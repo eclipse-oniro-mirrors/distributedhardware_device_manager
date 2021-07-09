@@ -1,0 +1,13 @@
+{
+    "parts": {
+        "device_manager_base": {
+            "variants": ["phone", "wearable", "ivi"],
+            "inner_kits": [],
+            "module_list": [],
+            "system_kits": []
+        }
+    },
+    "subsystem": "distributedhardware"
+}
+
+
