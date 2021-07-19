@@ -53,10 +53,10 @@ public:
     int32_t SoftbusJoinLnn(std::string devId);
     int32_t SoftbusLeaveLnn(std::string networkId);
     int32_t GetConnectionIpAddr(std::string deviceId, std::string &ipAddr);
+    static bool IsDeviceOnLine(std::string &deviceId);
 
 private:
     static void OnSoftBusDeviceStateChange(DmDeviceState state, NodeBasicInfo *info);
-    static bool IsDeviceOnLine(std::string &deviceId);
     std::string GetPackageNameBySubscribeId(uint16_t subscribeId);
     bool GetsubscribeIdAdapter(std::string packageName, int16_t originId, int32_t &adapterId);
     bool GetPackageNameBySubscribeId(int32_t adapterId, std::string &packageName);
