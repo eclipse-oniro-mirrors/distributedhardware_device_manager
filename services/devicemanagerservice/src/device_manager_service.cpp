@@ -23,6 +23,7 @@
 #include "system_ability_definition.h"
 
 #include "anonymous_string.h"
+#include "device_manager_errno.h"
 #include "device_manager_log.h"
 #include "softbus_adapter.h"
 
@@ -190,17 +191,24 @@ int32_t DeviceManagerService::AuthenticateDevice(std::string &packageName, const
     std::string &extra)
 {
     (void)extra;
+
+    std::string deviceId = deviceInfo.deviceId;
+    if (SoftbusAdapter::IsDeviceOnLine(deviceId)) {
+        HILOGI("AuthenticateDevice, deviceId is already in trusted list, return.");
+        return ERR_DEVICEMANAGER_DEVICE_ALREADY_TRUSTED;
+    }
+
     DeviceReqInfo devReqInfo;
-    devReqInfo.deviceId = deviceInfo.deviceId;
+    devReqInfo.deviceId = deviceId;
     HILOGI("AuthenticateDevice In, packageName: %{public}s, deviceId %{public}s", packageName.c_str(),
-        GetAnonyString(deviceInfo.deviceId).c_str());
-    int32_t ret = SoftbusAdapter::GetInstance().GetConnectionIpAddr(deviceInfo.deviceId, devReqInfo.ipAddr);
+        GetAnonyString(deviceId).c_str());
+    int32_t ret = SoftbusAdapter::GetInstance().GetConnectionIpAddr(deviceId, devReqInfo.ipAddr);
     if (ret != ERR_OK) {
         HILOGE("AuthenticateDevice Error: can not find ip by deviceId.");
         return ret;
     }
 
-    authCallbackParas_[deviceInfo.deviceId] = packageName;
+    authCallbackParas_[deviceId] = packageName;
     return HichainAdapter::GetInstance().Bind(devReqInfo, hichainBindCallback_, false);
 }
 
@@ -255,7 +263,10 @@ void HiChainBindCallback::onBindSuccess(std::string deviceId, const char *return
 
     std::string packageName = iter->second;
     sptr<IDeviceManagerListener> dmListener = DeviceManagerService::GetInstance().GetDmListener(packageName);
-    dmListener->OnAuthResult(packageName, deviceId, DmBindStatus::STATE_BIND_SUCCESS, ERR_NONE);
+    if (dmListener != nullptr) {
+        dmListener->OnAuthResult(packageName, deviceId, DmBindStatus::STATE_BIND_SUCCESS, ERR_NONE);
+    }
+
     int32_t ret = SoftbusAdapter::GetInstance().SoftbusJoinLnn(deviceId);
     HILOGI("onBindSuccess, DM bind succeed, joinlnn ret=%{public}d.", ret);
 }
