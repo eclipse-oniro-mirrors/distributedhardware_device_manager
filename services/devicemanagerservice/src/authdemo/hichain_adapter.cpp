@@ -29,9 +29,12 @@
 namespace OHOS {
 namespace DistributedHardware {
 namespace {
-// demo solution, may has security issues, later will be replaced by a formal plan
-const std::string PIN_CODE = "";
-const int32_t PORT = -1;
+// PIN_CODE一般为随机6位数字字符串, 例如;
+const std::string PIN_CODE = "123456";
+
+// PORT为server端的监听端口号，随机端口范围一般为1024~65534, 例如
+const int32_t PORT = 10001;
+
 
 const std::string DEVICE_MANAGER_APP = "ohos.distributedhardware.devicemanager";
 const std::string DEVICE_MANAGER_GROUPNAME = "DMPeerToPeerGroup";
