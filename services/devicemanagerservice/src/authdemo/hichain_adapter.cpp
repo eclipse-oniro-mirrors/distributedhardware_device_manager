@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <functional>
+#include <securec.h>
 
 #include "parameter.h"
 
@@ -25,6 +26,7 @@
 #include "device_client_channel.h"
 #include "device_manager_log.h"
 #include "device_server_channel.h"
+
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -262,13 +264,16 @@ char* HichainAdapter::OnBindRequest(int64_t requestId, int operationCode, const 
     (void)reqParams;
 
     HILOGI("HichainAdapter::OnBindRequest.");
-    bindRequestJsonObj_.clear();
-    bindRequestJsonObj_[FIELD_CONFIRMATION] = REQUEST_ACCEPTED;
-    bindRequestJsonObj_[FIELD_PIN_CODE] = PIN_CODE;
+    nlohmann::json jsonObj;
+    jsonObj[FIELD_CONFIRMATION] = REQUEST_ACCEPTED;
+    jsonObj[FIELD_PIN_CODE] = PIN_CODE;
     char localDeviceId[DEVICE_UUID_LENGTH] = {0};
     GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
-    bindRequestJsonObj_[FIELD_DEVICE_ID] = localDeviceId;
-    return (char*) bindRequestJsonObj_.dump().c_str();
+    jsonObj[FIELD_DEVICE_ID] = localDeviceId;
+
+    std::string jsonStr = jsonObj.dump();
+    char *buffer = strdup(jsonStr.c_str());
+    return buffer;
 }
 
 void HichainAdapter::OnBindSuccess(int64_t requestId, const char* returnData)
@@ -372,7 +377,7 @@ void HichainAuthCallBack::onError(int64_t requestId, int operationCode, int erro
 
 char* HichainAuthCallBack::onBindRequest(int64_t requestId, int operationCode, const char *reqParams)
 {
-    HILOGI("HichainAuthCallBack::onBindRequest reqId:%{public}lld, operation:%{public}d.", requestId, operationCode);
+    HILOGI("HichainAuthCallBack::onBindRequest reqId:%{public}lld, operation: %{public}d.", requestId, operationCode);
     return HichainAdapter::GetInstance().OnBindRequest(requestId, operationCode, reqParams);
 }
 }

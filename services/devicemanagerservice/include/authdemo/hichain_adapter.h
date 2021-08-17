@@ -91,7 +91,6 @@ private:
 
 private:
     std::atomic<int32_t> requestIdIndex_ {0};
-    nlohmann::json bindRequestJsonObj_;
     std::map<int64_t, std::string> bindingDeviceMap_;
     std::map<int64_t, std::shared_ptr<DeviceClientChannel>> clientBindReqMap_;
     std::map<int64_t, std::shared_ptr<BindCallback>> bindCallBackMap_;
