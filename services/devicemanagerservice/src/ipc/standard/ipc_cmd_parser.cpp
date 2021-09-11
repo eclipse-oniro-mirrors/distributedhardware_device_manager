@@ -336,7 +336,6 @@ ON_IPC_CMD(SERVER_USER_AUTHORIZATION_OPERATION, MessageParcel &data, MessageParc
     }
     return result;
 }
-
 ON_IPC_SET_REQUEST(SERVER_DEVICEMANAGER_FA_NOTIFY, std::shared_ptr<IpcReq> pBaseReq, MessageParcel& data)
 {
     DMLOG(DM_LOG_INFO, "OnFaCallBack");

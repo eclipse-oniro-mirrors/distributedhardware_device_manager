@@ -16,11 +16,16 @@
 #ifndef OHOS_DEVICE_MANAGER_DEVICE_INFO_H
 #define OHOS_DEVICE_MANAGER_DEVICE_INFO_H
 
-#include "parcel.h"
+#include <cstdint>
+
+#include "dm_app_image_info.h"
+
+#define DM_MAX_DEVICE_ID_LEN (96)
+#define DM_MAX_DEVICE_NAME_LEN (65)
 
 namespace OHOS {
 namespace DistributedHardware {
-enum DMDeviceType : uint8_t {
+typedef enum DMDeviceType {
     DEVICE_TYPE_UNKNOWN = 0x00,
     DEVICE_TYPE_WIFI_CAMERA = 0x08,
     DEVICE_TYPE_AUDIO = 0x0A,
@@ -30,22 +35,32 @@ enum DMDeviceType : uint8_t {
     DEVICE_TYPE_WATCH = 0x6D,
     DEVICE_TYPE_CAR = 0x83,
     DEVICE_TYPE_TV = 0x9C,
-};
+} DMDeviceType;
 
-enum DmDeviceState : uint8_t {
+typedef enum DmDeviceState {
     DEVICE_STATE_UNKNOWN = 0,
     DEVICE_STATE_ONLINE = 1,
     DEVICE_STATE_OFFLINE = 2,
-};
+    DEVICE_INFO_CHANGED = 3,
+} DmDeviceState;
 
-struct DmDeviceInfo : public Parcelable {
-    std::string deviceId;
-    std::string deviceName;
+typedef struct DmDeviceInfo {
+    char deviceId[DM_MAX_DEVICE_ID_LEN];
+    char deviceName[DM_MAX_DEVICE_NAME_LEN];
     DMDeviceType deviceTypeId;
-    bool ReadFromParcel(Parcel &parcel);
-    virtual bool Marshalling(Parcel &parcel) const override;
-    static DmDeviceInfo *Unmarshalling(Parcel &parcel);
-};
+} DmDeviceInfo;
+
+typedef struct DmAuthParam {
+    std::string packageName;
+    std::string appName;
+    std::string appDescription;
+    int32_t authType;
+    int32_t business;
+    int32_t pincode;
+    int32_t direction;
+    int32_t pinToken;
+    DmAppImageInfo imageinfo;
+} DmAuthParam;
 } // namespace DistributedHardware
 } // namespace OHOS
 #endif // OHOS_DEVICE_MANAGER_DEVICE_INFO_H

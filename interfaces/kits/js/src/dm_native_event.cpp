@@ -38,7 +38,7 @@ DmNativeEvent::~DmNativeEvent()
 
 void DmNativeEvent::On(std::string &eventType, napi_value handler)
 {
-    HILOGI("DmNativeEvent On in for event: %{public}s", eventType.c_str());
+    DMLOG(DM_LOG_INFO, "DmNativeEvent On in for event: %s", eventType.c_str());
     auto listener = std::make_shared<DmEventListener>();
     listener->eventType = eventType;
     napi_create_reference(env_, handler, 1, &listener->handlerRef);
@@ -47,17 +47,17 @@ void DmNativeEvent::On(std::string &eventType, napi_value handler)
 
 void DmNativeEvent::Off(std::string &eventType)
 {
-    HILOGI("DmNativeEvent Off in for event: %{public}s", eventType.c_str());
+    DMLOG(DM_LOG_INFO, "DmNativeEvent Off in for event: %s", eventType.c_str());
     napi_handle_scope scope = nullptr;
     napi_open_handle_scope(env_, &scope);
     if (scope == nullptr) {
-        HILOGE("scope is nullptr");
+        DMLOG(DM_LOG_ERROR, "scope is nullptr");
         return;
     }
 
     auto iter = eventMap_.find(eventType);
     if (iter == eventMap_.end()) {
-        HILOGE("eventType %{public}s not find", eventType.c_str());
+        DMLOG(DM_LOG_ERROR, "eventType %s not find", eventType.c_str());
         return;
     }
     auto listener = iter->second;
@@ -66,40 +66,40 @@ void DmNativeEvent::Off(std::string &eventType)
     napi_close_handle_scope(env_, scope);
 }
 
-void DmNativeEvent::OnEvent(const std::string &eventType, size_t argc, const napi_value* argv)
+void DmNativeEvent::OnEvent(const std::string &eventType, size_t argc, const napi_value *argv)
 {
-    HILOGI("OnEvent for %{public}s", eventType.c_str());
+    DMLOG(DM_LOG_INFO, "OnEvent for %s", eventType.c_str());
     napi_handle_scope scope = nullptr;
     napi_open_handle_scope(env_, &scope);
     if (scope == nullptr) {
-        HILOGE("scope is nullptr");
+        DMLOG(DM_LOG_ERROR, "scope is nullptr");
         return;
     }
 
     auto iter = eventMap_.find(eventType);
     if (iter == eventMap_.end()) {
-        HILOGE("eventType %{public}s not find", eventType.c_str());
+        DMLOG(DM_LOG_ERROR, "eventType %s not find", eventType.c_str());
         return;
     }
     auto listener = iter->second;
     napi_value thisVar = nullptr;
     napi_status status = napi_get_reference_value(env_, thisVarRef_, &thisVar);
     if (status != napi_ok) {
-        HILOGE("napi_get_reference_value thisVar for %{public}s failed, status=%{public}d", eventType.c_str(), status);
+        DMLOG(DM_LOG_ERROR, "napi_get_reference_value thisVar for %s failed, status=%d", eventType.c_str(), status);
         return;
     }
 
     napi_value handler = nullptr;
     status = napi_get_reference_value(env_, listener->handlerRef, &handler);
     if (status != napi_ok) {
-        HILOGE("napi_get_reference_value handler for %{public}s failed, status=%{public}d", eventType.c_str(), status);
+        DMLOG(DM_LOG_ERROR, "napi_get_reference_value handler for %s failed, status=%d", eventType.c_str(), status);
         return;
     }
 
     napi_value callResult = nullptr;
     status = napi_call_function(env_, thisVar, handler, argc, argv, &callResult);
     if (status != napi_ok) {
-        HILOGE("napi_call_function for %{public}s failed, status=%{public}d", eventType.c_str(), status);
+        DMLOG(DM_LOG_ERROR, "napi_call_function for %s failed, status=%d", eventType.c_str(), status);
         return;
     }
     napi_close_handle_scope(env_, scope);

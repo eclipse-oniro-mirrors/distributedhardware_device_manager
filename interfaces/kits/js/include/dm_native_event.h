@@ -33,7 +33,7 @@ public:
 
     virtual void On(std::string &eventType, napi_value handler);
     virtual void Off(std::string &eventType);
-    virtual void OnEvent(const std::string &eventType, size_t argc, const napi_value* argv);
+    virtual void OnEvent(const std::string &eventType, size_t argc, const napi_value *argv);
 
 protected:
     napi_env env_;

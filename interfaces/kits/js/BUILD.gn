@@ -14,51 +14,37 @@
 import("//build/ohos.gni")
 import("//foundation/distributedhardware/devicemanager/devicemanager.gni")
 
-config("dmnativejs_config") {
-  visibility = [ ":*" ]
+ohos_shared_library("devicemanager") {
   include_dirs = [
     "//third_party/node/src",
+    "//third_party/json/include",
+    "${common_path}/include",
     "//foundation/ace/napi/native_engine",
     "//foundation/ace/napi/interfaces/kits",
     "//utils/native/base/include",
     "include",
-    "${common_path}/log/include",
-    "${common_path}/utils/include",
+    "${utils_path}/include/log",
+    "${common_path}/include/ipc",
     "${innerkits_path}/native_cpp/include",
+    "${innerkits_path}/native_cpp/include/standard",
   ]
 
-  cflags = [
-    "-Wall",
-    "-Werror",
-    "-Wdate-time",
-    "-Wfloat-equal",
-    "-Wshadow",
-    "-Wformat=2",
-    "-fdata-sections",
-    "-ffunction-sections",
-    "-Os",
-  ]
-
-  cflags_cc = [
-    "-Os",
-  ]
-}
-
-ohos_shared_library("devicemanager") {
   sources = [
-    "src/native_devicemanager_js.cpp",
     "src/dm_native_event.cpp",
-    ]
-
-  configs = [ ":dmnativejs_config" ]
+    "src/native_devicemanager_js.cpp",
+  ]
 
   deps = [
-    "//utils/native/base:utils",
+    "${utils_path}:devicemanagerutils",
     "//foundation/ace/napi:ace_napi",
     "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
+    "//utils/native/base:utils",
   ]
 
+  cflags_cc = build_flags
+
   defines = [
+    "HI_LOG_ENABLE",
     "DH_LOG_TAG=\"devicemanagerkit_js\"",
     "LOG_DOMAIN=0xD004100",
   ]

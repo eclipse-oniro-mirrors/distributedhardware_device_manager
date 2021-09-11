@@ -15,6 +15,10 @@
 
 #ifndef OHOS_DEVICE_MANAGER_CALLBACK_H
 #define OHOS_DEVICE_MANAGER_CALLBACK_H
+
+#include <cstdint>
+#include <string>
+
 #include "dm_device_info.h"
 
 namespace OHOS {
@@ -39,13 +43,25 @@ public:
     virtual ~DiscoverCallback() {}
     virtual void OnDiscoverySuccess(uint16_t subscribeId) = 0;
     virtual void OnDiscoverFailed(uint16_t subscribeId, int32_t failedReason) = 0;
-    virtual void OnDeviceFound(uint16_t subscribeId, DmDeviceInfo &deviceInfo) = 0;
+    virtual void OnDeviceFound(uint16_t subscribeId, const DmDeviceInfo &deviceInfo) = 0;
 };
 
 class AuthenticateCallback {
 public:
     virtual ~AuthenticateCallback() {}
-    virtual void OnAuthResult(std::string &deviceId, int32_t status, int32_t reason) = 0;
+    virtual void OnAuthResult(std::string &deviceId, int32_t pinToken, int32_t status, int32_t reason) = 0;
+};
+
+class CheckAuthCallback {
+public:
+    virtual ~CheckAuthCallback() {}
+    virtual void OnCheckAuthResult(std::string &deviceId, int32_t resultCode, int32_t flag) = 0;
+};
+
+class DeviceManagerFaCallback {
+public:
+    virtual ~DeviceManagerFaCallback(){}
+    virtual void OnCall(std::string &paramJson) = 0;
 };
 } // namespace DistributedHardware
 } // namespace OHOS
