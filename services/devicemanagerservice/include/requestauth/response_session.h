@@ -58,7 +58,7 @@ private:
     void CancelDisplay();
     int32_t GeneratePincode();
 
-public:
+private:
     int64_t mRequestId_;
     std::string mGroupId_;
     std::string mGroupName_;
