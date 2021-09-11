@@ -51,7 +51,7 @@ ResponseSession::ResponseSession()
     // need to update
 }
 
-long long ResponseSession::GetRequestId(void)
+int64_t ResponseSession::GetRequestId(void)
 {
     return mRequestId_;
 }

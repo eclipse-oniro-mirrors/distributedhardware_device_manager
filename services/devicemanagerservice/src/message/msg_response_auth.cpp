@@ -137,7 +137,7 @@ std::string MsgResponseAuth::GetGroupName()
     return mGroupName_;
 }
 
-long long MsgResponseAuth::GetRequestId()
+int64_t MsgResponseAuth::GetRequestId()
 {
     return mRequestId_;
 }

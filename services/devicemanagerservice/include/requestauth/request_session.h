@@ -69,7 +69,7 @@ private:
     std::string mRemoteNetId_;
     std::string mRemoteGroupId_;
     std::string mRemoteGroupName_;
-    long long mRequestId_;
+    int64_t mRequestId_;
     std::shared_ptr<MsgResponseAuth> responseMsgPtr_;
 };
 }

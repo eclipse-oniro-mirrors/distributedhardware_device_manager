@@ -44,7 +44,7 @@ public:
     void OnGroupCreated(int64_t requestId, const std::string &groupId) override;
     void BuildAuthenticationInfo(DmAuthParam &authParam);
     void OnReceiveMsg(long long channelId, std::string &message);
-    long long GetRequestId();
+    int64_t GetRequestId();
     int32_t GetPinCodeByReqId(int64_t requestId);
     bool IsMyChannelId(long long channelId);
 
