@@ -55,6 +55,7 @@ int32_t DMDeathCallback(const IpcContext *ctx, void *ipcMsg, IpcIo *data, void *
 
 static int32_t SendCmdResultCb(IOwner owner, int code, IpcIo *reply)
 {
+    (void)code;
     int32_t cmdCode = *(int32_t *)owner;
     DMLOG(DM_LOG_INFO, "SendCmdResultCb code:%d", cmdCode);
     (void)IpcCmdRegister::GetInstance().ReadResponse(cmdCode, *reply, pCurRsp);

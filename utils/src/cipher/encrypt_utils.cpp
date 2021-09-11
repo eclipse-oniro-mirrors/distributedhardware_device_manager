@@ -98,7 +98,7 @@ int32_t EncryptUtils::GetRandomData(uint8_t *randStr, uint32_t len)
 }
 
 int32_t EncryptUtils::MbedtlsEncrypt(const uint8_t *plainText, int plainTextLen, uint8_t *cipherText,
-    int cipherTextLen, int *outLen)
+    int32_t cipherTextLen, int32_t *outLen)
 {
     if (memcpy_s(cipherText, cipherTextLen, plainText, plainTextLen) != DEVICEMANAGER_OK) {
         return DEVICEMANAGER_COPY_FAILED;
@@ -119,17 +119,19 @@ int32_t EncryptUtils::MbedtlsDecrypt(const uint8_t *cipherText, int32_t cipherTe
 
 bool EncryptUtils::MbedtlsGenRandomStr(char *szOut, int32_t szOutLen, bool numberOnly)
 {
-    if (szOut == nullptr || szOutLen <= 2) {
+    const int32_t MIN_OUT_LENGTH = 2;
+    if (szOut == nullptr || szOutLen <= MIN_OUT_LENGTH) {
         return false;
     }
     szOut[--szOutLen] = 0;
     GetRandomData((uint8_t*)szOut, szOutLen);
-    const int NUMBER_COUNT = 10;
-    const int ALPHA_COUNT = 26;
-    int M = numberOnly ? NUMBER_COUNT : (NUMBER_COUNT + 2 * ALPHA_COUNT);
-    for (int i = 0; i < szOutLen; i++) {
+    const int32_t NUMBER_COUNT = 10;
+    const int32_t ALPHA_COUNT = 26;
+    const int32_t ALPHA_BYTE_COUNT = 2;
+    int32_t M = numberOnly ? NUMBER_COUNT : (NUMBER_COUNT + ALPHA_BYTE_COUNT * ALPHA_COUNT);
+    for (int32_t i = 0; i < szOutLen; i++) {
         // 0~9,A~Z,a~z
-        unsigned int idx = ((unsigned int)szOut[i] % M);
+        uint32_t idx = ((uint32_t)szOut[i] % M);
         char base;
         if (idx < NUMBER_COUNT) {
             base = '0';

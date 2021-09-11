@@ -46,9 +46,8 @@ public:
         std::shared_ptr<CheckAuthCallback> callback);
     void UnRegisterCheckAuthenticationCallback(std::string &pkgName);
     void RegisterDeviceManagerFaCallback(std::string &packageName,
-    std::shared_ptr<DeviceManagerFaCallback> callback); 
+    std::shared_ptr<DeviceManagerFaCallback> callback);
     void UnRegisterDeviceManagerFaCallback(std::string &pkgName);
-    
 public:
     void OnRemoteDied();
     void OnDeviceOnline(std::string &pkgName, const DmDeviceInfo &deviceInfo);
@@ -60,7 +59,7 @@ public:
     void OnAuthResult(std::string &pkgName, std::string &deviceId, int32_t pinToken, uint32_t status,
         uint32_t reason);
     void OnCheckAuthResult(std::string &pkgName, std::string &deviceId, int32_t resultCode, int32_t flag);
-    void OnFaCall(std::string &pkgName,std::string &paramJson);
+    void OnFaCall(std::string &pkgName, std::string &paramJson);
 private:
     std::mutex lock_;
     std::map<std::string, std::shared_ptr<DeviceStateCallback>> deviceStateCallback_;

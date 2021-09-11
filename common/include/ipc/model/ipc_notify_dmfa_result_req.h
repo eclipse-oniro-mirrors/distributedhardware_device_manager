@@ -44,8 +44,6 @@ public:
     {
         JsonParam_ = JsonParam;
     }
-
- 
 private:
     std::string PackageName_;
     std::string JsonParam_;
