@@ -16,49 +16,51 @@
 #ifndef OHOS_DEVICE_MANAGER_SUBSCRIBE_INFO_H
 #define OHOS_DEVICE_MANAGER_SUBSCRIBE_INFO_H
 
-#include "parcel.h"
+#include <stdbool.h>
+
+#define DM_MAX_DEVICE_CAPABILITY_LEN 65
 
 namespace OHOS {
 namespace DistributedHardware {
-enum DmDiscoverMode : int32_t {
+typedef enum DmDiscoverMode {
     /* Passive */
-    DISCOVER_MODE_PASSIVE = 0x55,
+    DM_DISCOVER_MODE_PASSIVE = 0x55,
     /* Proactive */
-    DISCOVER_MODE_ACTIVE  = 0xAA
-};
+    DM_DISCOVER_MODE_ACTIVE  = 0xAA
+} DmDiscoverMode;
 
-enum DmExchangeMedium : int32_t {
+typedef enum DmExchangeMedium {
     /** Automatic medium selection */
-    AUTO = 0,
+    DM_AUTO = 0,
     /** Bluetooth */
-    BLE = 1,
+    DM_BLE = 1,
     /** Wi-Fi */
-    COAP = 2,
+    DM_COAP = 2,
     /** USB */
-    USB = 3,
-    MEDIUM_BUTT
-};
+    DM_USB = 3,
+    DM_MEDIUM_BUTT
+} DmExchangeMedium;
 
 /**
  * @brief Enumerates frequencies for publishing services.
  *
  * This enumeration applies only to Bluetooth and is not supported currently.
  */
-enum DmExchangeFreq : int32_t {
+typedef enum DmExchangeFreq {
     /** Low */
-    LOW = 0,
+    DM_LOW = 0,
     /** Medium */
-    MID = 1,
+    DM_MID = 1,
     /** High */
-    HIGH = 2,
+    DM_HIGH = 2,
     /** Super-high */
-    SUPER_HIGH = 3,
-    FREQ_BUTT
-};
+    DM_SUPER_HIGH = 3,
+    DM_FREQ_BUTT
+} DmExchangeFreq;
 
-const std::string DM_CAPABILITY_DDMP = "ddmpCapability";
+const static char *DM_CAPABILITY_OSD = "osdCapability";
 
-struct DmSubscribeInfo : public Parcelable {
+typedef struct DmSubscribeInfo {
     /** Service ID */
     uint16_t subscribeId;
     /** Discovery mode for service subscription. For details, see {@link DmDiscoverMode}. */
@@ -72,11 +74,8 @@ struct DmSubscribeInfo : public Parcelable {
     /** find the sleeping devices */
     bool isWakeRemote;
     /** Service subscription capability. */
-    std::string capability;
-    bool ReadFromParcel(Parcel &parcel);
-    virtual bool Marshalling(Parcel &parcel) const override;
-    static DmSubscribeInfo *Unmarshalling(Parcel &parcel);
-};
+    char capability[DM_MAX_DEVICE_CAPABILITY_LEN];
+} DmSubscribeInfo;
 } // namespace DistributedHardware
 } // namespace OHOS
 #endif // OHOS_DEVICE_MANAGER_SUBSCRIBE_INFO_H

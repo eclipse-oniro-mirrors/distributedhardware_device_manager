@@ -17,68 +17,60 @@
 #define OHOS_DEVICE_MANAGER_SOFTBUS_ADAPTER_H
 
 #include <string>
+#include <mutex>
 #include <map>
 #include <memory>
 #include "softbus_bus_center.h"
 #include "discovery_service.h"
 #include "dm_device_info.h"
 #include "dm_subscribe_info.h"
-#include "single_instance.h"
 
 namespace OHOS {
 namespace DistributedHardware {
-struct SubscribeInfoAdapter {
-    SubscribeInfo info;
-    uint16_t subscribeIdOrigin;
-    uint16_t subscribeIdPrefix;
+class PublishServiceCallBack {
+public:
+    static void OnPublishSuccess(int32_t publishId);
+    static void OnPublishFail(int32_t publishId, PublishFailReason reason);
 };
 
 class SoftbusAdapter {
-DECLARE_SINGLE_INSTANCE(SoftbusAdapter);
 public:
-    static int32_t GetSoftbusTrustDevices(const std::string &packageName, std::string &extra,
-        std::vector<DmDeviceInfo> &deviceList);
-    void RegSoftBusDeviceStateListener();
-    int32_t StartSoftbusDiscovery(std::string &packageName, DmSubscribeInfo &info);
-    int32_t StopSoftbusDiscovery(std::string &packageName, uint16_t subscribeId);
-    static void OnSoftbusDeviceOffline(NodeBasicInfo *info);
+    static int32_t Init();
+    static int32_t GetTrustDevices(const std::string &pkgName, NodeBasicInfo **info, int32_t *infoNum);
+    static int32_t StartDiscovery(std::string &pkgName, SubscribeInfo *info);
+    static int32_t StopDiscovery(std::string &pkgName, uint16_t subscribeId);
+    static bool IsDeviceOnLine(std::string &deviceId);
+    static int32_t GetConnectionIpAddr(std::string deviceId, std::string &ipAddr);
+    static ConnectionAddr *GetConnectAddr(std::string deviceId);
+public:
     static void OnSoftBusDeviceOnline(NodeBasicInfo *info);
+    static void OnSoftbusDeviceOffline(NodeBasicInfo *info);
     static void OnSoftbusDeviceInfoChanged(NodeBasicInfoType type, NodeBasicInfo *info);
     static void OnSoftbusDeviceFound(const DeviceInfo *device);
-    static void OnSoftbusDiscoverFailed(int subscribeId, DiscoveryFailReason failReason);
-    static void OnSoftbusDiscoverySuccess(int subscribeId);
-    static void OnSoftbusJoinLNNResult(ConnectionAddr *addr, const char *networkId, int32_t retCode);
-    static void OnSoftbusLeaveLNNResult(const char *networkId, int32_t retCode);
-    const std::map<std::string, std::vector<std::shared_ptr<SubscribeInfoAdapter>>>& GetsubscribeInfos();
-    int32_t SoftbusJoinLnn(std::string devId);
-    int32_t SoftbusLeaveLnn(std::string networkId);
-    int32_t GetConnectionIpAddr(std::string deviceId, std::string &ipAddr);
-    static bool IsDeviceOnLine(std::string &deviceId);
-
+    static void OnSoftbusDiscoverFailed(int32_t subscribeId, DiscoveryFailReason failReason);
+    static void OnSoftbusDiscoverySuccess(int32_t subscribeId);
 private:
-    static void OnSoftBusDeviceStateChange(DmDeviceState state, NodeBasicInfo *info);
-    std::string GetPackageNameBySubscribeId(uint16_t subscribeId);
-    bool GetsubscribeIdAdapter(std::string packageName, int16_t originId, int32_t &adapterId);
-    bool GetPackageNameBySubscribeId(int32_t adapterId, std::string &packageName);
-    void SaveDiscoverDeviceInfo(const DeviceInfo *deviceInfo);
-    void RemoveDiscoverDeviceInfo(const std::string deviceId);
-
+    static bool GetsubscribeIdAdapter(std::string &pkgName, int16_t originId, int32_t &adapterId);
+    static bool GetpkgNameBySubscribeId(int32_t adapterId, std::string &pkgName);
+    static void SaveDiscoverDeviceInfo(const DeviceInfo *deviceInfo);
+    static void RemoveDiscoverDeviceInfo(const std::string deviceId);
+    static void NodeBasicInfoCopyToDmDevice(DmDeviceInfo &dmDeviceInfo, NodeBasicInfo &nodeBasicInfo);
+    static void DeviceInfoCopyToDmDevice(DmDeviceInfo &dmDeviceInfo, const DeviceInfo &deviceInfo);
+    static ConnectionAddr *GetConnectAddrByType(DeviceInfo *deviceInfo, ConnectionAddrType type);
 private:
-    std::map<std::string, std::vector<std::shared_ptr<SubscribeInfoAdapter>>> subscribeInfos_;
-    std::map<std::string, std::shared_ptr<DeviceInfo>> discoverDeviceInfoMap_;
-    std::vector<std::shared_ptr<DeviceInfo>> discoverDeviceInfoVector_;
-    std::atomic<uint16_t> subscribeIdPrefix {0};
-    INodeStateCb softbusNodeStateCb = {
-        .events = EVENT_NODE_STATE_ONLINE | EVENT_NODE_STATE_OFFLINE | EVENT_NODE_STATE_INFO_CHANGED,
-        .onNodeOnline = OnSoftBusDeviceOnline,
-        .onNodeOffline = OnSoftbusDeviceOffline,
-        .onNodeBasicInfoChanged = OnSoftbusDeviceInfoChanged
+    struct SubscribeInfoAdapter {
+        SubscribeInfo info;
+        uint16_t subscribeIdOrigin;
+        uint16_t subscribeIdPrefix;
     };
-    IDiscoveryCallback softbusDiscoverCallback = {
-        .OnDeviceFound = OnSoftbusDeviceFound,
-        .OnDiscoverFailed = OnSoftbusDiscoverFailed,
-        .OnDiscoverySuccess = OnSoftbusDiscoverySuccess
-    };
+    static std::map<std::string, std::vector<std::shared_ptr<SubscribeInfoAdapter>>> subscribeInfos_;
+    static std::map<std::string, std::shared_ptr<DeviceInfo>> discoverDeviceInfoMap_;
+    static std::vector<std::shared_ptr<DeviceInfo>> discoverDeviceInfoVector_;
+    static uint16_t subscribeIdPrefix;
+    static std::mutex lock_;
+    static INodeStateCb softbusNodeStateCb_;
+    static IDiscoveryCallback softbusDiscoverCallback_;
+    static IPublishCallback servicePublishCallback_;
 };
 } // namespace DistributedHardware
 } // namespace OHOS
