@@ -11,7 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 devicemanager_path = "//foundation/distributedhardware/devicemanager"
 
 common_path = "${devicemanager_path}/common"
@@ -23,6 +22,6 @@ services_path = "${devicemanager_path}/services"
 innerkits_path = "${devicemanager_path}/interfaces/inner_kits"
 
 build_flags = [
-    "-Werror",
-    "-Wall",
-    ]
+  "-Werror",
+  "-Wall",
+]
