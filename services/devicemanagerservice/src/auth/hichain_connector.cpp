@@ -303,7 +303,8 @@ int32_t HichainConnector::DelMemberFromGroup(std::string groupId, std::string de
     jsonObj[FIELD_DELETE_ID] = deviceId;
     std::string deleteParams = jsonObj.dump();
 
-    int32_t ret = deviceGroupManager_->deleteMemberFromGroup(requestId, DEVICE_MANAGER_APP.c_str(), deleteParams.c_str());
+    int32_t ret = deviceGroupManager_->deleteMemberFromGroup(requestId, DEVICE_MANAGER_APP.c_str(),
+        deleteParams.c_str());
     if (ret != 0) {
         DMLOG(DM_LOG_ERROR, "HichainConnector::DelMemberFromGroup faild , ret: %d.", ret);
         return ret;
@@ -352,7 +353,8 @@ void HichainAuthenCallBack::onFinish(int64_t requestId, int32_t operationCode, c
     }
 }
 
-void HichainAuthenCallBack::onError(int64_t requestId, int32_t operationCode, int32_t errorCode, const char *errorReturn)
+void HichainAuthenCallBack::onError(int64_t requestId, int32_t operationCode, int32_t errorCode,
+    const char *errorReturn)
 {
     (void)errorReturn;
     DMLOG(DM_LOG_INFO, "HichainAuthenCallBack::onError reqId:%lld, operation:%d, errorCode:%d.",

@@ -718,7 +718,7 @@ void DeviceManagerNapi::CreateDmCallback(std::string &bundleName, std::string &e
         discoverCallback->IncreaseRefCount();
         return;
     }
-    
+
     if (eventType == DM_NAPI_EVENT_DMFA_CALLBACK) {
         auto iter = g_dmfaCallbackMap.find(bundleName);
         if (iter == g_dmfaCallbackMap.end()) {
