@@ -54,7 +54,7 @@ public:
         }
     }
 
-    DmAppImageInfo& operator= (const DmAppImageInfo &other)
+    DmAppImageInfo& operator=(const DmAppImageInfo &other)
     {
         if (this != &other) {
             SaveData(other.GetAppIcon(), other.GetAppIconLen(), other.GetAppThumbnail(), other.GetAppThumbnailLen());
@@ -63,7 +63,7 @@ public:
     }
 
     DmAppImageInfo(DmAppImageInfo&&) = delete;
-    DmAppImageInfo& operator= (DmAppImageInfo&&) = delete;
+    DmAppImageInfo& operator=(DmAppImageInfo&&) = delete;
 
     int32_t GetAppIconLen() const
     {

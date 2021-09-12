@@ -219,7 +219,7 @@ void HichainConnector::GetRelatedGroups(std::string deviceId, std::vector<GroupI
     DMLOG(DM_LOG_INFO, "HichainConnector::GetRelatedGroups Start to get local related groups.");
     uint32_t groupNum = 0;
     char *returnGroups = nullptr;
-    int ret = deviceGroupManager_->getRelatedGroups(DEVICE_MANAGER_APP.c_str(), deviceId.c_str(),
+    int32_t ret = deviceGroupManager_->getRelatedGroups(DEVICE_MANAGER_APP.c_str(), deviceId.c_str(),
         &returnGroups, &groupNum);
     if (ret != 0) {
         DMLOG(DM_LOG_ERROR, "HichainConnector::GetRelatedGroups faild , ret: %d.", ret);
@@ -303,7 +303,7 @@ int32_t HichainConnector::DelMemberFromGroup(std::string groupId, std::string de
     jsonObj[FIELD_DELETE_ID] = deviceId;
     std::string deleteParams = jsonObj.dump();
 
-    int ret = deviceGroupManager_->deleteMemberFromGroup(requestId, DEVICE_MANAGER_APP.c_str(), deleteParams.c_str());
+    int32_t ret = deviceGroupManager_->deleteMemberFromGroup(requestId, DEVICE_MANAGER_APP.c_str(), deleteParams.c_str());
     if (ret != 0) {
         DMLOG(DM_LOG_ERROR, "HichainConnector::DelMemberFromGroup faild , ret: %d.", ret);
         return ret;
@@ -318,13 +318,13 @@ void HichainConnector::DeleteGroup(std::string &groupId)
     jsonObj[FIELD_GROUP_ID] = groupId;
     std::string disbandParams = jsonObj.dump();
 
-    int ret = deviceGroupManager_->deleteGroup(requestId, DEVICE_MANAGER_APP.c_str(), disbandParams.c_str());
+    int32_t ret = deviceGroupManager_->deleteGroup(requestId, DEVICE_MANAGER_APP.c_str(), disbandParams.c_str());
     if (ret != 0) {
         DMLOG(DM_LOG_ERROR, "HichainConnector::DeleteGroup faild , ret: %d.", ret);
     }
 }
 
-void HichainAuthenCallBack::onFinish(int64_t requestId, int operationCode, const char *returnData)
+void HichainAuthenCallBack::onFinish(int64_t requestId, int32_t operationCode, const char *returnData)
 {
     std::string data = "";
     if (returnData != nullptr) {
@@ -352,7 +352,7 @@ void HichainAuthenCallBack::onFinish(int64_t requestId, int operationCode, const
     }
 }
 
-void HichainAuthenCallBack::onError(int64_t requestId, int operationCode, int errorCode, const char *errorReturn)
+void HichainAuthenCallBack::onError(int64_t requestId, int32_t operationCode, int32_t errorCode, const char *errorReturn)
 {
     (void)errorReturn;
     DMLOG(DM_LOG_INFO, "HichainAuthenCallBack::onError reqId:%lld, operation:%d, errorCode:%d.",
@@ -377,7 +377,7 @@ void HichainAuthenCallBack::onError(int64_t requestId, int operationCode, int er
     }
 }
 
-char *HichainAuthenCallBack::onRequest(int64_t requestId, int operationCode, const char *reqParams)
+char *HichainAuthenCallBack::onRequest(int64_t requestId, int32_t operationCode, const char *reqParams)
 {
     if (operationCode != GroupOperationCode::MEMBER_JOIN) {
         DMLOG(DM_LOG_ERROR, "HichainAuthenCallBack::onRequest operationCode %d", operationCode);

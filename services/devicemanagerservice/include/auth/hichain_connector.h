@@ -57,15 +57,15 @@ class HichainAuthenCallBack {
 public:
     static bool onTransmit(int64_t requestId, const uint8_t *data, uint32_t dataLen);
     static void onSessionKeyReturned(int64_t requestId, const uint8_t *sessionKey, uint32_t sessionKeyLen);
-    static void onFinish(int64_t requestId, int operationCode, const char *returnData);
-    static void onError(int64_t requestId, int operationCode, int errorCode, const char *errorReturn);
-    static char *onRequest(int64_t requestId, int operationCode, const char *reqParams);
+    static void onFinish(int64_t requestId, int32_t operationCode, const char *returnData);
+    static void onError(int64_t requestId, int32_t operationCode, int32_t errorCode, const char *errorReturn);
+    static char *onRequest(int64_t requestId, int32_t operationCode, const char *reqParams);
 };
 
 class HichainConnector {
 DECLARE_SINGLE_INSTANCE(HichainConnector);
 public:
-    int Init();
+    int32_t Init();
     bool OnTransmit(int64_t requestId, const uint8_t *data, uint32_t dataLen);
     int64_t GenRequestId();
     void RegisterConnectorCallback(std::shared_ptr<GroupCreateCallback> callback);

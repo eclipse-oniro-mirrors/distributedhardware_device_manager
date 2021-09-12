@@ -21,9 +21,9 @@ namespace OHOS {
 namespace DistributedHardware {
 std::string GetAnonyString(const std::string &value)
 {
-    const int INT32_SHORT_ID_LENGTH = 20;
-    const int INT32_PLAINTEXT_LENGTH = 4;
-    const int INT32_MIN_ID_LENGTH = 3;
+    const int32_t INT32_SHORT_ID_LENGTH = 20;
+    const int32_t INT32_PLAINTEXT_LENGTH = 4;
+    const int32_t INT32_MIN_ID_LENGTH = 3;
     std::string res;
     std::string tmpStr("******");
     int32_t strLen = value.length();
@@ -46,7 +46,7 @@ std::string GetAnonyString(const std::string &value)
 
 std::string GetAnonyInt32(const int32_t value)
 {
-    const int INT32_STRING_LENGTH = 40;
+    const int32_t INT32_STRING_LENGTH = 40;
     char tempBuffer[INT32_STRING_LENGTH] = "";
     int32_t secRet = sprintf_s(tempBuffer, INT32_STRING_LENGTH, "%d", value);
     if (secRet <= 0) {

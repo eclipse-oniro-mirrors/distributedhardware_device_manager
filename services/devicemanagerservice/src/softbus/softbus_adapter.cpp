@@ -409,7 +409,7 @@ int32_t SoftbusAdapter::GetConnectionIpAddr(std::string deviceId, std::string &i
         return DEVICEMANAGER_FAILED;
     }
 
-    for (unsigned int i = 0; i < deviceInfo->addrNum; ++i) {
+    for (uint32_t i = 0; i < deviceInfo->addrNum; ++i) {
         // currently, only support CONNECT_ADDR_WLAN
         if (deviceInfo->addr[i].type != ConnectionAddrType::CONNECTION_ADDR_WLAN &&
             deviceInfo->addr[i].type != ConnectionAddrType::CONNECTION_ADDR_ETH) {
@@ -429,7 +429,7 @@ ConnectionAddr *SoftbusAdapter::GetConnectAddrByType(DeviceInfo *deviceInfo, Con
     if (deviceInfo == nullptr) {
         return nullptr;
     }
-    for (unsigned int i = 0; i < deviceInfo->addrNum; ++i) {
+    for (uint32_t i = 0; i < deviceInfo->addrNum; ++i) {
         if (deviceInfo->addr[i].type == type) {
             return &deviceInfo->addr[i];
         }

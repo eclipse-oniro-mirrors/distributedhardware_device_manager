@@ -328,7 +328,7 @@ ON_IPC_CMD(SERVER_USER_AUTHORIZATION_OPERATION, MessageParcel &data, MessageParc
 {
     std::string packageName = data.ReadString();
     int32_t action = data.ReadInt32();
-    int result = IpcServerAdapter::GetInstance().SetUserOperation(packageName, action);
+    int32_t result = IpcServerAdapter::GetInstance().SetUserOperation(packageName, action);
 
     if (!reply.WriteInt32(action)) {
         DMLOG(DM_LOG_ERROR, "write result failed");

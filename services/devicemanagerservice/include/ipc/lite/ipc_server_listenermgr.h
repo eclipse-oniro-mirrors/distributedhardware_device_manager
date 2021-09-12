@@ -27,11 +27,11 @@
 namespace OHOS {
 namespace DistributedHardware {
 typedef struct CommonSvcId {
-    unsigned int handle;
-    unsigned int token;
-    unsigned int cookie;
+    uint32_t handle;
+    uint32_t token;
+    uint32_t cookie;
     IpcContext *ipcCtx;
-    unsigned int cbId;
+    uint32_t cbId;
 }CommonSvcId;
 
 class IpcServerListenermgr {

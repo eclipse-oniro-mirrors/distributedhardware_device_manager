@@ -97,9 +97,10 @@ int32_t EncryptUtils::GetRandomData(uint8_t *randStr, uint32_t len)
     return ret;
 }
 
-int32_t EncryptUtils::MbedtlsEncrypt(const uint8_t *plainText, int plainTextLen, uint8_t *cipherText,
+int32_t EncryptUtils::MbedtlsEncrypt(const uint8_t *plainText, int32_t plainTextLen, uint8_t *cipherText,
     int32_t cipherTextLen, int32_t *outLen)
 {
+    // Security algorithms do not support open source. Customize if required
     if (memcpy_s(cipherText, cipherTextLen, plainText, plainTextLen) != DEVICEMANAGER_OK) {
         return DEVICEMANAGER_COPY_FAILED;
     }
@@ -110,6 +111,7 @@ int32_t EncryptUtils::MbedtlsEncrypt(const uint8_t *plainText, int plainTextLen,
 int32_t EncryptUtils::MbedtlsDecrypt(const uint8_t *cipherText, int32_t cipherTextLen, uint8_t *plainText,
     int32_t plainTextLen, int32_t *outLen)
 {
+    // Security algorithms do not support open source. Customize if required
     (void)outLen;
     if (memcpy_s(plainText, plainTextLen, cipherText, cipherTextLen) != DEVICEMANAGER_OK) {
         return DEVICEMANAGER_COPY_FAILED;

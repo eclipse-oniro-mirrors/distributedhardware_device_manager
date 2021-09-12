@@ -27,7 +27,7 @@
 #include "nlohmann/json.hpp"
 #include "dm_device_info.h"
 
-const int DM_NAPI_BUF_LENGTH = 256;
+#define DM_NAPI_BUF_LENGTH (256)
 
 struct AsyncCallbackInfo {
     napi_env env = nullptr;
@@ -149,15 +149,15 @@ public:
     static void ReleaseDmCallback(std::string &bundleName, std::string &eventType);
     static void DeviceInfoToJsArray(const napi_env &env,
         const std::vector<OHOS::DistributedHardware::DmDeviceInfo>& vecDevInfo,
-        const int idx, napi_value &arrayResult);
+        const int32_t idx, napi_value &arrayResult);
     static void DmAuthParamToJsAuthParam(const napi_env &env,
         const OHOS::DistributedHardware::DmAuthParam &authParam, napi_value &paramResult);
-    static void SetValueInt32(const napi_env &env, const std::string &fieldStr, const int intValue,
+    static void SetValueInt32(const napi_env &env, const std::string &fieldStr, const int32_t intValue,
         napi_value &result);
     static void SetValueUtf8String(const napi_env &env, const std::string &fieldStr, const std::string &str,
         napi_value &result);
     static void JsObjectToString(const napi_env &env, const napi_value &object,
-        const std::string &fieldStr, char *dest, const int destLen);
+        const std::string &fieldStr, char *dest, const int32_t destLen);
     static void JsObjectToBool(const napi_env &env, const napi_value &object,
         const std::string &fieldStr, bool& fieldRef);
     static void JsObjectToInt(const napi_env &env, const napi_value &object, const std::string &fieldStr,

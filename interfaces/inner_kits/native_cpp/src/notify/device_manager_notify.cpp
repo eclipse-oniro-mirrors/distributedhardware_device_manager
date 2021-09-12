@@ -283,7 +283,7 @@ void DeviceManagerNotify::OnCheckAuthResult(std::string &pkgName, std::string &d
 
 void DeviceManagerNotify::OnFaCall(std::string &pkgName, std::string &paramJson)
 {
-  DMLOG(DM_LOG_INFO, "DeviceManager OnFaCallback pkgName:%s", pkgName.c_str());
+    DMLOG(DM_LOG_INFO, "DeviceManager OnFaCallback pkgName:%s", pkgName.c_str());
     std::lock_guard<std::mutex> autoLock(lock_);
     if (dmFaCallback_.count(pkgName) == 0) {
         DMLOG(DM_LOG_ERROR, "DeviceManager DmFaCallback not register");
