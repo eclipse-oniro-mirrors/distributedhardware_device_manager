@@ -128,15 +128,25 @@ bool ResponseSession::IsMyChannelId(long long channelId)
 
 void OnReceiveTimeOut(void *data)
 {
-    DMLOG(DM_LOG_ERROR, "Receive TimeOut");
+    DMLOG(DM_LOG_ERROR, "OnReceiveTimeOut TimeOut called");
     ResponseSession *respSess = (ResponseSession*)data;
+    if (respSess == nullptr || respSess->GetStatus() == ResponseSessionStatus::SESSION_INIT) {
+        DMLOG(DM_LOG_ERROR, "respSess Status is INIT");
+        return;
+    }
+
     respSess->Release();
 }
 
 void OnMemberJoinTimeOut(void *data)
 {
-    DMLOG(DM_LOG_ERROR, "Receive TimeOut");
+    DMLOG(DM_LOG_ERROR, "OnMemberJoinTimeOut TimeOut caled");
     ResponseSession *respSess = (ResponseSession*)data;
+    if (respSess == nullptr || respSess->GetStatus() == ResponseSessionStatus::SESSION_INIT) {
+        DMLOG(DM_LOG_ERROR, "respSess Status is INIT");
+        return;
+    }
+
     respSess->SendResponseMessage(SESSION_REPLY_TIMEOUT);
     respSess->CancelDisplay();
     respSess->Release();
@@ -151,7 +161,7 @@ void ResponseSession::OnReceiveMsg(long long channelId, std::string &message)
     }
 
     if (!mReceiveTimerPtr_) {
-        mReceiveTimerPtr_ = std::make_shared<DmTimer>();
+        mReceiveTimerPtr_ = std::make_shared<DmTimer>("mReceiveTimer");
     }
 
     mReceiveTimerPtr_->Start(SESSION_MSG_RECEIVE_TIMEOUT, OnReceiveTimeOut, this);
@@ -170,7 +180,7 @@ void ResponseSession::OnReceiveMsg(long long channelId, std::string &message)
 
     mSessionStatus_ = ResponseSessionStatus::SESSION_WAITTING_USER_CONFIRM;
     if (!mMemberJoinTimerPtr_) {
-        mMemberJoinTimerPtr_ = std::make_shared<DmTimer>();
+        mMemberJoinTimerPtr_ = std::make_shared<DmTimer>("mMemberJoinTimer");
     }
 
     mMemberJoinTimerPtr_->Start(SESSION_WAIT_MEMBER_JOIN_TIMEOUT, OnMemberJoinTimeOut, this);
@@ -236,7 +246,7 @@ void ResponseSession::OnGroupCreated(int64_t requestId, const std::string &group
     DMLOG(DM_LOG_INFO, "ResponseSession OnGroupCreated in requestId= %lld groupId = %s ", requestId, groupId.c_str());
 
     if (requestId != mRequestId_ || groupId.length() == 0) {
-        DMLOG(DM_LOG_ERROR, "ResponseSession::OnGroupCreated failed, requestId %d, requestId %d, groupId %s",
+        DMLOG(DM_LOG_ERROR, "ResponseSession::OnGroupCreated failed, requestId %lld, requestId %lld, groupId %s",
             requestId, mRequestId_, groupId.c_str());
         SendResponseMessage(SESSION_REPLY_CREAT_GROUP_FAILED);
         CancelDisplay();
@@ -263,7 +273,6 @@ void ResponseSession::OnMemberJoin(int64_t requestId, int32_t status)
     DMLOG(DM_LOG_INFO, "ResponseSession::OnMemberJoin, result: %d", status);
     CancelDisplay();
     mMemberJoinTimerPtr_->Stop(SESSION_CANCEL_TIMEOUT);
-    mMemberJoinTimerPtr_->Release();
     Release();
 }
 
@@ -304,6 +313,7 @@ void ResponseSession::OnUserReject(int32_t errorCode)
 void ResponseSession::Release()
 {
     DMLOG(DM_LOG_INFO, "ResponseSession::Release in");
+    mSessionStatus_ = ResponseSessionStatus::SESSION_INIT;
     mRequestId_ = -1;
     mGroupId_ = "";
     mGroupName_ = "";
@@ -311,9 +321,6 @@ void ResponseSession::Release()
     mMsgRequestAuthPtr_ = nullptr;
     mChannelId_ = -1;
     mPincode_ = -1;
-    mSessionStatus_ = ResponseSessionStatus::SESSION_INIT;
-    mReceiveTimerPtr_ = nullptr;
-    mMemberJoinTimerPtr_ = nullptr;
 }
 
 void ResponseSession::CancelDisplay()
@@ -323,7 +330,12 @@ void ResponseSession::CancelDisplay()
     std::string paramJson = jsonObj.dump();
     std::string pkgName = "com.ohos.devicemanagerui";
     IpcServerListenerAdapter::GetInstance().OnFaCall(pkgName, paramJson);
-    DMLOG(DM_LOG_INFO, "CancelDisplay close pin code window %s", mMsgRequestAuthPtr_->mTargetPkg_.c_str());
+    DMLOG(DM_LOG_INFO, "CancelDisplay close pin code window");
+}
+
+int32_t ResponseSession::GetStatus()
+{
+    return mSessionStatus_;
 }
 
 int32_t ResponseSession::GeneratePincode()

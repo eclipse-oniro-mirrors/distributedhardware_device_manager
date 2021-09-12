@@ -51,6 +51,7 @@ public:
     bool IsMyChannelId(long long channelId);
     void Release();
     void CancelDisplay();
+    int32_t GetStatus();
 
 private:
     int32_t DecodeReqMsg(std::string &message);

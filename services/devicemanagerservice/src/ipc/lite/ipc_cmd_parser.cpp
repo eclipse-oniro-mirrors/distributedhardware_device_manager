@@ -225,7 +225,7 @@ ON_IPC_SERVER_CMD(SERVER_GET_AUTHENTCATION_INFO, IpcIo &req, IpcIo &reply)
         IpcIoPushInt32(&reply, authParam.direction);
         IpcIoPushInt32(&reply, authParam.authType);
         IpcIoPushInt32(&reply, authParam.pinToken);
-        DMLOG(DM_LOG_DEBUG,"DeviceManagerStub::is Client so just return direction");
+        DMLOG(DM_LOG_DEBUG, "DeviceManagerStub::is Client so just return direction");
         return;
     }
 
@@ -246,10 +246,9 @@ ON_IPC_SERVER_CMD(SERVER_GET_AUTHENTCATION_INFO, IpcIo &req, IpcIo &reply)
         IpcIoPushFlatObj(&reply, authParam.imageinfo.GetAppIcon(),appIconLen);
     }
 
-    if ( appThumbnailLen > 0 && authParam.imageinfo.GetAppThumbnail() != nullptr) {
+    if (appThumbnailLen > 0 && authParam.imageinfo.GetAppThumbnail() != nullptr) {
         IpcIoPushFlatObj(&reply, authParam.imageinfo.GetAppThumbnail(), appThumbnailLen);
     }
-
 }
 
 ON_IPC_SERVER_CMD(SERVER_USER_AUTHORIZATION_OPERATION, IpcIo &req, IpcIo &reply)

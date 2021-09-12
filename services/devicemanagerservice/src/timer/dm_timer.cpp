@@ -19,41 +19,45 @@
 
 namespace OHOS {
 namespace DistributedHardware {
-DmTimer::DmTimer() {
-    mStatus = DmTimerStatus::DM_STATUS_INIT;
+DmTimer::DmTimer(std::string &name)
+{
+    mStatus_ = DmTimerStatus::DM_STATUS_INIT;
+    mTimerName_ = name;
 }
 
 DmTimerStatus DmTimer::Start(uint32_t timeOut, TimeoutHandle handle, void *data)
 {
-    DMLOG(DM_LOG_ERROR, "DmTimer start timeout(%d)\n", timeOut);
-    if (mStatus != DmTimerStatus::DM_STATUS_INIT) {
+    DMLOG(DM_LOG_INFO, "DmTimer %s start timeout(%d)", mTimerName_.c_str(), timeOut);
+    if (mStatus_ != DmTimerStatus::DM_STATUS_INIT) {
         return DmTimerStatus::DM_STATUS_BUSY;
     }
 
-    mTimeOutS = timeOut;
-    mHandle = handle;
-    mHandleData = data;
+    mTimeOutSec_ = timeOut;
+    mHandle_ = handle;
+    mHandleData_ = data;
 
     if (CreateTimeFd()) {
         return DmTimerStatus::DM_STATUS_CREATE_ERROR;
     }
 
-    mStatus = DmTimerStatus::DM_STATUS_RUNNING;
-    mThread = std::thread(&DmTimer::WiteforTimeout, this);
-    mThread.detach();
+    mStatus_ = DmTimerStatus::DM_STATUS_RUNNING;
+    mThread_ = std::thread(&DmTimer::WiteforTimeout, this);
+    mThread_.detach();
 
-    return mStatus;
+    return mStatus_;
 }
 
 void DmTimer::Stop(int32_t code)
 {
-    DMLOG(DM_LOG_ERROR, "DmTimer Stop code (%d)\n", code);
+    DMLOG(DM_LOG_INFO, "DmTimer %s Stop code (%d)", mTimerName_.c_str(), code);
     char event;
     event = 'S';
-    if (mTimeFd[1]) {
-        if (write(mTimeFd[1], &event, 1) < 0) {
-            DMLOG(DM_LOG_ERROR, "DmTimer Stop timer failed %d \n", errno);
+    if (mTimeFd_[1]) {
+        if (write(mTimeFd_[1], &event, 1) < 0) {
+            DMLOG(DM_LOG_ERROR, "DmTimer %s Stop timer failed, errno %d", mTimerName_.c_str(), errno);
+            return;
         }
+        DMLOG(DM_LOG_INFO, "DmTimer %s Stop success", mTimerName_.c_str());
     }
 
     return;
@@ -61,48 +65,49 @@ void DmTimer::Stop(int32_t code)
 
 void DmTimer::WiteforTimeout()
 {
-    DMLOG(DM_LOG_ERROR, "DmTimer start timer at (%d)s" ,mTimeOutS);
+    DMLOG(DM_LOG_INFO, "DmTimer %s start timer at (%d)s", mTimerName_.c_str(), mTimeOutSec_);
 
-    int32_t nfds = epoll_wait(mEpFd, mEvents, MAXEVENTS, mTimeOutS * 1000);
+    int32_t nfds = epoll_wait(mEpFd_, mEvents_, MAXEVENTS, mTimeOutSec_ * 1000);
     if (nfds < 0) {
-        DMLOG(DM_LOG_ERROR, "epoll_wait returned n=%d, error: %d", nfds, errno);
+        DMLOG(DM_LOG_ERROR, "DmTimer %s epoll_wait returned n=%d, error: %d", mTimerName_.c_str(), nfds, errno);
     }
 
     char event = 0;
     if (nfds > 0) {
-        if (mEvents[0].events & EPOLLIN) {
-            int num= read(mTimeFd[0], &event, 1);
+        if (mEvents_[0].events & EPOLLIN) {
+            int num= read(mTimeFd_[0], &event, 1);
             if (num > 0) {
-                DMLOG(DM_LOG_INFO, "DmTimer exit with event %d", event);
+                DMLOG(DM_LOG_INFO, "DmTimer %s exit with event %d", mTimerName_.c_str(), event);
             } else {
-                DMLOG(DM_LOG_ERROR, "DmTimer exit with errno %d", errno);
+                DMLOG(DM_LOG_ERROR, "DmTimer %s exit with errno %d", mTimerName_.c_str(), errno);
             }
         }
+        Release();
         return;
     }
 
-    mHandle(mHandleData);
+    mHandle_(mHandleData_);
     Release();
 
-    DMLOG(DM_LOG_ERROR, "DmTimer end timer at (%d)s" ,mTimeOutS);
+    DMLOG(DM_LOG_ERROR, "DmTimer %s end timer at (%d)s", mTimerName_.c_str(), mTimeOutSec_);
     return;
 }
 
 int32_t DmTimer::CreateTimeFd()
 {
-    DMLOG(DM_LOG_ERROR, "DmTimer creatTimeFd" );
+    DMLOG(DM_LOG_INFO, "DmTimer %s creatTimeFd", mTimerName_.c_str());
     int ret = 0;
 
-    ret = pipe(mTimeFd);
-    if ( ret < 0) {
-        DMLOG(DM_LOG_ERROR, "DmTimer CreateTimeFd fail:(%d) errno(%d)" ,ret, errno);
+    ret = pipe(mTimeFd_);
+    if (ret < 0) {
+        DMLOG(DM_LOG_ERROR, "DmTimer %s CreateTimeFd fail:(%d) errno(%d)", mTimerName_.c_str(), ret, errno);
         return ret;
     }
 
-    mEv.data.fd = mTimeFd[0];
-    mEv.events = EPOLLIN | EPOLLET;
-    mEpFd = epoll_create(MAXEVENTS);
-    ret = epoll_ctl(mEpFd, EPOLL_CTL_ADD, mTimeFd[0], &mEv);
+    mEv_.data.fd = mTimeFd_[0];
+    mEv_.events = EPOLLIN | EPOLLET;
+    mEpFd_ = epoll_create(MAXEVENTS);
+    ret = epoll_ctl(mEpFd_, EPOLL_CTL_ADD, mTimeFd_[0], &mEv_);
     if (ret != 0) {
         Release();
     }
@@ -112,13 +117,14 @@ int32_t DmTimer::CreateTimeFd()
 
 void DmTimer::Release()
 {
-    mStatus = DmTimerStatus::DM_STATUS_INIT;
-    close(mTimeFd[0]);
-    close(mTimeFd[1]);
-    close(mEpFd);
-    mTimeFd[0] = 0;
-    mTimeFd[1] = 0;
-    mEpFd = 0;
+    DMLOG(DM_LOG_INFO, "DmTimer %s Release in", mTimerName_.c_str());
+    mStatus_ = DmTimerStatus::DM_STATUS_INIT;
+    close(mTimeFd_[0]);
+    close(mTimeFd_[1]);
+    close(mEpFd_);
+    mTimeFd_[0] = 0;
+    mTimeFd_[1] = 0;
+    mEpFd_ = 0;
 }
 }
 }

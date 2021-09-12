@@ -361,8 +361,9 @@ ON_IPC_CMD(SERVER_DEVICEMANAGER_FA_NOTIFY, IpcIo &reply, const IpcContext &ctx, 
     std::string packagename = (const char *)IpcIoPopString(&reply, &len);
     size_t jsonLen = 0;
     std::string paramJson = (const char *)IpcIoPopString(&reply, &jsonLen);
-    DeviceManagerNotify::GetInstance().OnFaCall(packagename,paramJson);
+    DeviceManagerNotify::GetInstance().OnFaCall(packagename, paramJson);
     IpcIoPushInt32(&reply, DEVICEMANAGER_OK);
+    FreeBuffer(&ctx, ipcMsg);
 }
 } // namespace DistributedHardware
 } // namespace OHOS

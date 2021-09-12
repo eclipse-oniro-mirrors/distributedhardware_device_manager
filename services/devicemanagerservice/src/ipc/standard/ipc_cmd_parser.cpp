@@ -290,7 +290,7 @@ ON_IPC_CMD(SERVER_GET_AUTHENTCATION_INFO, MessageParcel &data, MessageParcel &re
     if (authParam.direction == AUTH_SESSION_SIDE_CLIENT) {
         if (!reply.WriteInt32(authParam.direction) || !reply.WriteInt32(authParam.authType) ||
             !reply.WriteInt32(authParam.pinToken)) {
-             DMLOG(DM_LOG_ERROR,"DeviceManagerStub::wirte client fail");
+             DMLOG(DM_LOG_ERROR, "DeviceManagerStub::wirte client fail");
              ret = DEVICEMANAGER_WRITE_FAILED;
         }
         return ret;

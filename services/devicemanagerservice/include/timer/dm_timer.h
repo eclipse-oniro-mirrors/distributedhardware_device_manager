@@ -48,21 +48,22 @@ public:
     DmTimerStatus Start(uint32_t timeOut, TimeoutHandle handle, void *data);
     void Stop(int32_t code);
     void WiteforTimeout();
-    void Release();
 
 private:
     int32_t CreateTimeFd();
+    void Release();
 
 private:
-    DmTimerStatus mStatus;
-    uint32_t mTimeOutS;
-    TimeoutHandle mHandle;
-    void* mHandleData;
-    int32_t mTimeFd[2];
-    struct epoll_event mEv;
-    struct epoll_event mEvents[MAXEVENTS];
-    int32_t mEpFd;
-    std::thread mThread;
+    DmTimerStatus mStatus_;
+    uint32_t mTimeOutSec_;
+    TimeoutHandle mHandle_;
+    void* mHandleData_;
+    int32_t mTimeFd_[2];
+    struct epoll_event mEv_;
+    struct epoll_event mEvents_[MAXEVENTS];
+    int32_t mEpFd_;
+    std::thread mThread_;
+    std::string mTimerName_;
 };
 }
 }
