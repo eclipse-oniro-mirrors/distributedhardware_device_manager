@@ -33,6 +33,8 @@
 #include "ipc_check_authenticate_req.h"
 #include "softbus_session.h"
 #include "auth_manager.h"
+#include "ipc_server_stub.h"
+#include "dm_ability_manager.h"
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -125,34 +127,51 @@ int32_t HichainConnector::CreateGroup(int64_t requestId, const std::string &grou
     return SUCCESS;
 }
 
-void HichainConnector::RegisterConnectorCallback(std::shared_ptr<GroupCreateCallback> callback)
+void HichainConnector::RegisterConnectorCallback(std::shared_ptr<HichainConnectorCallback> callback)
 {
-    groupCreateCallback_ = callback;
+    hichainConnectorCallback_ = callback;
 }
 
 void HichainConnector::OnGroupCreated(int64_t requestId, const std::string &returnData)
 {
-    if (groupCreateCallback_ == nullptr) {
-        DMLOG(DM_LOG_ERROR, "HichainConnector::OnGroupCreated groupCreateCallback_ not registe.");
+    if (hichainConnectorCallback_ == nullptr) {
+        DMLOG(DM_LOG_ERROR, "HichainConnector::OnGroupCreated hichainConnectorCallback_ not registe.");
         return;
     }
 
     nlohmann::json jsonObject = nlohmann::json::parse(returnData);
     if (jsonObject.is_discarded()) {
         DMLOG(DM_LOG_ERROR, "HichainConnector::OnGroupCreated returnData not json.");
-        groupCreateCallback_->OnGroupCreated(requestId, "");
+        hichainConnectorCallback_->OnGroupCreated(requestId, "");
         return;
     }
 
     if (jsonObject.find(FIELD_GROUP_ID) == jsonObject.end()) {
         DMLOG(DM_LOG_ERROR, "HichainConnector::OnGroupCreated failed to get groupId.");
-        groupCreateCallback_->OnGroupCreated(requestId, "");
+        hichainConnectorCallback_->OnGroupCreated(requestId, "");
         return;
     }
 
     std::string groupId = jsonObject.at(FIELD_GROUP_ID).get<std::string>();
     DMLOG(DM_LOG_INFO, "group create success, groupId:%s.", GetAnonyString(groupId).c_str());
-    groupCreateCallback_->OnGroupCreated(requestId, groupId);
+    hichainConnectorCallback_->OnGroupCreated(requestId, groupId);
+}
+
+void HichainConnector::OnMemberJoin(int64_t requestId, int32_t status)
+{
+    AbilityRole role = DmAbilityManager::GetInstance().GetAbilityRole();
+    DMLOG(DM_LOG_INFO, "HichainConnector::OnMemberJoin:: role = %d", (int32_t)role);
+
+    if (role == AbilityRole::ABILITY_ROLE_INITIATIVE) {
+        AuthManager::GetInstance().NotifyHostOnCheckAuthResult(requestId, status);
+        return;
+    }
+
+    if (hichainConnectorCallback_ == nullptr) {
+        DMLOG(DM_LOG_ERROR, "HichainConnector::OnMemberJoin hichainConnectorCallback_ not registe.");
+        return;
+    }
+    hichainConnectorCallback_->OnMemberJoin(requestId, status);
 }
 
 int32_t HichainConnector::AddMemeber(std::string deviceId, std::shared_ptr<MsgResponseAuth> msgResponseAuth)
@@ -335,7 +354,7 @@ void HichainAuthenCallBack::onFinish(int64_t requestId, int32_t operationCode, c
     DMLOG(DM_LOG_INFO, "HichainAuthenCallBack::onFinish reqId:%lld, operation:%d", requestId, operationCode);
     if (operationCode == GroupOperationCode::MEMBER_JOIN) {
         DMLOG(DM_LOG_INFO, "Add Member To Group success");
-        HichainConnector::GetInstance().NotifyHostOnCheckAuthResult(SUCCESS);
+        HichainConnector::GetInstance().OnMemberJoin(requestId, SUCCESS);
     }
 
     if (operationCode == GroupOperationCode::GROUP_CREATE) {
@@ -362,12 +381,12 @@ void HichainAuthenCallBack::onError(int64_t requestId, int32_t operationCode, in
 
     if (operationCode == GroupOperationCode::MEMBER_JOIN) {
         DMLOG(DM_LOG_ERROR, "Add Member To Group failed");
-        HichainConnector::GetInstance().NotifyHostOnCheckAuthResult(FAIL);
+        HichainConnector::GetInstance().OnMemberJoin(requestId, FAIL);
     }
 
     if (operationCode == GroupOperationCode::GROUP_CREATE) {
         DMLOG(DM_LOG_ERROR, "Create group failed");
-        HichainConnector::GetInstance().NotifyHostOnCheckAuthResult(FAIL);
+        HichainConnector::GetInstance().OnGroupCreated(requestId, "{}");
     }
 
     if (operationCode == GroupOperationCode::MEMBER_DELETE) {
@@ -401,17 +420,6 @@ char *HichainAuthenCallBack::onRequest(int64_t requestId, int32_t operationCode,
     std::string jsonStr = jsonObj.dump();
     char *buffer = strdup(jsonStr.c_str());
     return buffer;
-}
-
-void HichainConnector::NotifyHostOnCheckAuthResult(int errorCode)
-{
-    DMLOG(DM_LOG_INFO, "notify host result, errorcode: %d", errorCode);
-    std::string hostPkgName = "com.ohos.devicemanagerui";
-    char localDeviceId[DEVICE_UUID_LENGTH] = {0};
-    GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
-
-    std::string authParam = AuthManager::GetInstance().GetAuthPara();
-    IpcServerListenerAdapter::GetInstance().OnCheckAuthResult(hostPkgName, authParam, errorCode, 0);
 }
 }
 }

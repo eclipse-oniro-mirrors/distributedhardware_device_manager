@@ -113,9 +113,20 @@ void RequestSession::OnReceivePinCode(int32_t pinCode)
 void RequestSession::OnUserOperate(int32_t action)
 {
     if (action == FaAction::USER_OPERATION_TYPE_CANCEL_PINCODE_INPUT) {
+        Release();
         return;
     }
 }
+
+ int64_t RequestSession::GetRequestId()
+ {
+     return mRequestId_;
+ }
+
+std::string RequestSession::GetRequestDeviceId()
+ {
+     return mRemoteDeviceId_;
+ }
 
 int32_t RequestSession::StartFaService()
 {
@@ -237,19 +248,24 @@ void RequestSession::SyncDmPrivateGroup(std::vector<std::string> &remoteGroupLis
 
 void RequestSession::NotifyHostAppAuthResult(int32_t errorCode)
 {
-    if (mSessionType_ == SESSION_TYPE_IS_APP_AUTH) {
-        std::string deviceId = mDevInfo_.deviceId;
-        if (StartFaService() != SUCCESS) {
-            DMLOG(DM_LOG_INFO, "RequestSession::StartFaService failed");
-            return;
-        }
-        DMLOG(DM_LOG_INFO, "RequestSession::StartFaService success");
-        int32_t status = (errorCode == 0) ? 0 : -1;
-        IpcServerListenerAdapter::GetInstance().OnAuthResult(mHostPkgName_, deviceId, mPinToken_, status, errorCode);
-        DMLOG(DM_LOG_INFO, "notify host result, errorcode: %d", errorCode);
-    } else {
-        DMLOG(DM_LOG_ERROR, "wrong session type: %d", errorCode);
+    if (mSessionType_ != SESSION_TYPE_IS_APP_AUTH) {
+        DMLOG(DM_LOG_ERROR, "wrong session type: %d", mSessionType_);
+        return;
     }
+
+    std::string deviceId = mDevInfo_.deviceId;
+    if (errorCode != SESSION_REPLY_ACCEPT) {
+        IpcServerListenerAdapter::GetInstance().OnAuthResult(mHostPkgName_, deviceId, mPinToken_, FAIL, errorCode);
+        DMLOG(DM_LOG_INFO, "notify host result, errorcode: %d", errorCode);
+        return;
+    }
+
+    if (StartFaService() != SUCCESS) {
+        DMLOG(DM_LOG_INFO, "RequestSession::StartFaService failed");
+        return;
+    }
+    DMLOG(DM_LOG_INFO, "RequestSession::StartFaService success");
+    IpcServerListenerAdapter::GetInstance().OnAuthResult(mHostPkgName_, deviceId, mPinToken_, SUCCESS, errorCode);
 }
 }
 }

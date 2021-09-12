@@ -19,7 +19,7 @@
 
 namespace OHOS {
 namespace DistributedHardware {
-DeviceManager& DeviceManager::GetInstance()
+DeviceManager &DeviceManager::GetInstance()
 {
     return DeviceManagerImpl::GetInstance();
 }

@@ -15,7 +15,7 @@
 
 #include "dm_ability_manager.h"
 
-
+#include "auth_manager.h"
 #include "ability_manager_client.h"
 #include "ability_record.h"
 #include "ability_manager_service.h"
@@ -57,22 +57,25 @@ AbilityStatus DmAbilityManager::StartAbility(AbilityRole role)
     std::string deviceId = localDeviceId;
     std::string bundleName = "com.ohos.devicemanagerui";
     std::string abilityName = "com.ohos.devicemanagerui.MainAbility";
+    int32_t displayOwner = (role == AbilityRole::ABILITY_ROLE_INITIATIVE) ?
+        AuthManager::GetInstance().GetDisplayOwner() : DISPLAY_OWNER_SYSTEM;
 
     mStatus_ = AbilityStatus::ABILITY_STATUS_START;
     AAFwk::Want want;
     AppExecFwk::ElementName element(deviceId, bundleName, abilityName);
     want.SetElement(element);
-
+    if (displayOwner == DISPLAY_OWNER_OTHER) {
+        return AbilityStatus::ABILITY_STATUS_SUCCESS;
+    }
     AAFwk::AbilityManagerClient::GetInstance()->Connect();
     ErrCode result = AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want);
     if (result == OHOS::ERR_OK) {
-        DMLOG(DM_LOG_INFO, "Start Ability succeed");
+        DMLOG(DM_LOG_INFO,"Start Ability succeed");
     } else {
-        DMLOG(DM_LOG_INFO, "Start Ability faild");
+        DMLOG(DM_LOG_INFO,"Start Ability faild");
         mStatus_ = AbilityStatus::ABILITY_STATUS_FAILED;
         return mStatus_;
     }
-
     waitForTimeout(ABILITY_START_TIMEOUT);
     return mStatus_;
 }

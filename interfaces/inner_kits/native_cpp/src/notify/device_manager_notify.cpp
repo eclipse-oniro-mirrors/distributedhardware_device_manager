@@ -187,7 +187,7 @@ void DeviceManagerNotify::OnDeviceFound(std::string &pkgName, uint16_t subscribe
         DMLOG(DM_LOG_ERROR, "DeviceManager OnDeviceFound: no register discoverCallback for this package");
         return;
     }
-    std::map<uint16_t, std::shared_ptr<DiscoverCallback>>& discoverCallMap = deviceDiscoverCallbacks_[pkgName];
+    std::map<uint16_t, std::shared_ptr<DiscoverCallback>> &discoverCallMap = deviceDiscoverCallbacks_[pkgName];
     auto iter = discoverCallMap.find(subscribeId);
     if (iter == discoverCallMap.end()) {
         DMLOG(DM_LOG_ERROR, "DeviceManager OnDeviceFound: no register discoverCallback for subscribeId %d",
@@ -206,7 +206,7 @@ void DeviceManagerNotify::OnDiscoverFailed(std::string &pkgName, uint16_t subscr
         DMLOG(DM_LOG_ERROR, "DeviceManager OnDiscoverFailed: no register discoverCallback for this package");
         return;
     }
-    std::map<uint16_t, std::shared_ptr<DiscoverCallback>>& discoverCallMap = deviceDiscoverCallbacks_[pkgName];
+    std::map<uint16_t, std::shared_ptr<DiscoverCallback>> &discoverCallMap = deviceDiscoverCallbacks_[pkgName];
     auto iter = discoverCallMap.find(subscribeId);
     if (iter == discoverCallMap.end()) {
         DMLOG(DM_LOG_ERROR, "DeviceManager OnDiscoverFailed: no register discoverCallback for subscribeId %d",
@@ -225,7 +225,7 @@ void DeviceManagerNotify::OnDiscoverySuccess(std::string &pkgName, uint16_t subs
         DMLOG(DM_LOG_ERROR, "DeviceManager OnDiscoverySuccess: no register discoverCallback for this package");
         return;
     }
-    std::map<uint16_t, std::shared_ptr<DiscoverCallback>>& discoverCallMap = deviceDiscoverCallbacks_[pkgName];
+    std::map<uint16_t, std::shared_ptr<DiscoverCallback>> &discoverCallMap = deviceDiscoverCallbacks_[pkgName];
     auto iter = discoverCallMap.find(subscribeId);
     if (iter == discoverCallMap.end()) {
         DMLOG(DM_LOG_ERROR, "DeviceManager OnDiscoverySuccess: no register discoverCallback for subscribeId %d",
@@ -245,7 +245,7 @@ void DeviceManagerNotify::OnAuthResult(std::string &pkgName, std::string &device
         DMLOG(DM_LOG_ERROR, "DeviceManager OnAuthResult: no register authCallback for this package");
         return;
     }
-    std::map<std::string, std::shared_ptr<AuthenticateCallback>>& authCallMap = authenticateCallback_[pkgName];
+    std::map<std::string, std::shared_ptr<AuthenticateCallback>> &authCallMap = authenticateCallback_[pkgName];
     auto iter = authCallMap.find(deviceId);
     if (iter == authCallMap.end()) {
         DMLOG(DM_LOG_ERROR, "DeviceManager OnAuthResult: no register authCallback for deviceID ");
@@ -268,7 +268,7 @@ void DeviceManagerNotify::OnCheckAuthResult(std::string &pkgName, std::string &d
         DMLOG(DM_LOG_ERROR, "DeviceManager OnCheckAuthResult: no register authCallback for this package");
         return;
     }
-    std::map<std::string, std::shared_ptr<CheckAuthCallback>>& CheckAuthCallmap = checkauthcallback_[pkgName];
+    std::map<std::string, std::shared_ptr<CheckAuthCallback>> &CheckAuthCallmap = checkauthcallback_[pkgName];
     auto iter = CheckAuthCallmap.find(deviceId);
     if (iter == CheckAuthCallmap.end()) {
         DMLOG(DM_LOG_ERROR, "DeviceManager OnCheckAuthResult: no register CheckAuthCallmap for deviceID");

@@ -25,16 +25,6 @@ namespace DistributedHardware {
 class IpcNotifyDMFAResultReq : public IpcReq {
 DECLARE_IPC_MODEL(IpcNotifyDMFAResultReq);
 public:
-    std::string GetPkgName() const
-    {
-        return PackageName_;
-    }
-
-    void SetPkgName(std::string& pkgName)
-    {
-        PackageName_ = pkgName;
-    }
-
     std::string GetJsonParam() const
     {
         return JsonParam_;
@@ -45,7 +35,6 @@ public:
         JsonParam_ = JsonParam;
     }
 private:
-    std::string PackageName_;
     std::string JsonParam_;
 };
 } // namespace DistributedHardware

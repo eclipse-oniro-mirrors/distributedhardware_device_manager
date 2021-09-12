@@ -23,6 +23,7 @@
 #include "device_manager_errno.h"
 #include "softbus_session.h"
 #include "encrypt_utils.h"
+#include "ipc_server_listener_adapter.h"
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -62,6 +63,13 @@ void AuthManager::AuthAppGroup(std::string &hostPkgName, const DmDeviceInfo &dev
     if (!jsonObject.contains(AUTH_TYPE)) {
         DMLOG(DM_LOG_ERROR, "AuthAppGroup extrasJson error");
         return;
+    }
+
+    if (!jsonObject.contains(DISPLAY_OWNER)) {
+        DMLOG(DM_LOG_WARN, "AuthAppGroup DISPLAY_OWNER error");
+        displayOwner_ = DISPLAY_OWNER_SYSTEM;
+    } else {
+        displayOwner_ = jsonObject[DISPLAY_OWNER];
     }
 
     if (!CanStartNewSession()) {
@@ -165,17 +173,34 @@ int32_t AuthManager::CheckAuthentication(std::string &authPara)
     return CheckAuthenticationByPin(authJson);
 }
 
+void AuthManager::NotifyHostOnCheckAuthResult(int64_t requestId, int errorCode)
+{
+    DMLOG(DM_LOG_INFO, "notify host checkResult, requestId: %lld, errorcode: %d", requestId, errorCode);
+    for (auto iter = mWaitScanReqSessionMap_.begin(); iter != mWaitScanReqSessionMap_.end(); iter++) {
+        auto requestSessionPtr = iter->second;
+        if (requestSessionPtr != nullptr && requestSessionPtr->GetRequestId() == requestId) {
+            std::string deviceId = requestSessionPtr->GetRequestDeviceId();
+            DMLOG(DM_LOG_INFO, "notify host checkResult, deviceId: %s, requestId: %lld",
+                GetAnonyString(deviceId).c_str(), requestId);
+            IpcServerListenerAdapter::GetInstance().OnCheckAuthResult(deviceId, errorCode, 0);
+            return;
+        }
+    }
+
+    DMLOG(DM_LOG_ERROR, "notify host checkResult error, requestId: %lld", requestId);
+}
+
 int32_t AuthManager::CheckAuthenticationByPin(nlohmann::json &authJson)
 {
     int32_t pinCode = authJson.contains(PIN_CODE_KEY) ? (int32_t)authJson[PIN_CODE_KEY] : DEFAULT_PIN_CODE;
     int32_t pinToken = authJson.contains(PIN_TOKEN) ? (int32_t)authJson[PIN_TOKEN] : DEFAULT_PIN_TOKEN;
     if (pinCode < MIN_PIN_CODE || pinCode >= (MIN_PIN_CODE + MAX_PIN_CODE)) {
-        DMLOG(DM_LOG_ERROR, "pinCode err, pinCode is :%s", GetAnonyInt32(pinCode).c_str());
+        DMLOG(DM_LOG_ERROR, "pinCode err, please check pinCode");
         return PIN_CODE_CHECK_FAILED;
     }
 
     if (pinToken < MIN_PIN_TOKEN || pinToken >= (MIN_PIN_TOKEN + MAX_PIN_TOKEN)) {
-        DMLOG(DM_LOG_ERROR, "pinToken err, pinToken is :%s", GetAnonyInt32(pinToken).c_str());
+        DMLOG(DM_LOG_ERROR, "pinToken err, please check pinToken.");
         return PIN_TOKEN_CHECK_FAILED;
     }
     OnPinInputResult(pinCode, pinToken);
@@ -233,6 +258,11 @@ int32_t AuthManager::GetPincode(int64_t requestId)
 std::string AuthManager::GetAuthPara()
 {
     return authParam_;
+}
+
+int32_t AuthManager::GetDisplayOwner()
+{
+    return displayOwner_;
 }
 }
 }

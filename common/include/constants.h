@@ -104,6 +104,7 @@ namespace DistributedHardware {
     const int32_t SESSION_REPLY_UNKNOWN = -1;
     const int32_t SESSION_REPLY_ACCEPT = 0;
     const int32_t SESSION_REPLY_CANCEL = 1;
+    const int32_t SESSION_REPLY_TIMEOUT = 2;
     const int32_t SESSION_REPLY_AUTH_CONFIRM_TIMEOUT = 2;
     const int32_t SESSION_REPLY_CANCEL_PINCODE_DISPLAY = 3;
     const int32_t SESSION_REPLY_CANCEL_PINCODE_INPUT = 4;
@@ -136,6 +137,9 @@ namespace DistributedHardware {
     const int32_t SLICE_NUM_INVALID = -1;
     const int32_t AUTH_TYPE_QR = 0;
     const int32_t AUTH_TYPE_PIN = 1;
+    const std::string DISPLAY_OWNER = "displayOwner";
+    const int32_t DISPLAY_OWNER_SYSTEM = 0;
+    const int32_t DISPLAY_OWNER_OTHER = 1;
 
     // DmService constants
     const int32_t MSG_MAX_SIZE = 45 * 1024;

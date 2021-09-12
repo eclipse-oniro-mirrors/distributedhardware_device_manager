@@ -285,14 +285,13 @@ ON_IPC_CMD(SERVER_GET_AUTHENTCATION_INFO, MessageParcel &data, MessageParcel &re
     std::string packName = data.ReadString();
     DmAuthParam authParam;
     int32_t ret = DEVICEMANAGER_OK;
-    DMLOG(DM_LOG_ERROR, "GET_AUTHENTCATION_INFO:pkgName:%s", packName.c_str());
+    DMLOG(DM_LOG_ERROR, "DeviceManagerStub:: GET_AUTHENTCATION_INFO:pkgName:%s", packName.c_str());
     IpcServerAdapter::GetInstance().GetAuthenticationParam(packName, authParam);
     if (authParam.direction == AUTH_SESSION_SIDE_CLIENT) {
-        if (!reply.WriteInt32(authParam.direction) ||
-            !reply.WriteInt32(authParam.authType) ||
-            !reply.WriteInt32(authParam.pinToken)) {
-            DMLOG(DM_LOG_ERROR, "wirte client fail");
-            ret = DEVICEMANAGER_WRITE_FAILED;
+        if (!reply.WriteInt32(authParam.direction) || !reply.WriteInt32(authParam.authType) ||
+            !reply.WriteInt32(authParam.pinToken) || !reply.WriteInt32(authParam.displayOwner)) {
+             DMLOG(DM_LOG_ERROR,"DeviceManagerStub::wirte client fail");
+             ret = DEVICEMANAGER_WRITE_FAILED;
         }
         return ret;
     }
@@ -321,6 +320,7 @@ ON_IPC_CMD(SERVER_GET_AUTHENTCATION_INFO, MessageParcel &data, MessageParcel &re
             return DEVICEMANAGER_WRITE_FAILED;
         }
     }
+
     return DEVICEMANAGER_OK;
 }
 
@@ -328,7 +328,7 @@ ON_IPC_CMD(SERVER_USER_AUTHORIZATION_OPERATION, MessageParcel &data, MessageParc
 {
     std::string packageName = data.ReadString();
     int32_t action = data.ReadInt32();
-    int32_t result = IpcServerAdapter::GetInstance().SetUserOperation(packageName, action);
+    int result = IpcServerAdapter::GetInstance().SetUserOperation(packageName, action);
 
     if (!reply.WriteInt32(action)) {
         DMLOG(DM_LOG_ERROR, "write result failed");
@@ -336,6 +336,7 @@ ON_IPC_CMD(SERVER_USER_AUTHORIZATION_OPERATION, MessageParcel &data, MessageParc
     }
     return result;
 }
+
 ON_IPC_SET_REQUEST(SERVER_DEVICEMANAGER_FA_NOTIFY, std::shared_ptr<IpcReq> pBaseReq, MessageParcel& data)
 {
     DMLOG(DM_LOG_INFO, "OnFaCallBack");

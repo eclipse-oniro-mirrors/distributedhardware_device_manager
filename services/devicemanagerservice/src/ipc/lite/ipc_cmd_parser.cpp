@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include "constants.h"
 #include "ipc_cmd_register.h"
 
 #include "device_manager_errno.h"
@@ -24,6 +25,7 @@
 #include "ipc_notify_device_found_req.h"
 #include "ipc_notify_device_state_req.h"
 #include "ipc_notify_discover_result_req.h"
+#include "ipc_notify_dmfa_result_req.h"
 #include "ipc_server_adapter.h"
 #include "ipc_server_stub.h"
 
@@ -210,6 +212,72 @@ ON_IPC_SERVER_CMD(CHECK_AUTHENTICATION, IpcIo &req, IpcIo &reply)
     std::string authPara = (const char *)IpcIoPopString(&req, &authParaLen);
     int32_t ret = IpcServerAdapter::GetInstance().CheckAuthentication(authPara);
     IpcIoPushInt32(&reply, ret);
+}
+
+ON_IPC_SERVER_CMD(SERVER_GET_AUTHENTCATION_INFO, IpcIo &req, IpcIo &reply)
+{
+    size_t len = 0;
+    std::string packName = (const char *)IpcIoPopString(&req, &len);
+    DmAuthParam authParam = {0};
+    DMLOG(DM_LOG_ERROR, "DeviceManagerStub:: GET_AUTHENTCATION_INFO:pkgName:%s", packName.c_str());
+    IpcServerAdapter::GetInstance().GetAuthenticationParam(packName, authParam);
+    if (authParam.direction == AUTH_SESSION_SIDE_CLIENT) {
+        IpcIoPushInt32(&reply, authParam.direction);
+        IpcIoPushInt32(&reply, authParam.authType);
+        IpcIoPushInt32(&reply, authParam.pinToken);
+        IpcIoPushInt32(&reply, authParam.displayOwner);
+        DMLOG(DM_LOG_DEBUG,"DeviceManagerStub::is Client so just return direction");
+        return;
+    }
+
+    int32_t appIconLen = authParam.imageinfo.GetAppIconLen();
+    int32_t appThumbnailLen = authParam.imageinfo.GetAppThumbnailLen();
+
+    IpcIoPushInt32(&reply, authParam.direction);
+    IpcIoPushInt32(&reply, authParam.authType);
+    IpcIoPushString(&reply, authParam.packageName.c_str());
+    IpcIoPushString(&reply, authParam.appName.c_str());
+    IpcIoPushString(&reply, authParam.appDescription.c_str());
+    IpcIoPushInt32(&reply, authParam.business);
+    IpcIoPushInt32(&reply, authParam.pincode);
+    IpcIoPushInt32(&reply, appIconLen);
+    IpcIoPushInt32(&reply, appThumbnailLen);
+
+    if (appIconLen > 0 && authParam.imageinfo.GetAppIcon() != nullptr) {
+        IpcIoPushFlatObj(&reply, authParam.imageinfo.GetAppIcon(),appIconLen);
+    }
+
+    if ( appThumbnailLen > 0 && authParam.imageinfo.GetAppThumbnail() != nullptr) {
+        IpcIoPushFlatObj(&reply, authParam.imageinfo.GetAppThumbnail(), appThumbnailLen);
+    }
+
+}
+
+ON_IPC_SERVER_CMD(SERVER_USER_AUTHORIZATION_OPERATION, IpcIo &req, IpcIo &reply)
+{
+    size_t len = 0;
+    std::string packName = (const char *)IpcIoPopString(&req, &len);
+    int32_t action = IpcIoPopInt32(&reply);
+    IpcServerAdapter::GetInstance().SetUserOperation(packName, action);
+
+    IpcIoPushInt32(&reply, action);
+}
+
+ON_IPC_SET_REQUEST(SERVER_DEVICEMANAGER_FA_NOTIFY, std::shared_ptr<IpcReq> pBaseReq, IpcIo& request,
+    uint8_t *buffer, size_t buffLen)
+{
+    std::shared_ptr<IpcNotifyDMFAResultReq> pReq = std::static_pointer_cast<IpcNotifyDMFAResultReq>(pBaseReq);
+    std::string packagname = pReq->GetPkgName();
+    std::string paramJson = pReq->GetJsonParam();
+    IpcIoPushString(&request, packagname.c_str());
+    IpcIoPushString(&request, paramJson.c_str());
+    return DEVICEMANAGER_OK;
+}
+
+ON_IPC_READ_RESPONSE(SERVER_DEVICEMANAGER_FA_NOTIFY, IpcIo& reply, std::shared_ptr<IpcRsp> pBaseRsp)
+{
+    pBaseRsp->SetErrCode(IpcIoPopInt32(&reply));
+    return DEVICEMANAGER_OK;
 }
 } // namespace DistributedHardware
 } // namespace OHOS

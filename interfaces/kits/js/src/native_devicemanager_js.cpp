@@ -389,9 +389,9 @@ void DeviceManagerNapi::DmAuthParamToJsAuthParamy(const napi_env &env,
         void *appIcon = nullptr;
         napi_value appIconBuffer = nullptr;
         napi_create_arraybuffer(env, appIconLen, &appIcon, &appIconBuffer);
-        int32_t ret = memcpy_s(appIcon, appIconLen, reinterpret_cast<const void*>(authParam.imageinfo.GetAppIcon()),
-            appIconLen);
-        if (appIcon != nullptr && ret == 0) {
+        if (appIcon != nullptr &&
+            memcpy_s(appIcon, appIconLen, reinterpret_cast<const void*>(authParam.imageinfo.GetAppIcon()),
+            appIconLen) == 0) {
             napi_value appIconArray = nullptr;
             napi_create_typedarray(env, napi_uint8_array, appIconLen, appIconBuffer, 0, &appIconArray);
             napi_set_named_property(env, paramResult, "appIcon", appIconArray);
@@ -632,6 +632,7 @@ void DeviceManagerNapi::JsToJsonObject(const napi_env &env, const napi_value &ob
     uint32_t jsProCount = 0;
     napi_get_property_names(env, jsonField, &jsProNameList);
     napi_get_array_length(env, jsProNameList, &jsProCount);
+    DMLOG(DM_LOG_INFO, "Property size=%d.", jsProCount);
 
     napi_value jsProName = nullptr;
     napi_value jsProValue = nullptr;
@@ -642,12 +643,15 @@ void DeviceManagerNapi::JsToJsonObject(const napi_env &env, const napi_value &ob
         napi_typeof(env, jsProValue, &jsValueType);
         switch (jsValueType) {
             case napi_string: {
-                jsonObj[strProName] = JsObjectToString(env, jsProValue);
+                std::string natValue = JsObjectToString(env, jsProValue);
+                DMLOG(DM_LOG_INFO, "Property name=%s, string, value=%s", strProName.c_str(), natValue.c_str());
+                jsonObj[strProName] = natValue;
                 break;
             }
             case napi_boolean: {
                 bool elementValue = false;
                 napi_get_value_bool(env, jsProValue, &elementValue);
+                DMLOG(DM_LOG_INFO, "Property name=%s, boolean, value=%d.", strProName.c_str(), elementValue);
                 jsonObj[strProName] = elementValue;
                 break;
             }
@@ -657,11 +661,14 @@ void DeviceManagerNapi::JsToJsonObject(const napi_env &env, const napi_value &ob
                     DMLOG(DM_LOG_ERROR, "Property name=%s, Property int32_t parse error", strProName.c_str());
                 } else {
                     jsonObj[strProName] = elementValue;
+                    DMLOG(DM_LOG_INFO, "Property name=%s, number, value=%d.", strProName.c_str(), elementValue);
                 }
                 break;
             }
-            default:
+            default: {
+                DMLOG(DM_LOG_ERROR, "Property name=%s, value type not support.", strProName.c_str());
                 break;
+            }
         }
     }
 }
@@ -1043,10 +1050,11 @@ napi_value DeviceManagerNapi::JsOn(napi_env env, napi_callback_info info)
     napi_get_value_string_utf8(env, argv[0], nullptr, 0, &typeLen);
 
     NAPI_ASSERT(env, typeLen > 0, "typeLen == 0");
-    std::unique_ptr<char[]> type = std::make_unique<char[]>(typeLen + 1);
-    napi_get_value_string_utf8(env, argv[0], type.get(), typeLen + 1, &typeLen);
+    NAPI_ASSERT(env, typeLen < DM_NAPI_BUF_LENGTH, "typeLen >= MAXLEN");
+    char type[DM_NAPI_BUF_LENGTH] = {0};
+    napi_get_value_string_utf8(env, argv[0], type, typeLen + 1, &typeLen);
 
-    std::string eventType = type.get();
+    std::string eventType = type;
     DeviceManagerNapi *deviceManagerWrapper = nullptr;
     napi_unwrap(env, thisVar, reinterpret_cast<void **>(&deviceManagerWrapper));
 
@@ -1081,10 +1089,11 @@ napi_value DeviceManagerNapi::JsOff(napi_env env, napi_callback_info info)
     napi_get_value_string_utf8(env, argv[0], nullptr, 0, &typeLen);
 
     NAPI_ASSERT(env, typeLen > 0, "typeLen == 0");
-    std::unique_ptr<char[]> type = std::make_unique<char[]>(typeLen + 1);
-    napi_get_value_string_utf8(env, argv[0], type.get(), typeLen + 1, &typeLen);
+    NAPI_ASSERT(env, typeLen < DM_NAPI_BUF_LENGTH, "typeLen >= MAXLEN");
+    char type[DM_NAPI_BUF_LENGTH] = {0};
+    napi_get_value_string_utf8(env, argv[0], type, typeLen + 1, &typeLen);
 
-    std::string eventType = type.get();
+    std::string eventType = type;
     DeviceManagerNapi *deviceManagerWrapper = nullptr;
     napi_unwrap(env, thisVar, reinterpret_cast<void **>(&deviceManagerWrapper));
 
@@ -1161,6 +1170,7 @@ void DeviceManagerNapi::HandleCreateDmCallBack(const napi_env &env, AsyncCallbac
                 asCallbackInfo->status = -1;
             }
             if (asCallbackInfo->status == 0) {
+                DMLOG(DM_LOG_INFO, "InitDeviceManager for bunderName %s success", asCallbackInfo->bundleName);
                 napi_get_undefined(env, &result[0]);
                 napi_value callback = nullptr;
                 napi_value callResult = nullptr;
@@ -1168,13 +1178,13 @@ void DeviceManagerNapi::HandleCreateDmCallBack(const napi_env &env, AsyncCallbac
                 napi_call_function(env, nullptr, callback, DM_NAPI_ARGS_TWO, &result[0], &callResult);
                 napi_delete_reference(env, asCallbackInfo->callback);
             } else {
+                DMLOG(DM_LOG_INFO, "InitDeviceManager for bunderName %s failed", asCallbackInfo->bundleName);
                 napi_value message = nullptr;
                 napi_create_object(env, &result[0]);
                 napi_create_int32(env, asCallbackInfo->status, &message);
                 napi_set_named_property(env, result[0], "code", message);
                 napi_get_undefined(env, &result[1]);
             }
-            DMLOG(DM_LOG_INFO, "bunderName %s, status:%d", asCallbackInfo->bundleName, asCallbackInfo->status);
             napi_delete_async_work(env, asCallbackInfo->asyncWork);
             delete asCallbackInfo;
         }, (void *)asCallbackInfo, &asCallbackInfo->asyncWork);

@@ -40,6 +40,8 @@ public:
     void OnUserOperate(int32_t action);
     int32_t GetPincode(int64_t requestId);
     std::string GetAuthPara();
+    int32_t GetDisplayOwner();
+    void NotifyHostOnCheckAuthResult(int64_t requestId, int errorCode);
 
 private:
     void SyncDmPrivateGroup(std::string &message);
@@ -53,6 +55,7 @@ private:
 
 private:
     std::string authParam_ = "";
+    int32_t displayOwner_ = 0;
     std::shared_ptr<RequestSession> mPendingReqSessionPtr_ {nullptr};
     std::shared_ptr<ResponseSession> mPendingRespSessionPtr {};
     std::map<std::string, std::shared_ptr<RequestSession>> mWaitScanReqSessionMap_ = {};

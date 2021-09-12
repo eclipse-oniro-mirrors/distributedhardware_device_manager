@@ -69,7 +69,7 @@ void MsgResponseAuth::Encode(nlohmann::json &jsonObj)
     DMLOG(DM_LOG_INFO, "encode mReply_ is : %d", mReply_);
     DMLOG(DM_LOG_INFO, "encode deviceId is : %s", GetAnonyString(mDeviceId_).c_str());
     DMLOG(DM_LOG_INFO, "encode netId is : %s", GetAnonyString(mNetId_).c_str());
-    DMLOG(DM_LOG_INFO, "encode mGroupId_ is %s", mGroupId_.c_str());
+    DMLOG(DM_LOG_INFO, "encode mGroupId_ is %s", GetAnonyString(mGroupId_).c_str());
     DMLOG(DM_LOG_INFO, "encode mGroupName_ is %s", mGroupName_.c_str());
     DMLOG(DM_LOG_INFO, "encode mRequestId_ is %d", mRequestId_);
 }
@@ -103,8 +103,8 @@ int32_t MsgResponseAuth::Decode(nlohmann::json &jsonObj)
         mRequestId_ = jsonObj[TAG_REQUEST_ID];
     }
     DMLOG(DM_LOG_INFO, "decode mReply_ is : %d", mReply_);
-    DMLOG(DM_LOG_INFO, "decode mGroupId_ is %s", mGroupId_.c_str());
-    DMLOG(DM_LOG_INFO, "decode mGroupName_ is %s", mGroupName_.c_str());
+    DMLOG(DM_LOG_INFO, "decode mGroupId_ is %s", GetAnonyString(mGroupId_).c_str());
+    DMLOG(DM_LOG_INFO, "decode mGroupName_ is %s", GetAnonyString(mGroupName_).c_str());
     DMLOG(DM_LOG_INFO, "decode deviceId is : %s", GetAnonyString(mDeviceId_).c_str());
     DMLOG(DM_LOG_INFO, "decode netId is : %s", GetAnonyString(mNetId_).c_str());
     DMLOG(DM_LOG_INFO, "decode mRequestId_ is %d", mRequestId_);

@@ -58,6 +58,7 @@ typedef struct DmAuthParam {
     int32_t business;
     int32_t pincode;
     int32_t direction;
+    int32_t displayOwner;
     int32_t pinToken;
     DmAppImageInfo imageinfo;
 } DmAuthParam;

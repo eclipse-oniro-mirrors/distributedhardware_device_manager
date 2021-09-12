@@ -303,7 +303,7 @@ ON_IPC_CMD(SERVER_CHECK_AUTH_RESULT, MessageParcel &data, MessageParcel &reply)
     return DEVICEMANAGER_OK;
 }
 
-ON_IPC_SET_REQUEST(SERVER_GET_AUTHENTCATION_INFO, std::shared_ptr<IpcReq> pBaseReq, MessageParcel& data)
+ON_IPC_SET_REQUEST(SERVER_GET_AUTHENTCATION_INFO, std::shared_ptr<IpcReq> pBaseReq, MessageParcel &data)
 {
     std::shared_ptr<IpcReq> pReq = std::static_pointer_cast<IpcReq>(pBaseReq);
     std::string packagename = pReq->GetPkgName();
@@ -314,7 +314,7 @@ ON_IPC_SET_REQUEST(SERVER_GET_AUTHENTCATION_INFO, std::shared_ptr<IpcReq> pBaseR
     return DEVICEMANAGER_OK;
 }
 
-ON_IPC_READ_RESPONSE(SERVER_GET_AUTHENTCATION_INFO, MessageParcel& reply, std::shared_ptr<IpcRsp> pBaseRsp)
+ON_IPC_READ_RESPONSE(SERVER_GET_AUTHENTCATION_INFO, MessageParcel &reply, std::shared_ptr<IpcRsp> pBaseRsp)
 {
     std::shared_ptr<IpcGetAuthParamRsp> pRsp = std::static_pointer_cast<IpcGetAuthParamRsp>(pBaseRsp);
     DmAuthParam authParam;
@@ -322,6 +322,7 @@ ON_IPC_READ_RESPONSE(SERVER_GET_AUTHENTCATION_INFO, MessageParcel& reply, std::s
     authParam.authType = reply.ReadInt32();
     if (authParam.direction == AUTH_SESSION_SIDE_CLIENT) {
         authParam.pinToken = reply.ReadInt32();
+        authParam.displayOwner = reply.ReadInt32();
         pRsp->SetAuthParam(authParam);
         return DEVICEMANAGER_OK;
     }
@@ -347,7 +348,7 @@ ON_IPC_READ_RESPONSE(SERVER_GET_AUTHENTCATION_INFO, MessageParcel& reply, std::s
     return DEVICEMANAGER_OK;
 }
 
-ON_IPC_SET_REQUEST(SERVER_USER_AUTHORIZATION_OPERATION, std::shared_ptr<IpcReq> pBaseReq, MessageParcel& data)
+ON_IPC_SET_REQUEST(SERVER_USER_AUTHORIZATION_OPERATION, std::shared_ptr<IpcReq> pBaseReq, MessageParcel &data)
 {
     std::shared_ptr<IpcGetOperationReq> pReq = std::static_pointer_cast<IpcGetOperationReq>(pBaseReq);
     std::string pkgName = pReq->GetPkgName();
@@ -365,7 +366,7 @@ ON_IPC_SET_REQUEST(SERVER_USER_AUTHORIZATION_OPERATION, std::shared_ptr<IpcReq> 
     return DEVICEMANAGER_OK;
 }
 
-ON_IPC_READ_RESPONSE(SERVER_USER_AUTHORIZATION_OPERATION, MessageParcel& reply, std::shared_ptr<IpcRsp> pBaseRsp)
+ON_IPC_READ_RESPONSE(SERVER_USER_AUTHORIZATION_OPERATION, MessageParcel &reply, std::shared_ptr<IpcRsp> pBaseRsp)
 {
     pBaseRsp->SetErrCode(reply.ReadInt32());
     return DEVICEMANAGER_OK;

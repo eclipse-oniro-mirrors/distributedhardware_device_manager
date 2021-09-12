@@ -16,6 +16,8 @@
 #include "ipc_cmd_register.h"
 #include "ipc_def.h"
 
+#include "securec.h"
+#include "constants.h"
 #include "device_manager_errno.h"
 #include "device_manager_log.h"
 #include "device_manager_notify.h"
@@ -30,6 +32,8 @@
 #include "ipc_get_trustdevice_rsp.h"
 #include "ipc_authenticate_device_req.h"
 #include "ipc_check_authenticate_req.h"
+#include "ipc_get_authenticationparam_rsp.h"
+#include "ipc_set_useroperation_req.h"
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -282,6 +286,84 @@ ON_IPC_CMD(SERVER_CHECK_AUTH_RESULT, IpcIo &reply, const IpcContext &ctx, void *
     }
     DeviceManagerNotify::GetInstance().OnCheckAuthResult(pkgName, deviceId, resultCode, flag);
     FreeBuffer(&ctx, ipcMsg);
+}
+
+ON_IPC_SET_REQUEST(SERVER_GET_AUTHENTCATION_INFO, std::shared_ptr<IpcReq> pBaseReq, IpcIo& request,
+    uint8_t *buffer, size_t buffLen)
+{
+    std::shared_ptr<IpcReq> pReq = std::static_pointer_cast<IpcReq>(pBaseReq);
+    std::string packagename = pReq->GetPkgName();
+
+    IpcIoInit(&request, buffer, buffLen, 0);
+    IpcIoPushString(&request, packagename.c_str());
+    return DEVICEMANAGER_OK;
+}
+
+ON_IPC_READ_RESPONSE(SERVER_GET_AUTHENTCATION_INFO, IpcIo& reply, std::shared_ptr<IpcRsp> pBaseRsp)
+{
+    std::shared_ptr<IpcGetAuthParamRsp> pRsp = std::static_pointer_cast<IpcGetAuthParamRsp>(pBaseRsp);
+    DmAuthParam authParam = {0};
+    authParam.direction = IpcIoPopInt32(&reply);
+    authParam.authType = IpcIoPopInt32(&reply);
+    if (authParam.direction == AUTH_SESSION_SIDE_CLIENT) {
+        authParam.pinToken = IpcIoPopInt32(&reply);
+        authParam.displayOwner = IpcIoPopInt32(&reply);
+        pRsp->SetAuthParam(authParam);
+        return DEVICEMANAGER_OK;
+    }
+    size_t PackagerNamelen = 0;
+    authParam.packageName = strdup((const char *)IpcIoPopString(&reply, &PackagerNamelen));
+    size_t appNameLen = 0;
+    authParam.appName = strdup((const char *)IpcIoPopString(&reply, &appNameLen));
+    size_t appDesLen = 0;
+    authParam.appDescription = strdup((const char *)IpcIoPopString(&reply, &appDesLen));
+    authParam.business = IpcIoPopInt32(&reply);
+    authParam.pincode = IpcIoPopInt32(&reply);
+
+    uint32_t appIconLen = IpcIoPopInt32(&reply);
+    uint8_t *appIconBuffer = nullptr;
+    uint32_t appThumbnailLen = IpcIoPopInt32(&reply);
+    uint8_t *appThumbBuffer = nullptr;
+
+    if (appIconLen > 0) {
+        appIconBuffer = (uint8_t *)IpcIoPopFlatObj(&reply, &appIconLen);
+    }
+    if (appThumbnailLen > 0) {
+        appThumbBuffer = (uint8_t *)IpcIoPopFlatObj(&reply, &appThumbnailLen);
+    }
+
+    authParam.imageinfo.Reset(appIconBuffer, appIconLen, appThumbBuffer, appThumbnailLen);
+    pRsp->SetAuthParam(authParam);
+    return DEVICEMANAGER_OK;
+}
+
+ON_IPC_SET_REQUEST(SERVER_USER_AUTHORIZATION_OPERATION, std::shared_ptr<IpcReq> pBaseReq, IpcIo& request,
+    uint8_t *buffer, size_t buffLen)
+{
+    std::shared_ptr<IpcGetOperationReq> pReq = std::static_pointer_cast<IpcGetOperationReq>(pBaseReq);
+    std::string pkgName= pReq->GetPkgName();
+    int32_t action = pReq->GetOperation();
+
+    IpcIoInit(&request, buffer, buffLen, 0);
+    IpcIoPushString(&request, pkgName.c_str());
+    IpcIoPushInt32(&request, action);
+    return DEVICEMANAGER_OK;
+}
+
+ON_IPC_READ_RESPONSE(SERVER_USER_AUTHORIZATION_OPERATION, IpcIo& reply, std::shared_ptr<IpcRsp> pBaseRsp)
+{
+    pBaseRsp->SetErrCode(IpcIoPopInt32(&reply));
+    return DEVICEMANAGER_OK;
+}
+
+ON_IPC_CMD(SERVER_DEVICEMANAGER_FA_NOTIFY, IpcIo &reply, const IpcContext &ctx, void *ipcMsg)
+{
+    size_t len = 0;
+    std::string packagename = (const char *)IpcIoPopString(&reply, &len);
+    size_t jsonLen = 0;
+    std::string paramJson = (const char *)IpcIoPopString(&reply, &jsonLen);
+    DeviceManagerNotify::GetInstance().OnFaCall(packagename,paramJson);
+    IpcIoPushInt32(&reply, DEVICEMANAGER_OK);
 }
 } // namespace DistributedHardware
 } // namespace OHOS
