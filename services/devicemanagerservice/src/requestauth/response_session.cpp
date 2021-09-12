@@ -161,7 +161,8 @@ void ResponseSession::OnReceiveMsg(long long channelId, std::string &message)
     }
 
     if (!mReceiveTimerPtr_) {
-        mReceiveTimerPtr_ = std::make_shared<DmTimer>("mReceiveTimer");
+        std::string mReceiveTimerName = "mReceiveTimer";
+        mReceiveTimerPtr_ = std::make_shared<DmTimer>(mReceiveTimerName);
     }
 
     mReceiveTimerPtr_->Start(SESSION_MSG_RECEIVE_TIMEOUT, OnReceiveTimeOut, this);
@@ -180,7 +181,8 @@ void ResponseSession::OnReceiveMsg(long long channelId, std::string &message)
 
     mSessionStatus_ = ResponseSessionStatus::SESSION_WAITTING_USER_CONFIRM;
     if (!mMemberJoinTimerPtr_) {
-        mMemberJoinTimerPtr_ = std::make_shared<DmTimer>("mMemberJoinTimer");
+        std::string mMemberJoinTimerName = "mMemberJoinTimer";
+        mMemberJoinTimerPtr_ = std::make_shared<DmTimer>(mMemberJoinTimerName);
     }
 
     mMemberJoinTimerPtr_->Start(SESSION_WAIT_MEMBER_JOIN_TIMEOUT, OnMemberJoinTimeOut, this);
@@ -325,12 +327,13 @@ void ResponseSession::Release()
 
 void ResponseSession::CancelDisplay()
 {
+    DMLOG(DM_LOG_INFO, "Cancel PinCode Display in");
     nlohmann::json jsonObj;
     jsonObj[CANCEL_DISPLAY_KEY] = CANCEL_PICODE_DISPLAY;
     std::string paramJson = jsonObj.dump();
     std::string pkgName = "com.ohos.devicemanagerui";
     IpcServerListenerAdapter::GetInstance().OnFaCall(pkgName, paramJson);
-    DMLOG(DM_LOG_INFO, "CancelDisplay close pin code window");
+    DMLOG(DM_LOG_INFO, "Cancel PinCode Display success");
 }
 
 int32_t ResponseSession::GetStatus()

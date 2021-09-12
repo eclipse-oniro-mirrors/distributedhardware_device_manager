@@ -44,7 +44,8 @@ enum DmTimerStatus : int32_t {
 
 class DmTimer {
 public:
-    DmTimer();
+    DmTimer(std::string &name);
+    ~DmTimer();
     DmTimerStatus Start(uint32_t timeOut, TimeoutHandle handle, void *data);
     void Stop(int32_t code);
     void WiteforTimeout();
@@ -57,7 +58,7 @@ private:
     DmTimerStatus mStatus_;
     uint32_t mTimeOutSec_;
     TimeoutHandle mHandle_;
-    void* mHandleData_;
+    void *mHandleData_;
     int32_t mTimeFd_[2];
     struct epoll_event mEv_;
     struct epoll_event mEvents_[MAXEVENTS];

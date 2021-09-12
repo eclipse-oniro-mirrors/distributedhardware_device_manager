@@ -116,7 +116,7 @@ void IpcServerListenerAdapter::OnCheckAuthResult(std::string &authParam, int32_t
 
 void IpcServerListenerAdapter::OnFaCall(std::string &pkgName, std::string &paramJson)
 {
-    DMLOG(DM_LOG_INFO, "OnFaCallSuccess");
+    DMLOG(DM_LOG_INFO, "OnFaCall in");
     std::shared_ptr<IpcNotifyDMFAResultReq> pReq = std::make_shared<IpcNotifyDMFAResultReq>();
     std::shared_ptr<IpcRsp> pRsp = std::make_shared<IpcRsp>();
 

@@ -106,19 +106,12 @@ void DeviceManagerNotify::RegisterCheckAuthenticationCallback(std::string &pkgNa
     std::shared_ptr<CheckAuthCallback> callback)
 {
     std::lock_guard<std::mutex> autoLock(lock_);
-    if (checkauthcallback_.count(pkgName) == 0) {
-        checkauthcallback_[pkgName] = std::map<std::string, std::shared_ptr<CheckAuthCallback>>();
-    }
-    checkauthcallback_[pkgName][authPara] = callback;
+    checkauthcallback_[pkgName] = callback;
 }
 
 void DeviceManagerNotify::UnRegisterCheckAuthenticationCallback(std::string &pkgName)
 {
     std::lock_guard<std::mutex> autoLock(lock_);
-    deviceStateCallback_.erase(pkgName);
-    deviceDiscoverCallbacks_.erase(pkgName);
-    authenticateCallback_.erase(pkgName);
-    dmInitCallback_.erase(pkgName);
     checkauthcallback_.erase(pkgName);
 }
 
@@ -268,17 +261,9 @@ void DeviceManagerNotify::OnCheckAuthResult(std::string &pkgName, std::string &d
         DMLOG(DM_LOG_ERROR, "DeviceManager OnCheckAuthResult: no register authCallback for this package");
         return;
     }
-    std::map<std::string, std::shared_ptr<CheckAuthCallback>> &CheckAuthCallmap = checkauthcallback_[pkgName];
-    auto iter = CheckAuthCallmap.find(deviceId);
-    if (iter == CheckAuthCallmap.end()) {
-        DMLOG(DM_LOG_ERROR, "DeviceManager OnCheckAuthResult: no register CheckAuthCallmap for deviceID");
-        return;
-    }
-    iter->second->OnCheckAuthResult(deviceId, resultCode, flag);
-    checkauthcallback_[pkgName].erase(deviceId);
-    if (checkauthcallback_[pkgName].empty()) {
-        checkauthcallback_.erase(pkgName);
-    }
+
+    checkauthcallback_[pkgName]->OnCheckAuthResult(deviceId, resultCode, flag);
+    checkauthcallback_.erase(pkgName);
 }
 
 void DeviceManagerNotify::OnFaCall(std::string &pkgName, std::string &paramJson)

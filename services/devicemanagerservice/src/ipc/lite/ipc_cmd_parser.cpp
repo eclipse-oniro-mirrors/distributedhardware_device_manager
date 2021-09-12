@@ -243,7 +243,7 @@ ON_IPC_SERVER_CMD(SERVER_GET_AUTHENTCATION_INFO, IpcIo &req, IpcIo &reply)
     IpcIoPushInt32(&reply, appThumbnailLen);
 
     if (appIconLen > 0 && authParam.imageinfo.GetAppIcon() != nullptr) {
-        IpcIoPushFlatObj(&reply, authParam.imageinfo.GetAppIcon(),appIconLen);
+        IpcIoPushFlatObj(&reply, authParam.imageinfo.GetAppIcon(), appIconLen);
     }
 
     if (appThumbnailLen > 0 && authParam.imageinfo.GetAppThumbnail() != nullptr) {

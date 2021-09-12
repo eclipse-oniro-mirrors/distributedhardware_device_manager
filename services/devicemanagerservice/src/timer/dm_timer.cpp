@@ -25,6 +25,12 @@ DmTimer::DmTimer(std::string &name)
     mTimerName_ = name;
 }
 
+DmTimer::~DmTimer()
+{
+    DMLOG(DM_LOG_INFO, "DmTimer %s Destory in", mTimerName_.c_str());
+    Release();
+}
+
 DmTimerStatus DmTimer::Start(uint32_t timeOut, TimeoutHandle handle, void *data)
 {
     DMLOG(DM_LOG_INFO, "DmTimer %s start timeout(%d)", mTimerName_.c_str(), timeOut);
@@ -50,9 +56,8 @@ DmTimerStatus DmTimer::Start(uint32_t timeOut, TimeoutHandle handle, void *data)
 void DmTimer::Stop(int32_t code)
 {
     DMLOG(DM_LOG_INFO, "DmTimer %s Stop code (%d)", mTimerName_.c_str(), code);
-    char event;
-    event = 'S';
     if (mTimeFd_[1]) {
+        char event = 'S';
         if (write(mTimeFd_[1], &event, 1) < 0) {
             DMLOG(DM_LOG_ERROR, "DmTimer %s Stop timer failed, errno %d", mTimerName_.c_str(), errno);
             return;
@@ -75,7 +80,7 @@ void DmTimer::WiteforTimeout()
     char event = 0;
     if (nfds > 0) {
         if (mEvents_[0].events & EPOLLIN) {
-            int num= read(mTimeFd_[0], &event, 1);
+            int num = read(mTimeFd_[0], &event, 1);
             if (num > 0) {
                 DMLOG(DM_LOG_INFO, "DmTimer %s exit with event %d", mTimerName_.c_str(), event);
             } else {
@@ -118,6 +123,10 @@ int32_t DmTimer::CreateTimeFd()
 void DmTimer::Release()
 {
     DMLOG(DM_LOG_INFO, "DmTimer %s Release in", mTimerName_.c_str());
+    if (mStatus_ == DmTimerStatus::DM_STATUS_INIT) {
+        DMLOG(DM_LOG_INFO, "DmTimer %s already Release", mTimerName_.c_str());
+        return;
+    }
     mStatus_ = DmTimerStatus::DM_STATUS_INIT;
     close(mTimeFd_[0]);
     close(mTimeFd_[1]);
