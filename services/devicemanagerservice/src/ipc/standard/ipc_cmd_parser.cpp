@@ -289,7 +289,7 @@ ON_IPC_CMD(SERVER_GET_AUTHENTCATION_INFO, MessageParcel &data, MessageParcel &re
     IpcServerAdapter::GetInstance().GetAuthenticationParam(packName, authParam);
     if (authParam.direction == AUTH_SESSION_SIDE_CLIENT) {
         if (!reply.WriteInt32(authParam.direction) || !reply.WriteInt32(authParam.authType) ||
-            !reply.WriteInt32(authParam.pinToken) || !reply.WriteInt32(authParam.displayOwner)) {
+            !reply.WriteInt32(authParam.pinToken)) {
              DMLOG(DM_LOG_ERROR,"DeviceManagerStub::wirte client fail");
              ret = DEVICEMANAGER_WRITE_FAILED;
         }
@@ -308,7 +308,7 @@ ON_IPC_CMD(SERVER_GET_AUTHENTCATION_INFO, MessageParcel &data, MessageParcel &re
     }
 
     if (appIconLen > 0 && authParam.imageinfo.GetAppIcon() != nullptr) {
-        if (!reply.WriteRawData(authParam.imageinfo.GetAppIcon(), appIconLen)){
+        if (!reply.WriteRawData(authParam.imageinfo.GetAppIcon(), appIconLen)) {
             DMLOG(DM_LOG_ERROR, "write appIcon failed");
             return DEVICEMANAGER_WRITE_FAILED;
         }

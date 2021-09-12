@@ -322,7 +322,6 @@ ON_IPC_READ_RESPONSE(SERVER_GET_AUTHENTCATION_INFO, MessageParcel &reply, std::s
     authParam.authType = reply.ReadInt32();
     if (authParam.direction == AUTH_SESSION_SIDE_CLIENT) {
         authParam.pinToken = reply.ReadInt32();
-        authParam.displayOwner = reply.ReadInt32();
         pRsp->SetAuthParam(authParam);
         return DEVICEMANAGER_OK;
     }

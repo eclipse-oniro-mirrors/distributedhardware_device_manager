@@ -118,15 +118,15 @@ void RequestSession::OnUserOperate(int32_t action)
     }
 }
 
- int64_t RequestSession::GetRequestId()
- {
-     return mRequestId_;
- }
+int64_t RequestSession::GetRequestId()
+{
+    return mRequestId_;
+}
 
 std::string RequestSession::GetRequestDeviceId()
- {
-     return mRemoteDeviceId_;
- }
+{
+    return mRemoteDeviceId_;
+}
 
 int32_t RequestSession::StartFaService()
 {

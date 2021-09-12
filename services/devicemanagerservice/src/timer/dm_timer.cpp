@@ -1,17 +1,18 @@
 /*
- ** Copyright (C) 2021 Huawei Device Co., Ltd.
- ** Licensed under the Apache License, Version 2.0 (the "License");
- ** you may not use this file except in compliance with the License.
- ** You may obtain a copy of the License at
- **
- **     http://www.apache.org/licenses/LICENSE-2.0
- **
- ** Unless required by applicable law or agreed to in writing, software
- ** distributed under the License is distributed on an "AS IS" BASIS,
- ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- ** See the License for the specific language governing permissions and
- ** limitations under the License.
- **/
+ * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "dm_timer.h"
 
 #include <thread>
@@ -44,7 +45,9 @@ DmTimerStatus DmTimer::Start(uint32_t timeOut, TimeoutHandle handle, void *data)
     return mStatus;
 }
 
-void DmTimer::Stop(int32_t code) {
+void DmTimer::Stop(int32_t code)
+{
+    DMLOG(DM_LOG_ERROR, "DmTimer Stop code (%d)\n", code);
     char event;
     event = 'S';
     if (mTimeFd[1]) {
@@ -56,7 +59,8 @@ void DmTimer::Stop(int32_t code) {
     return;
 }
 
-void DmTimer::WiteforTimeout() {
+void DmTimer::WiteforTimeout()
+{
     DMLOG(DM_LOG_ERROR, "DmTimer start timer at (%d)s" ,mTimeOutS);
 
     int32_t nfds = epoll_wait(mEpFd, mEvents, MAXEVENTS, mTimeOutS * 1000);
@@ -67,13 +71,14 @@ void DmTimer::WiteforTimeout() {
     char event = 0;
     if (nfds > 0) {
         if (mEvents[0].events & EPOLLIN) {
-            int num=read(mTimeFd[0], &event, 1);
+            int num= read(mTimeFd[0], &event, 1);
             if (num > 0) {
                 DMLOG(DM_LOG_INFO, "DmTimer exit with event %d", event);
             } else {
                 DMLOG(DM_LOG_ERROR, "DmTimer exit with errno %d", errno);
             }
         }
+        return;
     }
 
     mHandle(mHandleData);
@@ -83,7 +88,8 @@ void DmTimer::WiteforTimeout() {
     return;
 }
 
-int32_t DmTimer::CreateTimeFd(){
+int32_t DmTimer::CreateTimeFd()
+{
     DMLOG(DM_LOG_ERROR, "DmTimer creatTimeFd" );
     int ret = 0;
 
@@ -94,7 +100,7 @@ int32_t DmTimer::CreateTimeFd(){
     }
 
     mEv.data.fd = mTimeFd[0];
-    mEv.events = EPOLLIN|EPOLLET;
+    mEv.events = EPOLLIN | EPOLLET;
     mEpFd = epoll_create(MAXEVENTS);
     ret = epoll_ctl(mEpFd, EPOLL_CTL_ADD, mTimeFd[0], &mEv);
     if (ret != 0) {

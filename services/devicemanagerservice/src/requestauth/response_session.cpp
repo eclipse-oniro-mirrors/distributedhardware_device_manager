@@ -187,7 +187,13 @@ int32_t ResponseSession::GetPinCodeByReqId(int64_t requestId)
 
 void ResponseSession::BuildAuthenticationInfo(DmAuthParam &authParam)
 {
+    DMLOG(DM_LOG_INFO, "ResponseSession::BuildAuthenticationInfo in");
     authParam.direction = (int32_t)DmAbilityManager::GetInstance().GetAbilityRole();
+    if (mMsgRequestAuthPtr_ == nullptr) {
+        DMLOG(DM_LOG_ERROR, "ResponseSession::BuildAuthenticationInfo mMsgRequestAuthPtr_ is nullptr");
+        return;
+    }
+
     authParam.packageName = mMsgRequestAuthPtr_->mTargetPkg_;
     authParam.appName = mMsgRequestAuthPtr_->mAppName_;
     authParam.appDescription = mMsgRequestAuthPtr_->mAppDescription_;

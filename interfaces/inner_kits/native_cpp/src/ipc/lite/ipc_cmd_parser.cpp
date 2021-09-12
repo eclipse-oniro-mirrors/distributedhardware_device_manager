@@ -307,7 +307,6 @@ ON_IPC_READ_RESPONSE(SERVER_GET_AUTHENTCATION_INFO, IpcIo& reply, std::shared_pt
     authParam.authType = IpcIoPopInt32(&reply);
     if (authParam.direction == AUTH_SESSION_SIDE_CLIENT) {
         authParam.pinToken = IpcIoPopInt32(&reply);
-        authParam.displayOwner = IpcIoPopInt32(&reply);
         pRsp->SetAuthParam(authParam);
         return DEVICEMANAGER_OK;
     }

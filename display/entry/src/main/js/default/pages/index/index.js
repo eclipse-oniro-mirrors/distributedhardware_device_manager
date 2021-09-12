@@ -27,7 +27,7 @@ function uint8ArrayToBase64(array) {
     if (lastByte === 1) {
         const lastNum1 = array[i];
         base64Str += table[lastNum1 >>> 2] + table[((lastNum1 & 0b11) << 4)] + '==';
-    } else if (lastByte === 2){
+    } else if (lastByte === 2) {
         const lastNum1 = array[i];
         const lastNum2 = array[i + 1];
         base64Str += table[lastNum1 >>> 2] + table[((lastNum1 & 0b11) << 4) | (lastNum2 >>> 4)] + table[(lastNum2 & 0b1111) << 2] + '=';

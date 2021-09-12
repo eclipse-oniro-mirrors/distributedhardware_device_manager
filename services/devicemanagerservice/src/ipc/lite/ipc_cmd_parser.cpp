@@ -225,7 +225,6 @@ ON_IPC_SERVER_CMD(SERVER_GET_AUTHENTCATION_INFO, IpcIo &req, IpcIo &reply)
         IpcIoPushInt32(&reply, authParam.direction);
         IpcIoPushInt32(&reply, authParam.authType);
         IpcIoPushInt32(&reply, authParam.pinToken);
-        IpcIoPushInt32(&reply, authParam.displayOwner);
         DMLOG(DM_LOG_DEBUG,"DeviceManagerStub::is Client so just return direction");
         return;
     }
