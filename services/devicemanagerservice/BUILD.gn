@@ -60,7 +60,7 @@ if (defined(ohos_lite)) {
     ]
 
     sources = [
-      "src/ability/dm_ability_manager_lite.cpp",
+      "src/ability/lite/dm_ability_manager.cpp",
       "src/auth/hichain_connector.cpp",
       "src/ipc/ipc_server_adapter.cpp",
       "src/ipc/ipc_server_listener_adapter.cpp",
@@ -134,7 +134,7 @@ if (defined(ohos_lite)) {
     ]
 
     sources = [
-      "src/ability/dm_ability_manager.cpp",
+      "src/ability/standard/dm_ability_manager.cpp",
       "src/auth/hichain_connector.cpp",
       "src/ipc/ipc_server_adapter.cpp",
       "src/ipc/ipc_server_listener_adapter.cpp",
