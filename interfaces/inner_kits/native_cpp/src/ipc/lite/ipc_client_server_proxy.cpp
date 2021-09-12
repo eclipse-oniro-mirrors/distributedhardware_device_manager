@@ -53,7 +53,7 @@ int32_t DMDeathCallback(const IpcContext *ctx, void *ipcMsg, IpcIo *data, void *
     return DEVICEMANAGER_OK;
 }
 
-static int32_t SendCmdResultCb(IOwner owner, int code, IpcIo *reply)
+static int32_t SendCmdResultCb(IOwner owner, int32_t code, IpcIo *reply)
 {
     (void)code;
     int32_t cmdCode = *(int32_t *)owner;

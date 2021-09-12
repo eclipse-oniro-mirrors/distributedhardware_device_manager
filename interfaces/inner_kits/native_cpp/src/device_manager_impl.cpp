@@ -280,7 +280,7 @@ int32_t DeviceManagerImpl::RegisterDeviceManagerFaCallback(std::string &packageN
 
 int32_t DeviceManagerImpl::UnRegisterDeviceManagerFaCallback(std::string &pkgName)
 {
-     DMLOG(DM_LOG_INFO, "DeviceManager::UnRegisterDeviceManagerFaCallback start, pkgName: %s", pkgName.c_str());
+    DMLOG(DM_LOG_INFO, "DeviceManager::UnRegisterDeviceManagerFaCallback start, pkgName: %s", pkgName.c_str());
     if (pkgName.empty()) {
         DMLOG(DM_LOG_ERROR, "Invalid para");
         return DEVICEMANAGER_INVALID_VALUE;

@@ -192,7 +192,7 @@ static TaskConfig GetTaskConfig(Service *service)
     return config;
 }
 
-static int32_t OnRemoteRequest(IServerProxy *iProxy, int funcId, void *origin,
+static int32_t OnRemoteRequest(IServerProxy *iProxy, int32_t funcId, void *origin,
     IpcIo *req, IpcIo *reply)
 {
     DMLOG(DM_LOG_INFO, "Receive funcId:%d", funcId);
