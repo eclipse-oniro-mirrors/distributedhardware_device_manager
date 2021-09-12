@@ -22,9 +22,6 @@
 
 namespace OHOS {
 namespace DistributedHardware {
-namespace {
-const int32_t ABILITY_START_TIMEOUT = 3; // 3 second
-}
 IMPLEMENT_SINGLE_INSTANCE(DmAbilityManager);
 
 AbilityRole DmAbilityManager::GetAbilityRole()
