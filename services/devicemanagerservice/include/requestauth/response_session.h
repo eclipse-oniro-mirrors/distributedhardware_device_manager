@@ -25,6 +25,7 @@
 #include "msg_response_auth.h"
 #include "msg_request_auth.h"
 #include "hichain_connector.h"
+#include "dm_timer.h"
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -35,27 +36,29 @@ enum ResponseSessionStatus : int32_t {
     SESSION_WAITTING_PIN_CODE = 3
 };
 
-class ResponseSession : public GroupCreateCallback, public std::enable_shared_from_this<ResponseSession> {
+class ResponseSession : public HichainConnectorCallback, public std::enable_shared_from_this<ResponseSession> {
 public:
     ResponseSession();
     virtual ~ResponseSession() {};
     int32_t SendResponseMessage(int32_t reply);
     void OnUserOperate(int32_t action);
     void OnGroupCreated(int64_t requestId, const std::string &groupId) override;
+    void OnMemberJoin(int64_t requestId, int32_t status) override;
     void BuildAuthenticationInfo(DmAuthParam &authParam);
     void OnReceiveMsg(long long channelId, std::string &message);
     int64_t GetRequestId();
     int32_t GetPinCodeByReqId(int64_t requestId);
     bool IsMyChannelId(long long channelId);
+    void Release();
+    void CancelDisplay();
+    int32_t GetStatus();
 
 private:
-    void Release();
     int32_t DecodeReqMsg(std::string &message);
     int32_t StartFaService();
     std::string GenerateGroupName();
     void OnUserConfirm();
     void OnUserReject(int32_t errorCode);
-    void CancelDisplay();
     int32_t GeneratePincode();
 
 private:
@@ -68,6 +71,8 @@ private:
     int64_t mChannelId_;
     int32_t mPincode_;
     int32_t mSessionStatus_;
+    std::shared_ptr<DmTimer> mReceiveTimerPtr_;
+    std::shared_ptr<DmTimer> mMemberJoinTimerPtr_;
 };
 } // namespace DistributedHardware
 } // namespace OHOS

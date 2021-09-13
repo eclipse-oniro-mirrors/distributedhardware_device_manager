@@ -28,6 +28,7 @@ if (defined(ohos_lite)) {
       "include/requestauth",
       "include/auth",
       "include/ipc",
+      "include/timer",
       "include/message",
       "include/ipc/lite",
       "${utils_path}/include/cipher",
@@ -59,7 +60,7 @@ if (defined(ohos_lite)) {
     ]
 
     sources = [
-      "src/ability/dm_ability_manager.cpp",
+      "src/ability/lite/dm_ability_manager.cpp",
       "src/auth/hichain_connector.cpp",
       "src/ipc/ipc_server_adapter.cpp",
       "src/ipc/ipc_server_listener_adapter.cpp",
@@ -78,6 +79,7 @@ if (defined(ohos_lite)) {
       "src/requestauth/response_session.cpp",
       "src/softbus/softbus_adapter.cpp",
       "src/softbus/softbus_session.cpp",
+      "src/timer/dm_timer.cpp",
     ]
 
     defines = [
@@ -90,13 +92,11 @@ if (defined(ohos_lite)) {
     cflags_cc = build_flags
 
     deps = [
+      "${innerkits_path}/native_cpp:devicemanagersdk",
       "${utils_path}:devicemanagerutils",
       "//base/hiviewdfx/hilog_lite/frameworks/featured:hilog_shared",
       "//base/security/deviceauth/services:deviceauth_sdk",
       "//base/startup/syspara_lite/frameworks/parameter/src:sysparam",
-      "//foundation/aafwk/standard/interfaces/innerkits/ability_manager:ability_manager",
-      "//foundation/aafwk/standard/interfaces/innerkits/want:want",
-      "//foundation/aafwk/standard/services/abilitymgr:abilityms",
       "//foundation/communication/dsoftbus/sdk:softbus_client",
       "//foundation/communication/ipc_lite:liteipc_adapter",
       "//foundation/distributedschedule/samgr_lite/samgr:samgr",
@@ -117,6 +117,7 @@ if (defined(ohos_lite)) {
       "include/auth",
       "include/ipc",
       "include/message",
+      "include/timer",
       "include/ipc/standard",
       "${utils_path}/include/cipher",
       "${utils_path}/include/log",
@@ -133,7 +134,7 @@ if (defined(ohos_lite)) {
     ]
 
     sources = [
-      "src/ability/dm_ability_manager.cpp",
+      "src/ability/standard/dm_ability_manager.cpp",
       "src/auth/hichain_connector.cpp",
       "src/ipc/ipc_server_adapter.cpp",
       "src/ipc/ipc_server_listener_adapter.cpp",
@@ -151,9 +152,11 @@ if (defined(ohos_lite)) {
       "src/requestauth/response_session.cpp",
       "src/softbus/softbus_adapter.cpp",
       "src/softbus/softbus_session.cpp",
+      "src/timer/dm_timer.cpp",
     ]
 
     deps = [
+      "${innerkits_path}/native_cpp:devicemanagersdk",
       "${utils_path}:devicemanagerutils",
       "//base/security/deviceauth/services:deviceauth_sdk",
       "//foundation/aafwk/standard/interfaces/innerkits/ability_manager:ability_manager",

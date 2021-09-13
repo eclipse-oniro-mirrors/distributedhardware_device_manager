@@ -26,9 +26,6 @@
 
 #include "single_instance.h"
 #include "softbus_adapter.h"
-#include "ability_manager_interface.h"
-#include "want.h"
-#include "ipc_server_adapter.h"
 
 namespace OHOS {
 namespace DistributedHardware {

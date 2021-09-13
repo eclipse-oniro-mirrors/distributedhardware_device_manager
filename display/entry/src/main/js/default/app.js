@@ -13,30 +13,11 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DEVICE_MANAGER_IPC_NOTIFY_DMFA_RESULT_REQ_H
-#define OHOS_DEVICE_MANAGER_IPC_NOTIFY_DMFA_RESULT_REQ_H
-
-#include <stdint.h>
-
-#include "ipc_req.h"
-
-namespace OHOS {
-namespace DistributedHardware {
-class IpcNotifyDMFAResultReq : public IpcReq {
-DECLARE_IPC_MODEL(IpcNotifyDMFAResultReq);
-public:
-    std::string GetJsonParam() const
-    {
-        return JsonParam_;
+export default {
+    onCreate() {
+        console.info('AceApplication onCreate');
+    },
+    onDestroy() {
+        console.info('AceApplication onDestroy');
     }
-
-    void SetJsonParam(std::string& JsonParam)
-    {
-        JsonParam_ = JsonParam;
-    }
-private:
-    std::string JsonParam_;
 };
-} // namespace DistributedHardware
-} // namespace OHOS
-#endif // OHOS_DEVICE_MANAGER_IPC_NOTIFY_AUTH_RESULT_REQ_H

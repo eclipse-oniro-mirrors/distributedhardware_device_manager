@@ -106,19 +106,12 @@ void DeviceManagerNotify::RegisterCheckAuthenticationCallback(std::string &pkgNa
     std::shared_ptr<CheckAuthCallback> callback)
 {
     std::lock_guard<std::mutex> autoLock(lock_);
-    if (checkauthcallback_.count(pkgName) == 0) {
-        checkauthcallback_[pkgName] = std::map<std::string, std::shared_ptr<CheckAuthCallback>>();
-    }
-    checkauthcallback_[pkgName][authPara] = callback;
+    checkauthcallback_[pkgName] = callback;
 }
 
 void DeviceManagerNotify::UnRegisterCheckAuthenticationCallback(std::string &pkgName)
 {
     std::lock_guard<std::mutex> autoLock(lock_);
-    deviceStateCallback_.erase(pkgName);
-    deviceDiscoverCallbacks_.erase(pkgName);
-    authenticateCallback_.erase(pkgName);
-    dmInitCallback_.erase(pkgName);
     checkauthcallback_.erase(pkgName);
 }
 
@@ -187,7 +180,7 @@ void DeviceManagerNotify::OnDeviceFound(std::string &pkgName, uint16_t subscribe
         DMLOG(DM_LOG_ERROR, "DeviceManager OnDeviceFound: no register discoverCallback for this package");
         return;
     }
-    std::map<uint16_t, std::shared_ptr<DiscoverCallback>>& discoverCallMap = deviceDiscoverCallbacks_[pkgName];
+    std::map<uint16_t, std::shared_ptr<DiscoverCallback>> &discoverCallMap = deviceDiscoverCallbacks_[pkgName];
     auto iter = discoverCallMap.find(subscribeId);
     if (iter == discoverCallMap.end()) {
         DMLOG(DM_LOG_ERROR, "DeviceManager OnDeviceFound: no register discoverCallback for subscribeId %d",
@@ -206,7 +199,7 @@ void DeviceManagerNotify::OnDiscoverFailed(std::string &pkgName, uint16_t subscr
         DMLOG(DM_LOG_ERROR, "DeviceManager OnDiscoverFailed: no register discoverCallback for this package");
         return;
     }
-    std::map<uint16_t, std::shared_ptr<DiscoverCallback>>& discoverCallMap = deviceDiscoverCallbacks_[pkgName];
+    std::map<uint16_t, std::shared_ptr<DiscoverCallback>> &discoverCallMap = deviceDiscoverCallbacks_[pkgName];
     auto iter = discoverCallMap.find(subscribeId);
     if (iter == discoverCallMap.end()) {
         DMLOG(DM_LOG_ERROR, "DeviceManager OnDiscoverFailed: no register discoverCallback for subscribeId %d",
@@ -225,7 +218,7 @@ void DeviceManagerNotify::OnDiscoverySuccess(std::string &pkgName, uint16_t subs
         DMLOG(DM_LOG_ERROR, "DeviceManager OnDiscoverySuccess: no register discoverCallback for this package");
         return;
     }
-    std::map<uint16_t, std::shared_ptr<DiscoverCallback>>& discoverCallMap = deviceDiscoverCallbacks_[pkgName];
+    std::map<uint16_t, std::shared_ptr<DiscoverCallback>> &discoverCallMap = deviceDiscoverCallbacks_[pkgName];
     auto iter = discoverCallMap.find(subscribeId);
     if (iter == discoverCallMap.end()) {
         DMLOG(DM_LOG_ERROR, "DeviceManager OnDiscoverySuccess: no register discoverCallback for subscribeId %d",
@@ -245,7 +238,7 @@ void DeviceManagerNotify::OnAuthResult(std::string &pkgName, std::string &device
         DMLOG(DM_LOG_ERROR, "DeviceManager OnAuthResult: no register authCallback for this package");
         return;
     }
-    std::map<std::string, std::shared_ptr<AuthenticateCallback>>& authCallMap = authenticateCallback_[pkgName];
+    std::map<std::string, std::shared_ptr<AuthenticateCallback>> &authCallMap = authenticateCallback_[pkgName];
     auto iter = authCallMap.find(deviceId);
     if (iter == authCallMap.end()) {
         DMLOG(DM_LOG_ERROR, "DeviceManager OnAuthResult: no register authCallback for deviceID ");
@@ -268,17 +261,9 @@ void DeviceManagerNotify::OnCheckAuthResult(std::string &pkgName, std::string &d
         DMLOG(DM_LOG_ERROR, "DeviceManager OnCheckAuthResult: no register authCallback for this package");
         return;
     }
-    std::map<std::string, std::shared_ptr<CheckAuthCallback>>& CheckAuthCallmap = checkauthcallback_[pkgName];
-    auto iter = CheckAuthCallmap.find(deviceId);
-    if (iter == CheckAuthCallmap.end()) {
-        DMLOG(DM_LOG_ERROR, "DeviceManager OnCheckAuthResult: no register CheckAuthCallmap for deviceID");
-        return;
-    }
-    iter->second->OnCheckAuthResult(deviceId, resultCode, flag);
-    checkauthcallback_[pkgName].erase(deviceId);
-    if (checkauthcallback_[pkgName].empty()) {
-        checkauthcallback_.erase(pkgName);
-    }
+
+    checkauthcallback_[pkgName]->OnCheckAuthResult(deviceId, resultCode, flag);
+    checkauthcallback_.erase(pkgName);
 }
 
 void DeviceManagerNotify::OnFaCall(std::string &pkgName, std::string &paramJson)

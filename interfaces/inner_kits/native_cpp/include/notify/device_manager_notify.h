@@ -65,7 +65,7 @@ private:
     std::map<std::string, std::shared_ptr<DeviceStateCallback>> deviceStateCallback_;
     std::map<std::string, std::map<uint16_t, std::shared_ptr<DiscoverCallback>>> deviceDiscoverCallbacks_;
     std::map<std::string, std::map<std::string, std::shared_ptr<AuthenticateCallback>>> authenticateCallback_;
-    std::map<std::string, std::map<std::string, std::shared_ptr<CheckAuthCallback>>> checkauthcallback_;
+    std::map<std::string, std::shared_ptr<CheckAuthCallback>> checkauthcallback_;
     std::map<std::string, std::shared_ptr<DmInitCallback>> dmInitCallback_;
     std::map<std::string, std::shared_ptr<DeviceManagerFaCallback>> dmFaCallback_;
 };

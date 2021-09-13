@@ -44,6 +44,8 @@ public:
     void OnReceivePinCode(int32_t pinCode);
     void NotifyHostAppAuthResult(int32_t errorCode);
     void OnUserOperate(int32_t action);
+    int64_t GetRequestId();
+    std::string GetRequestDeviceId();
 
 private:
     int32_t StartFaService();

@@ -100,7 +100,7 @@ void IpcServerListenerAdapter::OnAuthResult(std::string &pkgName, std::string &d
     ipcServerListener_.SendRequest(SERVER_AUTH_RESULT, pReq, pRsp);
 }
 
-void IpcServerListenerAdapter::OnCheckAuthResult(std::string &pkgName, std::string &authParam, int32_t resultCode,
+void IpcServerListenerAdapter::OnCheckAuthResult(std::string &authParam, int32_t resultCode,
     int32_t flag)
 {
     DMLOG(DM_LOG_INFO, "OnCheckResult, authParam: %s, errorCode: %d",
@@ -108,16 +108,15 @@ void IpcServerListenerAdapter::OnCheckAuthResult(std::string &pkgName, std::stri
     std::shared_ptr<IpcNotifyCheckAuthResultReq> pReq = std::make_shared<IpcNotifyCheckAuthResultReq>();
     std::shared_ptr<IpcRsp> pRsp = std::make_shared<IpcRsp>();
 
-    pReq->SetPkgName(pkgName);
     pReq->SetDeviceId(authParam);
     pReq->SetResult(resultCode);
     pReq->SetFlag(flag);
-    ipcServerListener_.SendRequest(SERVER_CHECK_AUTH_RESULT, pReq, pRsp);
+    ipcServerListener_.SendAll(SERVER_CHECK_AUTH_RESULT, pReq, pRsp);
 }
 
 void IpcServerListenerAdapter::OnFaCall(std::string &pkgName, std::string &paramJson)
 {
-    DMLOG(DM_LOG_INFO, "OnFaCallSuccess");
+    DMLOG(DM_LOG_INFO, "OnFaCall in");
     std::shared_ptr<IpcNotifyDMFAResultReq> pReq = std::make_shared<IpcNotifyDMFAResultReq>();
     std::shared_ptr<IpcRsp> pRsp = std::make_shared<IpcRsp>();
 

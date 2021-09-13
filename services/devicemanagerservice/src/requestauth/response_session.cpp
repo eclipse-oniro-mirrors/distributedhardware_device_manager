@@ -37,21 +37,20 @@
 namespace OHOS {
 namespace DistributedHardware {
 namespace {
-// const int32_t RECEIVE_MESSAGE_TIMEOUT = 3; // 3 second
-// const int32_t WAIT_NEXT_PACKAGE_TIMEOUT = 3; // 3 second
-// const int32_t WAIT_ENTER_PINCODE_TIMEOUT = 3; // 3 second
+const int32_t SESSION_CANCEL_TIMEOUT = 0;
+const int32_t SESSION_MSG_RECEIVE_TIMEOUT = 5;
+const int32_t SESSION_WAIT_MEMBER_JOIN_TIMEOUT = 120;
+const int32_t CANCEL_PICODE_DISPLAY = 1;
+const int32_t DEVICE_ID_HALF = 2;
 }
-
-#define PINCODE_LEN  6
 
 ResponseSession::ResponseSession()
 {
     mSessionStatus_ = ResponseSessionStatus::SESSION_INIT;
     sem_init(&mSem_, 0, 0);
-    // need to update
 }
 
-int64_t ResponseSession::GetRequestId(void)
+int64_t ResponseSession::GetRequestId()
 {
     return mRequestId_;
 }
@@ -128,28 +127,66 @@ bool ResponseSession::IsMyChannelId(long long channelId)
     return channelId == mChannelId_ && mChannelId_ > 0;
 }
 
+void OnReceiveTimeOut(void *data)
+{
+    DMLOG(DM_LOG_ERROR, "OnReceiveTimeOut TimeOut called");
+    ResponseSession *respSess = (ResponseSession*)data;
+    if (respSess == nullptr || respSess->GetStatus() == ResponseSessionStatus::SESSION_INIT) {
+        DMLOG(DM_LOG_ERROR, "respSess Status is INIT");
+        return;
+    }
+
+    respSess->Release();
+}
+
+void OnMemberJoinTimeOut(void *data)
+{
+    DMLOG(DM_LOG_ERROR, "OnMemberJoinTimeOut TimeOut caled");
+    ResponseSession *respSess = (ResponseSession*)data;
+    if (respSess == nullptr || respSess->GetStatus() == ResponseSessionStatus::SESSION_INIT) {
+        DMLOG(DM_LOG_ERROR, "respSess Status is INIT");
+        return;
+    }
+
+    respSess->SendResponseMessage(SESSION_REPLY_TIMEOUT);
+    respSess->CancelDisplay();
+    respSess->Release();
+}
+
 void ResponseSession::OnReceiveMsg(long long channelId, std::string &message)
 {
     int32_t ret =  DecodeReqMsg(message);
     if (ret != SUCCESS) {
+        DMLOG(DM_LOG_ERROR, "DecodeReqMsg failed");
         return;
     }
 
+    if (!mReceiveTimerPtr_) {
+        std::string mReceiveTimerName = "mReceiveTimer";
+        mReceiveTimerPtr_ = std::make_shared<DmTimer>(mReceiveTimerName);
+    }
+
+    mReceiveTimerPtr_->Start(SESSION_MSG_RECEIVE_TIMEOUT, OnReceiveTimeOut, this);
     if (mMsgRequestAuthPtr_->GetMsgCnt() != mMsgRequestAuthPtr_->GetMsgSlice()) {
         return;
     }
 
-    // 正常业务逻辑
+    mReceiveTimerPtr_->Stop(SESSION_CANCEL_TIMEOUT);
     mReqDeviceId_ = mMsgRequestAuthPtr_->GetRequestDeviceId();
     mChannelId_ = channelId;
     mPincode_ = GeneratePincode();
     if (StartFaService() != SUCCESS) {
-        // 拉起界面失败，直接回复拒绝，清理session状态
         OnUserReject(ERROR_FA_START_FAIL);
         return;
     }
 
     mSessionStatus_ = ResponseSessionStatus::SESSION_WAITTING_USER_CONFIRM;
+    if (!mMemberJoinTimerPtr_) {
+        std::string mMemberJoinTimerName = "mMemberJoinTimer";
+        mMemberJoinTimerPtr_ = std::make_shared<DmTimer>(mMemberJoinTimerName);
+    }
+
+    mMemberJoinTimerPtr_->Start(SESSION_WAIT_MEMBER_JOIN_TIMEOUT, OnMemberJoinTimeOut, this);
 }
 
 int32_t ResponseSession::GetPinCodeByReqId(int64_t requestId)
@@ -163,7 +200,13 @@ int32_t ResponseSession::GetPinCodeByReqId(int64_t requestId)
 
 void ResponseSession::BuildAuthenticationInfo(DmAuthParam &authParam)
 {
+    DMLOG(DM_LOG_INFO, "ResponseSession::BuildAuthenticationInfo in");
     authParam.direction = (int32_t)DmAbilityManager::GetInstance().GetAbilityRole();
+    if (mMsgRequestAuthPtr_ == nullptr) {
+        DMLOG(DM_LOG_ERROR, "ResponseSession::BuildAuthenticationInfo mMsgRequestAuthPtr_ is nullptr");
+        return;
+    }
+
     authParam.packageName = mMsgRequestAuthPtr_->mTargetPkg_;
     authParam.appName = mMsgRequestAuthPtr_->mAppName_;
     authParam.appDescription = mMsgRequestAuthPtr_->mAppDescription_;
@@ -206,7 +249,7 @@ void ResponseSession::OnGroupCreated(int64_t requestId, const std::string &group
     DMLOG(DM_LOG_INFO, "ResponseSession OnGroupCreated in requestId= %lld groupId = %s ", requestId, groupId.c_str());
 
     if (requestId != mRequestId_ || groupId.length() == 0) {
-        DMLOG(DM_LOG_ERROR, "ResponseSession::OnGroupCreated failed, requestId %d, requestId %d, groupId %s",
+        DMLOG(DM_LOG_ERROR, "ResponseSession::OnGroupCreated failed, requestId %lld, requestId %lld, groupId %s",
             requestId, mRequestId_, groupId.c_str());
         SendResponseMessage(SESSION_REPLY_CREAT_GROUP_FAILED);
         CancelDisplay();
@@ -228,13 +271,21 @@ void ResponseSession::OnGroupCreated(int64_t requestId, const std::string &group
     mSessionStatus_ = ResponseSessionStatus::SESSION_WAITTING_PIN_CODE;
 }
 
+void ResponseSession::OnMemberJoin(int64_t requestId, int32_t status)
+{
+    DMLOG(DM_LOG_INFO, "ResponseSession::OnMemberJoin, result: %d", status);
+    CancelDisplay();
+    mMemberJoinTimerPtr_->Stop(SESSION_CANCEL_TIMEOUT);
+    Release();
+}
+
 std::string ResponseSession::GenerateGroupName()
 {
     char localDeviceId[DEVICE_UUID_LENGTH] = {0};
     GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
     std::string sLocalDeviceID = localDeviceId;
     std::string groupName = mMsgRequestAuthPtr_->mTargetPkg_ + mMsgRequestAuthPtr_->mHostPkg_ +
-        sLocalDeviceID.substr(0, sLocalDeviceID.size() / 2);
+        sLocalDeviceID.substr(0, sLocalDeviceID.size() / DEVICE_ID_HALF);
     return groupName;
 }
 
@@ -265,6 +316,7 @@ void ResponseSession::OnUserReject(int32_t errorCode)
 void ResponseSession::Release()
 {
     DMLOG(DM_LOG_INFO, "ResponseSession::Release in");
+    mSessionStatus_ = ResponseSessionStatus::SESSION_INIT;
     mRequestId_ = -1;
     mGroupId_ = "";
     mGroupName_ = "";
@@ -272,15 +324,22 @@ void ResponseSession::Release()
     mMsgRequestAuthPtr_ = nullptr;
     mChannelId_ = -1;
     mPincode_ = -1;
-    mSessionStatus_ = ResponseSessionStatus::SESSION_INIT;
 }
 
 void ResponseSession::CancelDisplay()
 {
+    DMLOG(DM_LOG_INFO, "Cancel PinCode Display in");
     nlohmann::json jsonObj;
-    jsonObj[CANCEL_DISPLAY_KEY] = 1;
-    std::string jsonObjTmp = jsonObj.dump();
-    IpcServerListenerAdapter::GetInstance().OnFaCall(mMsgRequestAuthPtr_->mTargetPkg_, jsonObjTmp);
+    jsonObj[CANCEL_DISPLAY_KEY] = CANCEL_PICODE_DISPLAY;
+    std::string paramJson = jsonObj.dump();
+    std::string pkgName = "com.ohos.devicemanagerui";
+    IpcServerListenerAdapter::GetInstance().OnFaCall(pkgName, paramJson);
+    DMLOG(DM_LOG_INFO, "Cancel PinCode Display success");
+}
+
+int32_t ResponseSession::GetStatus()
+{
+    return mSessionStatus_;
 }
 
 int32_t ResponseSession::GeneratePincode()

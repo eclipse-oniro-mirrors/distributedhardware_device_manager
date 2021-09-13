@@ -60,7 +60,7 @@ public:
 
 class DeviceManagerFaCallback {
 public:
-    virtual ~DeviceManagerFaCallback(){}
+    virtual ~DeviceManagerFaCallback() {}
     virtual void OnCall(std::string &paramJson) = 0;
 };
 } // namespace DistributedHardware

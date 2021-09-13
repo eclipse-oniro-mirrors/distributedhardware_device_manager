@@ -33,7 +33,7 @@ public:
     void OnDiscoverFailed(std::string &pkgName, uint16_t originId, DiscoveryFailReason failReason);
     void OnDiscoverySuccess(std::string &pkgName, uint16_t originId);
     void OnAuthResult(std::string &pkgName, std::string &deviceId, int32_t pinToken, uint32_t status, uint32_t reason);
-    void OnCheckAuthResult(std::string &pkgName, std::string &deviceId, int32_t resultCode, int32_t flag);
+    void OnCheckAuthResult(std::string &deviceId, int32_t resultCode, int32_t flag);
     void OnFaCall(std::string &pkgName, std::string &paramJson);
 private:
     IpcServerListener ipcServerListener_;

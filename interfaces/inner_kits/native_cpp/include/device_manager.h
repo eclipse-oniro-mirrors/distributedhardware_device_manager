@@ -27,7 +27,7 @@ namespace OHOS {
 namespace DistributedHardware {
 class DeviceManager {
 public:
-    static DeviceManager& GetInstance();
+    static DeviceManager &GetInstance();
 public:
     virtual int32_t InitDeviceManager(std::string &pkgName, std::shared_ptr<DmInitCallback> dmInitCallback) = 0;
     virtual int32_t UnInitDeviceManager(std::string &pkgName) = 0;
