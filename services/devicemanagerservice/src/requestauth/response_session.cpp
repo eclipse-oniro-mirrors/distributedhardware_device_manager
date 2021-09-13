@@ -41,6 +41,7 @@ const int32_t SESSION_CANCEL_TIMEOUT = 0;
 const int32_t SESSION_MSG_RECEIVE_TIMEOUT = 5;
 const int32_t SESSION_WAIT_MEMBER_JOIN_TIMEOUT = 120;
 const int32_t CANCEL_PICODE_DISPLAY = 1;
+const int32_t DEVICE_ID_HALF = 2;
 }
 
 ResponseSession::ResponseSession()
@@ -284,7 +285,7 @@ std::string ResponseSession::GenerateGroupName()
     GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
     std::string sLocalDeviceID = localDeviceId;
     std::string groupName = mMsgRequestAuthPtr_->mTargetPkg_ + mMsgRequestAuthPtr_->mHostPkg_ +
-        sLocalDeviceID.substr(0, sLocalDeviceID.size() / 2);
+        sLocalDeviceID.substr(0, sLocalDeviceID.size() / DEVICE_ID_HALF);
     return groupName;
 }
 

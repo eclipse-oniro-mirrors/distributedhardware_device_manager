@@ -19,6 +19,9 @@
 
 namespace OHOS {
 namespace DistributedHardware {
+namespace {
+const int32_t MILL_SECONDS_PER_SECOND = 1000;
+}
 DmTimer::DmTimer(std::string &name)
 {
     mStatus_ = DmTimerStatus::DM_STATUS_INIT;
@@ -72,7 +75,7 @@ void DmTimer::WiteforTimeout()
 {
     DMLOG(DM_LOG_INFO, "DmTimer %s start timer at (%d)s", mTimerName_.c_str(), mTimeOutSec_);
 
-    int32_t nfds = epoll_wait(mEpFd_, mEvents_, MAXEVENTS, mTimeOutSec_ * 1000);
+    int32_t nfds = epoll_wait(mEpFd_, mEvents_, MAXEVENTS, mTimeOutSec_ * MILL_SECONDS_PER_SECOND);
     if (nfds < 0) {
         DMLOG(DM_LOG_ERROR, "DmTimer %s epoll_wait returned n=%d, error: %d", mTimerName_.c_str(), nfds, errno);
     }
