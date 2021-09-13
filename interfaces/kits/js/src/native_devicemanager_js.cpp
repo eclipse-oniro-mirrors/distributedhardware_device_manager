@@ -49,6 +49,7 @@ const int32_t DM_AUTH_TYPE_PINCODE = 1;
 const int32_t DM_AUTH_DIRECTION_CLIENT = 1;
 
 const int32_t DM_NAPI_SUBSCRIBE_CAPABILITY_DDMP = 0;
+const int32_t DM_NAPI_SUBSCRIBE_CAPABILITY_OSD = 1;
 
 std::map<std::string, DeviceManagerNapi *> g_deviceManagerMap;
 std::map<std::string, std::shared_ptr<DmNapiInitCallback>> g_initCallbackMap;
@@ -525,7 +526,7 @@ int32_t DeviceManagerNapi::JsToDmSubscribeInfo(const napi_env &env, const napi_v
 
     int32_t capability = -1;
     JsObjectToInt(env, object, "capability", capability);
-    if (capability == DM_NAPI_SUBSCRIBE_CAPABILITY_DDMP) {
+    if (capability == DM_NAPI_SUBSCRIBE_CAPABILITY_DDMP || capability == DM_NAPI_SUBSCRIBE_CAPABILITY_OSD) {
         (void)strncpy_s(info.capability, sizeof(info.capability), DM_CAPABILITY_OSD, strlen(DM_CAPABILITY_OSD));
     }
     return 0;
