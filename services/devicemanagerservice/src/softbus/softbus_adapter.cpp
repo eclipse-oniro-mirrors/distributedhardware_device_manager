@@ -16,474 +16,112 @@
 #include "softbus_adapter.h"
 
 #include <cstdlib>
-#include <set>
 #include <string>
 #include <unistd.h>
+#include <map>
+#include <vector>
+#include <memory>
 
 #include <securec.h>
 
+#include "softbus_bus_center.h"
+
 #include "dm_device_info.h"
+#include "dm_subscribe_info.h"
 
 #include "anonymous_string.h"
 #include "device_manager_errno.h"
 #include "device_manager_log.h"
-#include "device_manager_service.h"
+#include "softbus_session.h"
+#include "system_ability_definition.h"
+
+#include "ipc_server_listener_adapter.h"
 
 namespace OHOS {
 namespace DistributedHardware {
 namespace {
-const std::string DEVICE_MANAGER_PACKAGE_NAME = "ohos.distributedhardware.devicemanager";
+const std::string DEVICE_MANAGER_PACKAGE_NAME = "com.huawei.devicemanager";
 const int32_t CHECK_INTERVAL = 100000; // 100ms
 const int32_t SUBSCRIBE_ID_PREFIX_LEN = 16;
 const int32_t SUBSCRIBE_ID_MASK = 0x0000FFFF;
 const int32_t DISCOVER_DEVICEINFO_MAX_SIZE = 20;
 }
+std::map<std::string, std::vector<std::shared_ptr<SoftbusAdapter::SubscribeInfoAdapter>>>
+    SoftbusAdapter::subscribeInfos_;
+std::map<std::string, std::shared_ptr<DeviceInfo>> SoftbusAdapter::discoverDeviceInfoMap_;
+std::vector<std::shared_ptr<DeviceInfo>> SoftbusAdapter::discoverDeviceInfoVector_;
+uint16_t SoftbusAdapter::subscribeIdPrefix = 0;
+std::mutex SoftbusAdapter::lock_;
+INodeStateCb SoftbusAdapter::softbusNodeStateCb_ = {
+    .events = EVENT_NODE_STATE_ONLINE | EVENT_NODE_STATE_OFFLINE | EVENT_NODE_STATE_INFO_CHANGED,
+    .onNodeOnline = OnSoftBusDeviceOnline,
+    .onNodeOffline = OnSoftbusDeviceOffline,
+    .onNodeBasicInfoChanged = OnSoftbusDeviceInfoChanged
+};
+IDiscoveryCallback SoftbusAdapter::softbusDiscoverCallback_ = {
+    .OnDeviceFound = OnSoftbusDeviceFound,
+    .OnDiscoverFailed = OnSoftbusDiscoverFailed,
+    .OnDiscoverySuccess = OnSoftbusDiscoverySuccess
+};
+IPublishCallback SoftbusAdapter::servicePublishCallback_ = {
+    .OnPublishSuccess = PublishServiceCallBack::OnPublishSuccess,
+    .OnPublishFail    = PublishServiceCallBack::OnPublishFail
+};
 
-IMPLEMENT_SINGLE_INSTANCE(SoftbusAdapter);
+void SoftbusAdapter::RemoveDiscoverDeviceInfo(const std::string deviceId)
+{
+    discoverDeviceInfoMap_.erase(deviceId);
+    auto iter = discoverDeviceInfoVector_.begin();
+    while (iter != discoverDeviceInfoVector_.end()) {
+        if (strcmp(iter->get()->devId, deviceId.c_str()) == 0) {
+            iter = discoverDeviceInfoVector_.erase(iter);
+        } else {
+            ++iter;
+        }
+    }
+}
+
 void SoftbusAdapter::OnSoftBusDeviceOnline(NodeBasicInfo *info)
 {
     if (info == nullptr) {
-        HILOGE("SoftbusAdapter::OnSoftBusDeviceOnline NodeBasicInfo is nullptr");
+        DMLOG(DM_LOG_ERROR, "OnSoftBusDeviceOnline NodeBasicInfo is nullptr");
         return;
     }
+    DmDeviceInfo dmDeviceInfo;
 
-    std::string networkId = info->networkId;
-    HILOGI("device online, networkId: %{public}s", GetAnonyString(networkId).c_str());
-    OnSoftBusDeviceStateChange(DmDeviceState::DEVICE_STATE_ONLINE, info);
+    NodeBasicInfoCopyToDmDevice(dmDeviceInfo, *info);
+    IpcServerListenerAdapter::GetInstance().OnDeviceStateChange(DmDeviceState::DEVICE_STATE_ONLINE, dmDeviceInfo);
 
     uint8_t udid[UDID_BUF_LEN] = {0};
     int32_t ret = GetNodeKeyInfo(DEVICE_MANAGER_PACKAGE_NAME.c_str(), info->networkId,
         NodeDeivceInfoKey::NODE_KEY_UDID, udid, sizeof(udid));
-    if (ret != ERR_OK) {
-        HILOGE("GetNodeKeyInfo failed");
+    if (ret != DEVICEMANAGER_OK) {
+        DMLOG(DM_LOG_ERROR, "GetNodeKeyInfo failed");
         return;
     }
     std::string deviceId = (char *)udid;
-    SoftbusAdapter::GetInstance().RemoveDiscoverDeviceInfo(deviceId);
+    DMLOG(DM_LOG_INFO, "device online, deviceId: %s", GetAnonyString(deviceId).c_str());
+    RemoveDiscoverDeviceInfo(deviceId);
 }
 
 void SoftbusAdapter::OnSoftbusDeviceOffline(NodeBasicInfo *info)
 {
     if (info == nullptr) {
-        HILOGE("SoftbusAdapter::OnSoftbusDeviceOffline NodeBasicInfo is nullptr");
+        DMLOG(DM_LOG_ERROR, "OnSoftbusDeviceOffline NodeBasicInfo is nullptr");
         return;
     }
+    DmDeviceInfo dmDeviceInfo;
 
-    std::string networkId = info->networkId;
-    HILOGI("device offline, networkId: %{public}s", GetAnonyString(networkId).c_str());
-    OnSoftBusDeviceStateChange(DmDeviceState::DEVICE_STATE_OFFLINE, info);
-}
-
-void SoftbusAdapter::OnSoftBusDeviceStateChange(DmDeviceState state, NodeBasicInfo *info)
-{
-    DmDeviceInfo deviceInfo;
-    deviceInfo.deviceId = info->networkId;
-    deviceInfo.deviceName = info->deviceName;
-    deviceInfo.deviceTypeId = (DMDeviceType)info->deviceTypeId;
-
-    std::map<std::string, sptr<IRemoteObject>> listeners = DeviceManagerService::GetInstance().GetDmListener();
-    for (auto iter : listeners) {
-        auto packageName = iter.first;
-        auto remote = iter.second;
-        sptr<IDeviceManagerListener> dmListener = iface_cast<IDeviceManagerListener>(remote);
-        if (state == DmDeviceState::DEVICE_STATE_ONLINE) {
-            HILOGI("SoftbusAdapter::OnSoftBusDeviceStateChange listenr handle device online.");
-            dmListener->OnDeviceOnline(packageName, deviceInfo);
-        } else {
-            HILOGI("SoftbusAdapter::OnSoftBusDeviceStateChange listenr handle device offline.");
-            dmListener->OnDeviceOffline(packageName, deviceInfo);
-        }
-    }
+    NodeBasicInfoCopyToDmDevice(dmDeviceInfo, *info);
+    IpcServerListenerAdapter::GetInstance().OnDeviceStateChange(DmDeviceState::DEVICE_STATE_OFFLINE, dmDeviceInfo);
 }
 
 void SoftbusAdapter::OnSoftbusDeviceInfoChanged(NodeBasicInfoType type, NodeBasicInfo *info)
 {
-    HILOGI("SoftbusAdapter::OnSoftbusDeviceInfoChanged.");
+    DMLOG(DM_LOG_INFO, "OnSoftbusDeviceInfoChanged.");
     // currently do nothing
     (void)type;
     (void)info;
-}
-
-void SoftbusAdapter::OnSoftbusDeviceFound(const DeviceInfo *device)
-{
-    if (device == nullptr) {
-        HILOGE("deviceinfo is null");
-        return;
-    }
-
-    std::string deviceId = device->devId;
-    HILOGI("SoftbusAdapter::OnSoftbusDeviceFound device %{public}s found.", GetAnonyString(deviceId).c_str());
-    if (IsDeviceOnLine(deviceId)) {
-        return;
-    }
-
-    SoftbusAdapter::GetInstance().SaveDiscoverDeviceInfo(device);
-    DmDeviceInfo deviceInfo;
-    deviceInfo.deviceId = deviceId;
-    deviceInfo.deviceName = device->devName;
-    deviceInfo.deviceTypeId = (DMDeviceType)device->devType;
-
-    // currently, only care ddmpCapability
-    if (!((device->capabilityBitmap[0] >> DDMP_CAPABILITY_BITMAP) & 0x1)) {
-        HILOGE("capBitmap Invalid, not contain ddmpCap");
-        return;
-    }
-
-    auto subscribeInfos = SoftbusAdapter::GetInstance().GetsubscribeInfos();
-    for (auto iter = subscribeInfos.begin(); iter != subscribeInfos.end(); iter++) {
-        auto subInfovector = iter->second;
-        for (auto vectorIter = subInfovector.begin(); vectorIter != subInfovector.end(); ++vectorIter) {
-            auto info = vectorIter->get();
-            HILOGI("subscribe info capability:%{public}s.", info->info.capability);
-            if (strcmp(DM_CAPABILITY_DDMP.c_str(), info->info.capability) != 0) {
-                HILOGE("subscribe info capability invalid.");
-            }
-            std::string packageName = iter->first;
-            sptr<IDeviceManagerListener> listener = DeviceManagerService::GetInstance().GetDmListener(packageName);
-            if (listener == nullptr) {
-                HILOGI("cannot get listener for package:%{public}s.", packageName.c_str());
-                continue;
-            }
-
-            uint16_t originId = (uint16_t)(((uint32_t)info->info.subscribeId) & SUBSCRIBE_ID_MASK);
-            HILOGI("call OnDeviceFound for %{public}s, originId %{public}d, deviceId %{public}s",
-                packageName.c_str(), originId, GetAnonyString(deviceInfo.deviceId).c_str());
-            listener->OnDeviceFound(packageName, originId, deviceInfo);
-        }
-    }
-}
-
-void SoftbusAdapter::OnSoftbusDiscoverFailed(int subscribeId, DiscoveryFailReason failReason)
-{
-    HILOGI("In, subscribeId %{public}d, failReason %{public}d", subscribeId, (int32_t)failReason);
-    std::string packageName;
-    if (!SoftbusAdapter::GetInstance().GetPackageNameBySubscribeId(subscribeId, packageName)) {
-        HILOGE("OnSoftbusDiscoverFailed: packageName not found");
-        return;
-    }
-    sptr<IDeviceManagerListener> listener = DeviceManagerService::GetInstance().GetDmListener(packageName);
-    if (listener == nullptr) {
-        HILOGE("OnSoftbusDiscoverFailed: listener not found for packageName %{public}s", packageName.c_str());
-        return;
-    }
-    uint16_t originId = (uint16_t)(((uint32_t)subscribeId) & SUBSCRIBE_ID_MASK);
-    listener->OnDiscoverFailed(packageName, originId, (int32_t)failReason);
-}
-
-void SoftbusAdapter::OnSoftbusDiscoverySuccess(int subscribeId)
-{
-    HILOGI("In, subscribeId %{public}d", subscribeId);
-    std::string packageName;
-    if (!SoftbusAdapter::GetInstance().GetPackageNameBySubscribeId(subscribeId, packageName)) {
-        HILOGE("OnSoftbusDiscoverySuccess: packageName not found");
-        return;
-    }
-    sptr<IDeviceManagerListener> listener = DeviceManagerService::GetInstance().GetDmListener(packageName);
-    if (listener == nullptr) {
-        HILOGE("OnSoftbusDiscoverySuccess: listener not found for packageName %{public}s", packageName.c_str());
-        return;
-    }
-    uint16_t originId = (uint16_t)(((uint32_t)subscribeId) & SUBSCRIBE_ID_MASK);
-    listener->OnDiscoverySuccess(packageName, originId);
-}
-
-void SoftbusAdapter::OnSoftbusJoinLNNResult(ConnectionAddr *addr, const char *networkId, int32_t retCode)
-{
-    (void)addr;
-    if (retCode != 0) {
-        HILOGE("OnSoftbusJoinLNNResult: failed, retCode %{public}d", retCode);
-        return;
-    }
-
-    if (networkId == nullptr) {
-        HILOGE("OnSoftbusJoinLNNResult: success, but networkId is nullptr");
-        return;
-    }
-
-    std::string netIdStr = networkId;
-    HILOGI("OnSoftbusJoinLNNResult: success, networkId %{public}s, retCode %{public}d",
-        GetAnonyString(netIdStr).c_str(), retCode);
-}
-
-void SoftbusAdapter::OnSoftbusLeaveLNNResult(const char *networkId, int32_t retCode)
-{
-    if (retCode != 0) {
-        HILOGE("OnSoftbusLeaveLNNResult: failed, retCode %{public}d", retCode);
-        return;
-    }
-
-    if (networkId == nullptr) {
-        HILOGE("OnSoftbusLeaveLNNResult: success, but networkId is nullptr");
-        return;
-    }
-
-    std::string netIdStr = networkId;
-    HILOGI("OnSoftbusLeaveLNNResult: success, networkId %{public}s, retCode %{public}d",
-        GetAnonyString(netIdStr).c_str(), retCode);
-}
-
-int32_t SoftbusAdapter::GetSoftbusTrustDevices(const std::string &packageName, std::string &extra,
-    std::vector<DmDeviceInfo> &deviceList)
-{
-    // extra not used yet
-    (void) packageName;
-    (void) extra;
-
-    HILOGI("GetSoftbusTrustDevices start, packageName: %{public}s", packageName.c_str());
-    NodeBasicInfo *info = nullptr;
-    int32_t infoNum = 0;
-    int32_t ret = GetAllNodeDeviceInfo(DEVICE_MANAGER_PACKAGE_NAME.c_str(), &info, &infoNum);
-    if (ret != 0) {
-        HILOGE("GetAllNodeDeviceInfo failed with ret %{public}d", ret);
-        return ret;
-    }
-
-    for (int32_t i = 0; i < infoNum; i++) {
-        NodeBasicInfo *nodeBasicInfo = info + i;
-        if (nodeBasicInfo == nullptr) {
-            HILOGE("nodeBasicInfo is empty for index %{public}d, infoNum %{public}d.", i, infoNum);
-            continue;
-        }
-        DmDeviceInfo deviceInfo;
-        deviceInfo.deviceId = nodeBasicInfo->networkId;
-        deviceInfo.deviceName = nodeBasicInfo->deviceName;
-        deviceInfo.deviceTypeId = (DMDeviceType)nodeBasicInfo->deviceTypeId;
-        deviceList.push_back(deviceInfo);
-    }
-    FreeNodeInfo(info);
-    HILOGI("success, packageName: %{public}s, deviceCount %{public}d", packageName.c_str(), deviceList.size());
-    return ERR_OK;
-}
-
-bool SoftbusAdapter::IsDeviceOnLine(std::string &deviceId)
-{
-    std::vector<DmDeviceInfo> deviceList;
-    std::string extra = "";
-    if (GetSoftbusTrustDevices(DEVICE_MANAGER_PACKAGE_NAME, extra, deviceList) != ERR_OK) {
-        HILOGE("SoftbusAdapter::IsDeviceOnLine GetSoftbusTrustDevices failed");
-        return false;
-    }
-
-    for (auto iter = deviceList.begin(); iter != deviceList.end(); ++iter) {
-        std::string& networkId = iter->deviceId;
-        if (networkId == deviceId) {
-            HILOGI("SoftbusAdapter::IsDeviceOnLine devccie %{public}s online", GetAnonyString(deviceId).c_str());
-            return true;
-        }
-
-        uint8_t udid[UDID_BUF_LEN] = {0};
-        int32_t ret = GetNodeKeyInfo(DEVICE_MANAGER_PACKAGE_NAME.c_str(), networkId.c_str(),
-            NodeDeivceInfoKey::NODE_KEY_UDID, udid, sizeof(udid));
-        if (ret != ERR_OK) {
-            HILOGE("SoftbusAdapter::IsDeviceOnLine GetNodeKeyInfo failed");
-            return false;
-        }
-
-        if (strcmp((char *)udid, deviceId.c_str()) == 0) {
-            HILOGI("SoftbusAdapter::IsDeviceOnLine devccie %{public}s online", GetAnonyString(deviceId).c_str());
-            return true;
-        }
-    }
-    return false;
-}
-
-void SoftbusAdapter::RegSoftBusDeviceStateListener()
-{
-    int32_t ret;
-    int32_t retryTimes = 0;
-    do {
-        ret = RegNodeDeviceStateCb(DEVICE_MANAGER_PACKAGE_NAME.c_str(), &softbusNodeStateCb);
-        if (ret != ERR_OK) {
-            ++retryTimes;
-            HILOGE("RegNodeDeviceStateCb failed with ret %{public}d, retryTimes %{public}d", ret, retryTimes);
-            usleep(CHECK_INTERVAL);
-        }
-    } while (ret != ERR_OK);
-    HILOGI("RegNodeDeviceStateCb success.");
-}
-
-int32_t SoftbusAdapter::StartSoftbusDiscovery(std::string &packageName, DmSubscribeInfo &info)
-{
-    std::shared_ptr<SubscribeInfoAdapter> subinfo = nullptr;
-    if (subscribeInfos_.find(packageName) == subscribeInfos_.end()) {
-        subscribeInfos_[packageName] = {};
-    }
-
-    auto iter = subscribeInfos_.find(packageName);
-    std::vector<std::shared_ptr<SubscribeInfoAdapter>> &subinfoVector = iter->second;
-    auto vectorIter = subinfoVector.begin();
-    for (; vectorIter != subinfoVector.end(); ++vectorIter) {
-        if (vectorIter->get()->subscribeIdOrigin == info.subscribeId) {
-            subinfo = *vectorIter;
-            break;
-        }
-    }
-
-    if (subinfo == nullptr) {
-        subinfo = std::make_shared<SubscribeInfoAdapter>();
-        subinfo->subscribeIdOrigin = info.subscribeId;
-        subinfo->subscribeIdPrefix = subscribeIdPrefix++;
-        subinfo->info.subscribeId = (subinfo->subscribeIdPrefix << SUBSCRIBE_ID_PREFIX_LEN) | info.subscribeId;
-        subinfo->info.mode = (DiscoverMode)info.mode;
-        subinfo->info.medium = (ExchanageMedium)info.medium;
-        subinfo->info.freq = (ExchangeFreq)info.freq;
-        subinfo->info.isSameAccount = info.isSameAccount;
-        subinfo->info.isWakeRemote = info.isWakeRemote;
-        subinfo->info.capability = info.capability.c_str();
-        subinfo->info.capabilityData = nullptr;
-        subinfo->info.dataLen = 0;
-    }
-
-    if (vectorIter == subinfoVector.end()) {
-        subinfoVector.push_back(subinfo);
-    }
-
-    HILOGI("StartDiscovery, packageName: %{public}s, subscribeId %{public}d, prefix %{public}d, origin %{public}d",
-        packageName.c_str(), subinfo->info.subscribeId, subinfo->subscribeIdPrefix, subinfo->subscribeIdOrigin);
-    int ret = StartDiscovery(DEVICE_MANAGER_PACKAGE_NAME.c_str(), &subinfo->info, &softbusDiscoverCallback);
-    if (ret != ERR_OK) {
-        HILOGE("StartDiscovery failed with ret %{public}d.", ret);
-    }
-    return ret;
-}
-
-bool SoftbusAdapter::GetPackageNameBySubscribeId(int32_t adapterId, std::string &packageName)
-{
-    for (auto iter = subscribeInfos_.begin(); iter != subscribeInfos_.end(); ++iter) {
-        std::vector<std::shared_ptr<SubscribeInfoAdapter>> &subinfoVector = iter->second;
-        auto vectorIter = subinfoVector.begin();
-        for (; vectorIter != subinfoVector.end(); ++vectorIter) {
-            if (vectorIter->get()->info.subscribeId == adapterId) {
-                packageName = iter->first;
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-bool SoftbusAdapter::GetsubscribeIdAdapter(std::string packageName, int16_t originId, int32_t &adapterId)
-{
-    HILOGI("GetsubscribeIdAdapter in, packageName: %{public}s, originId:%{public}d", packageName.c_str(),
-        (int32_t)originId);
-    auto iter = subscribeInfos_.find(packageName);
-    if (iter == subscribeInfos_.end()) {
-        HILOGE("subscribeInfo not find for packageName: %{public}s", packageName.c_str());
-        return false;
-    }
-
-    std::vector<std::shared_ptr<SubscribeInfoAdapter>> &subinfoVector = iter->second;
-    auto vectorIter = subinfoVector.begin();
-    for (; vectorIter != subinfoVector.end(); ++vectorIter) {
-        if (vectorIter->get()->subscribeIdOrigin == originId) {
-            HILOGE("find adapterId:%{public}d for packageName: %{public}s, originId:%{public}d",
-                vectorIter->get()->info.subscribeId, packageName.c_str(), (int32_t)originId);
-            adapterId = vectorIter->get()->info.subscribeId;
-            return true;
-        }
-    }
-    HILOGE("subscribe not find. packageName: %{public}s, originId:%{public}d", packageName.c_str(), (int32_t)originId);
-    return false;
-}
-
-int32_t SoftbusAdapter::StopSoftbusDiscovery(std::string &packageName, uint16_t subscribeId)
-{
-    int32_t subscribeIdAdapter = -1;
-    if (!GetsubscribeIdAdapter(packageName, subscribeId, subscribeIdAdapter)) {
-        HILOGE("StopDiscovery failed, subscribeId not match");
-        return ERR_INVALID_OPERATION;
-    }
-
-    HILOGI("StopDiscovery begin, packageName: %{public}s, subscribeId:%{public}d, subscribeIdAdapter:%{public}d",
-        packageName.c_str(), (int32_t)subscribeId, subscribeIdAdapter);
-    int ret = StopDiscovery(DEVICE_MANAGER_PACKAGE_NAME.c_str(), subscribeIdAdapter);
-    if (ret != ERR_OK) {
-        HILOGE("StopDiscovery failed with ret %{public}d", ret);
-        return ret;
-    }
-
-    auto iter = subscribeInfos_.find(packageName);
-    auto subinfoVector = iter->second;
-    auto vectorIter = subinfoVector.begin();
-    while (vectorIter != subinfoVector.end()) {
-        if (vectorIter->get()->subscribeIdOrigin == subscribeId) {
-            vectorIter = subinfoVector.erase(vectorIter);
-            break;
-        } else {
-            ++vectorIter;
-        }
-    }
-    if (subinfoVector.empty()) {
-        subscribeInfos_.erase(packageName);
-    }
-    HILOGI("SoftbusAdapter::StopSoftbusDiscovery completed, packageName: %{public}s", packageName.c_str());
-    return ERR_OK;
-}
-
-int32_t SoftbusAdapter::SoftbusJoinLnn(std::string devId)
-{
-    auto iter = discoverDeviceInfoMap_.find(devId);
-    if (iter == discoverDeviceInfoMap_.end()) {
-        HILOGE("SoftbusAdapter::SoftbusJoinLnn deviceInfo not found: %{public}s", GetAnonyString(devId).c_str());
-        return ERR_INVALID_OPERATION;
-    }
-
-    DeviceInfo *deviceInfo = iter->second.get();
-    if (deviceInfo->addrNum <= 0 || deviceInfo->addrNum >= CONNECTION_ADDR_MAX) {
-        HILOGE("deviceInfo addrNum not valid, addrNum %{public}d", deviceInfo->addrNum);
-        return ERR_DEVICEMANAGER_OPERATION_FAILED;
-    }
-
-    for (unsigned int i = 0; i < deviceInfo->addrNum; i++) {
-        // currently, only support CONNECT_ADDR_WLAN
-        if (deviceInfo->addr[i].type != ConnectionAddrType::CONNECTION_ADDR_WLAN &&
-            deviceInfo->addr[i].type != ConnectionAddrType::CONNECTION_ADDR_ETH) {
-            continue;
-        }
-
-        HILOGI("SoftbusAdapter::SoftbusJoinLnn call softbus JoinLNN.");
-        return JoinLNN(DEVICE_MANAGER_PACKAGE_NAME.c_str(), &deviceInfo->addr[i], OnSoftbusJoinLNNResult);
-    }
-
-    return ERR_DEVICEMANAGER_OPERATION_FAILED;
-}
-
-int32_t SoftbusAdapter::SoftbusLeaveLnn(std::string networkId)
-{
-    return LeaveLNN(networkId.c_str(), OnSoftbusLeaveLNNResult);
-}
-
-int32_t SoftbusAdapter::GetConnectionIpAddr(std::string deviceId, std::string &ipAddr)
-{
-    auto iter = discoverDeviceInfoMap_.find(deviceId);
-    if (iter == discoverDeviceInfoMap_.end()) {
-        HILOGE("deviceInfo not found by deviceId %{public}s", GetAnonyString(deviceId).c_str());
-        return ERR_INVALID_OPERATION;
-    }
-
-    DeviceInfo *deviceInfo = iter->second.get();
-    if (deviceInfo->addrNum <= 0 || deviceInfo->addrNum >= CONNECTION_ADDR_MAX) {
-        HILOGE("deviceInfo addrNum not valid, addrNum %{public}d", deviceInfo->addrNum);
-        return ERR_DEVICEMANAGER_OPERATION_FAILED;
-    }
-
-    for (unsigned int i = 0; i < deviceInfo->addrNum; ++i) {
-        // currently, only support CONNECT_ADDR_WLAN
-        if (deviceInfo->addr[i].type != ConnectionAddrType::CONNECTION_ADDR_WLAN &&
-            deviceInfo->addr[i].type != ConnectionAddrType::CONNECTION_ADDR_ETH) {
-            continue;
-        }
-        ipAddr = deviceInfo->addr[i].info.ip.ip;
-        HILOGI("SoftbusAdapter::GetConnectionIpAddr get ip ok.");
-        return ERR_OK;
-    }
-    HILOGE("failed to get ipAddr for deviceId %{public}s", GetAnonyString(deviceId).c_str());
-    return ERR_DEVICEMANAGER_OPERATION_FAILED;
-}
-
-const std::map<std::string, std::vector<std::shared_ptr<SubscribeInfoAdapter>>>& SoftbusAdapter::GetsubscribeInfos()
-{
-    return subscribeInfos_;
 }
 
 void SoftbusAdapter::SaveDiscoverDeviceInfo(const DeviceInfo *deviceInfo)
@@ -491,7 +129,7 @@ void SoftbusAdapter::SaveDiscoverDeviceInfo(const DeviceInfo *deviceInfo)
     std::shared_ptr<DeviceInfo> info = std::make_shared<DeviceInfo>();
     DeviceInfo *infoPtr = info.get();
     if (memcpy_s(infoPtr, sizeof(DeviceInfo), deviceInfo, sizeof(DeviceInfo)) != 0) {
-        HILOGE("SoftbusAdapter::SaveDiscoverDeviceInfo failed.");
+        DMLOG(DM_LOG_ERROR, "SoftbusAdapter::SaveDiscoverDeviceInfo failed.");
         return;
     }
 
@@ -508,17 +146,368 @@ void SoftbusAdapter::SaveDiscoverDeviceInfo(const DeviceInfo *deviceInfo)
     }
 }
 
-void SoftbusAdapter::RemoveDiscoverDeviceInfo(const std::string deviceId)
+void SoftbusAdapter::OnSoftbusDeviceFound(const DeviceInfo *device)
 {
-    discoverDeviceInfoMap_.erase(deviceId);
-    auto iter = discoverDeviceInfoVector_.begin();
-    while (iter != discoverDeviceInfoVector_.end()) {
-        if (strcmp(iter->get()->devId, deviceId.c_str()) == 0) {
-            iter = discoverDeviceInfoVector_.erase(iter);
-        } else {
-            ++iter;
+    if (device == nullptr) {
+        DMLOG(DM_LOG_ERROR, "deviceinfo is null");
+        return;
+    }
+
+    std::string deviceId = device->devId;
+    DMLOG(DM_LOG_INFO, "SoftbusAdapter::OnSoftbusDeviceFound device %s found.", GetAnonyString(deviceId).c_str());
+    if (IsDeviceOnLine(deviceId)) {
+        return;
+    }
+
+    SaveDiscoverDeviceInfo(device);
+    for (auto iter = subscribeInfos_.begin(); iter != subscribeInfos_.end(); ++iter) {
+        auto subInfovector = iter->second;
+        for (auto vectorIter = subInfovector.begin(); vectorIter != subInfovector.end(); ++vectorIter) {
+            auto info = vectorIter->get();
+            DMLOG(DM_LOG_INFO, "subscribe info capability:%s.", info->info.capability);
+            if (strcmp(DM_CAPABILITY_OSD, info->info.capability) != 0) {
+                DMLOG(DM_LOG_ERROR, "subscribe info capability invalid.");
+            }
+            uint16_t originId = (uint16_t)(((uint32_t)info->info.subscribeId) & SUBSCRIBE_ID_MASK);
+            std::string strPkgName = iter->first;
+            DmDeviceInfo dmDeviceInfo;
+
+            DeviceInfoCopyToDmDevice(dmDeviceInfo, *device);
+            IpcServerListenerAdapter::GetInstance().OnDeviceFound(strPkgName, originId, dmDeviceInfo);
         }
     }
+}
+
+bool SoftbusAdapter::GetpkgNameBySubscribeId(int32_t adapterId, std::string &pkgName)
+{
+    for (auto iter = subscribeInfos_.begin(); iter != subscribeInfos_.end(); ++iter) {
+        std::vector<std::shared_ptr<SubscribeInfoAdapter>> &subinfoVector = iter->second;
+        auto vectorIter = subinfoVector.begin();
+        for (; vectorIter != subinfoVector.end(); ++vectorIter) {
+            if (vectorIter->get()->info.subscribeId == adapterId) {
+                pkgName = iter->first;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void SoftbusAdapter::OnSoftbusDiscoverFailed(int32_t subscribeId, DiscoveryFailReason failReason)
+{
+    DMLOG(DM_LOG_INFO, "In, subscribeId %d, failReason %d", subscribeId, (int32_t)failReason);
+    std::string pkgName;
+    if (!GetpkgNameBySubscribeId(subscribeId, pkgName)) {
+        DMLOG(DM_LOG_ERROR, "OnSoftbusDiscoverFailed: pkgName not found");
+        return;
+    }
+
+    uint16_t originId = (uint16_t)(((uint32_t)subscribeId) & SUBSCRIBE_ID_MASK);
+    IpcServerListenerAdapter::GetInstance().OnDiscoverFailed(pkgName, originId, failReason);
+}
+
+void SoftbusAdapter::OnSoftbusDiscoverySuccess(int32_t subscribeId)
+{
+    DMLOG(DM_LOG_INFO, "In, subscribeId %d", subscribeId);
+    std::string pkgName;
+    if (!GetpkgNameBySubscribeId(subscribeId, pkgName)) {
+        DMLOG(DM_LOG_ERROR, "OnSoftbusDiscoverySuccess: pkgName not found");
+        return;
+    }
+    uint16_t originId = (uint16_t)(((uint32_t)subscribeId) & SUBSCRIBE_ID_MASK);
+    IpcServerListenerAdapter::GetInstance().OnDiscoverySuccess(pkgName, originId);
+}
+
+bool SoftbusAdapter::GetsubscribeIdAdapter(std::string &pkgName, int16_t originId, int32_t &adapterId)
+{
+    DMLOG(DM_LOG_INFO, "GetsubscribeIdAdapter in, pkgName: %s, originId:%d", pkgName.c_str(),
+        (int32_t)originId);
+    auto iter = subscribeInfos_.find(pkgName);
+    if (iter == subscribeInfos_.end()) {
+        DMLOG(DM_LOG_ERROR, "subscribeInfo not find for pkgName: %s", pkgName.c_str());
+        return false;
+    }
+
+    std::vector<std::shared_ptr<SubscribeInfoAdapter>> &subinfoVector = iter->second;
+    auto vectorIter = subinfoVector.begin();
+    for (; vectorIter != subinfoVector.end(); ++vectorIter) {
+        if (vectorIter->get()->subscribeIdOrigin == originId) {
+            DMLOG(DM_LOG_ERROR, "find adapterId:%d for pkgName: %s, originId:%d",
+                vectorIter->get()->info.subscribeId, pkgName.c_str(), (int32_t)originId);
+            adapterId = vectorIter->get()->info.subscribeId;
+            return true;
+        }
+    }
+    DMLOG(DM_LOG_ERROR, "subscribe not find. pkgName: %s, originId:%d", pkgName.c_str(), (int32_t)originId);
+    return false;
+}
+
+int32_t SoftbusAdapter::Init()
+{
+    int32_t ret;
+    int32_t retryTimes = 0;
+    do {
+        ret = RegNodeDeviceStateCb(DEVICE_MANAGER_PACKAGE_NAME.c_str(), &softbusNodeStateCb_);
+        if (ret != DEVICEMANAGER_OK) {
+            ++retryTimes;
+            DMLOG(DM_LOG_ERROR, "RegNodeDeviceStateCb failed with ret %d, retryTimes %d", ret, retryTimes);
+            usleep(CHECK_INTERVAL);
+        }
+    } while (ret != DEVICEMANAGER_OK);
+    DMLOG(DM_LOG_INFO, "RegNodeDeviceStateCb success.");
+    SoftbusSession::GetInstance().Start();
+
+    PublishInfo dmPublishInfo;
+    dmPublishInfo.publishId = DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID;
+    dmPublishInfo.mode = DiscoverMode::DISCOVER_MODE_ACTIVE;
+    dmPublishInfo.medium = ExchanageMedium::AUTO;
+    dmPublishInfo.freq = ExchangeFreq::HIGH;
+    dmPublishInfo.capability = DM_CAPABILITY_OSD;
+    dmPublishInfo.capabilityData = nullptr;
+    dmPublishInfo.dataLen = 0;
+    ret = PublishService(DEVICE_MANAGER_PACKAGE_NAME.c_str(), &dmPublishInfo, &servicePublishCallback_);
+    DMLOG(DM_LOG_INFO, "service publish result is : %d", ret);
+    return ret;
+}
+
+int32_t SoftbusAdapter::GetTrustDevices(const std::string &pkgName, NodeBasicInfo **info, int32_t *infoNum)
+{
+    DMLOG(DM_LOG_INFO, "DM_GetSoftbusTrustDevices start, pkgName: %s", pkgName.c_str());
+    int32_t ret = GetAllNodeDeviceInfo(DEVICE_MANAGER_PACKAGE_NAME.c_str(), info, infoNum);
+    if (ret != 0) {
+        DMLOG(DM_LOG_ERROR, "GetAllNodeDeviceInfo failed with ret %d", ret);
+        return ret;
+    }
+    DMLOG(DM_LOG_INFO, "success, pkgName: %s, deviceCount %d", pkgName.c_str(), *infoNum);
+    return DEVICEMANAGER_OK;
+}
+
+int32_t SoftbusAdapter::StartDiscovery(std::string &pkgName, SubscribeInfo *info)
+{
+    std::shared_ptr<SubscribeInfoAdapter> subinfo = nullptr;
+    if (subscribeInfos_.find(pkgName) == subscribeInfos_.end()) {
+        subscribeInfos_[pkgName] = {};
+    }
+
+    auto iter = subscribeInfos_.find(pkgName);
+    std::vector<std::shared_ptr<SubscribeInfoAdapter>> &subinfoVector = iter->second;
+    auto vectorIter = subinfoVector.begin();
+    for (; vectorIter != subinfoVector.end(); ++vectorIter) {
+        if (vectorIter->get()->subscribeIdOrigin == info->subscribeId) {
+            subinfo = *vectorIter;
+            break;
+        }
+    }
+    if (subinfo == nullptr) {
+        std::lock_guard<std::mutex> autoLock(lock_);
+        subinfo = std::make_shared<SubscribeInfoAdapter>();
+        subinfo->subscribeIdOrigin = info->subscribeId;
+        subinfo->subscribeIdPrefix = subscribeIdPrefix++;
+        subinfo->info = *info;
+        subinfo->info.subscribeId = (subinfo->subscribeIdPrefix << SUBSCRIBE_ID_PREFIX_LEN) | info->subscribeId;
+    }
+    if (vectorIter == subinfoVector.end()) {
+        subinfoVector.push_back(subinfo);
+    }
+    DMLOG(DM_LOG_INFO, "StartDiscovery, pkgName: %s, subscribeId %d, prefix %d, origin %d",
+        pkgName.c_str(), subinfo->info.subscribeId, subinfo->subscribeIdPrefix, subinfo->subscribeIdOrigin);
+    DMLOG(DM_LOG_INFO, "Capability: %s", subinfo->info.capability);
+    int32_t ret = ::StartDiscovery(DEVICE_MANAGER_PACKAGE_NAME.c_str(), &subinfo->info, &softbusDiscoverCallback_);
+    if (ret != 0) {
+        DMLOG(DM_LOG_ERROR, "StartDiscovery failed with ret %d.", ret);
+        return DEVICEMANAGER_DISCOVERY_FAILED;
+    }
+    return DEVICEMANAGER_OK;
+}
+
+int32_t SoftbusAdapter::StopDiscovery(std::string &pkgName, uint16_t subscribeId)
+{
+    int32_t subscribeIdAdapter = -1;
+    if (!GetsubscribeIdAdapter(pkgName, subscribeId, subscribeIdAdapter)) {
+        DMLOG(DM_LOG_ERROR, "StopDiscovery failed, subscribeId not match");
+        return DEVICEMANAGER_FAILED;
+    }
+
+    DMLOG(DM_LOG_INFO, "StopDiscovery begin, pkgName: %s, subscribeId:%d, subscribeIdAdapter:%d",
+        pkgName.c_str(), (int32_t)subscribeId, subscribeIdAdapter);
+    int32_t ret = ::StopDiscovery(DEVICE_MANAGER_PACKAGE_NAME.c_str(), subscribeIdAdapter);
+    if (ret != 0) {
+        DMLOG(DM_LOG_ERROR, "StopDiscovery failed with ret %d", ret);
+        return ret;
+    }
+
+    auto iter = subscribeInfos_.find(pkgName);
+    auto subinfoVector = iter->second;
+    auto vectorIter = subinfoVector.begin();
+    while (vectorIter != subinfoVector.end()) {
+        if (vectorIter->get()->subscribeIdOrigin == subscribeId) {
+            vectorIter = subinfoVector.erase(vectorIter);
+            break;
+        } else {
+            ++vectorIter;
+        }
+    }
+    if (subinfoVector.empty()) {
+        subscribeInfos_.erase(pkgName);
+    }
+    DMLOG(DM_LOG_INFO, "DM_StopSoftbusDiscovery completed, pkgName: %s", pkgName.c_str());
+    return DEVICEMANAGER_OK;
+}
+
+bool SoftbusAdapter::IsDeviceOnLine(std::string &deviceId)
+{
+    NodeBasicInfo *info = nullptr;
+    int32_t infoNum = 0;
+
+    if (GetTrustDevices(DEVICE_MANAGER_PACKAGE_NAME.c_str(), &info, &infoNum) != DEVICEMANAGER_OK) {
+        DMLOG(DM_LOG_ERROR, "DM_IsDeviceOnLine DM_GetSoftbusTrustDevices failed");
+        return false;
+    }
+
+    bool bDeviceOnline = false;
+    for (int32_t i = 0; i < infoNum; ++i) {
+        NodeBasicInfo *nodeBasicInfo = info + i;
+        if (nodeBasicInfo == nullptr) {
+            DMLOG(DM_LOG_ERROR, "nodeBasicInfo is empty for index %d, infoNum %d.", i, infoNum);
+            continue;
+        }
+        std::string networkId = nodeBasicInfo->networkId;
+        if (networkId == deviceId) {
+            DMLOG(DM_LOG_INFO, "DM_IsDeviceOnLine device %s online", GetAnonyString(deviceId).c_str());
+            bDeviceOnline = true;
+            break;
+        }
+        uint8_t udid[UDID_BUF_LEN] = {0};
+        int32_t ret = GetNodeKeyInfo(DEVICE_MANAGER_PACKAGE_NAME.c_str(), networkId.c_str(),
+            NodeDeivceInfoKey::NODE_KEY_UDID, udid, sizeof(udid));
+        if (ret != DEVICEMANAGER_OK) {
+            DMLOG(DM_LOG_ERROR, "DM_IsDeviceOnLine GetNodeKeyInfo failed");
+            break;
+        }
+
+        if (strcmp((char *)udid, deviceId.c_str()) == 0) {
+            DMLOG(DM_LOG_INFO, "DM_IsDeviceOnLine devccie %s online", GetAnonyString(deviceId).c_str());
+            bDeviceOnline = true;
+            break;
+        }
+    }
+    FreeNodeInfo(info);
+    return bDeviceOnline;
+}
+
+int32_t SoftbusAdapter::GetConnectionIpAddr(std::string deviceId, std::string &ipAddr)
+{
+    auto iter = discoverDeviceInfoMap_.find(deviceId);
+    if (iter == discoverDeviceInfoMap_.end()) {
+        DMLOG(DM_LOG_ERROR, "deviceInfo not found by deviceId %s", GetAnonyString(deviceId).c_str());
+        return DEVICEMANAGER_FAILED;
+    }
+
+    DeviceInfo *deviceInfo = iter->second.get();
+    if (deviceInfo->addrNum <= 0 || deviceInfo->addrNum >= CONNECTION_ADDR_MAX) {
+        DMLOG(DM_LOG_ERROR, "deviceInfo addrNum not valid, addrNum %d", deviceInfo->addrNum);
+        return DEVICEMANAGER_FAILED;
+    }
+
+    for (uint32_t i = 0; i < deviceInfo->addrNum; ++i) {
+        // currently, only support CONNECT_ADDR_WLAN
+        if (deviceInfo->addr[i].type != ConnectionAddrType::CONNECTION_ADDR_WLAN &&
+            deviceInfo->addr[i].type != ConnectionAddrType::CONNECTION_ADDR_ETH) {
+            continue;
+        }
+        ipAddr = deviceInfo->addr[i].info.ip.ip;
+        DMLOG(DM_LOG_INFO, "DM_GetConnectionIpAddr get ip ok.");
+        return DEVICEMANAGER_OK;
+    }
+    DMLOG(DM_LOG_ERROR, "failed to get ipAddr for deviceId %s", GetAnonyString(deviceId).c_str());
+    return DEVICEMANAGER_FAILED;
+}
+
+// eth >> wlan >> ble >> br
+ConnectionAddr *SoftbusAdapter::GetConnectAddrByType(DeviceInfo *deviceInfo, ConnectionAddrType type)
+{
+    if (deviceInfo == nullptr) {
+        return nullptr;
+    }
+    for (uint32_t i = 0; i < deviceInfo->addrNum; ++i) {
+        if (deviceInfo->addr[i].type == type) {
+            return &deviceInfo->addr[i];
+        }
+    }
+    return nullptr;
+}
+
+ConnectionAddr *SoftbusAdapter::GetConnectAddr(std::string deviceId)
+{
+    auto iter = discoverDeviceInfoMap_.find(deviceId);
+    if (iter == discoverDeviceInfoMap_.end()) {
+        DMLOG(DM_LOG_ERROR, "deviceInfo not found by deviceId %s", GetAnonyString(deviceId).c_str());
+        return nullptr;
+    }
+
+    DeviceInfo *deviceInfo = iter->second.get();
+    if (deviceInfo->addrNum <= 0 || deviceInfo->addrNum >= CONNECTION_ADDR_MAX) {
+        DMLOG(DM_LOG_ERROR, "deviceInfo addrNum not valid, addrNum %d", deviceInfo->addrNum);
+        return nullptr;
+    }
+
+    ConnectionAddr *addr = nullptr;
+    addr = GetConnectAddrByType(deviceInfo, ConnectionAddrType::CONNECTION_ADDR_ETH);
+    if (addr != nullptr) {
+        DMLOG(DM_LOG_INFO, "get ETH ConnectionAddr for deviceId %s", GetAnonyString(deviceId).c_str());
+        return addr;
+    }
+
+    addr = GetConnectAddrByType(deviceInfo, ConnectionAddrType::CONNECTION_ADDR_WLAN);
+    if (addr != nullptr) {
+        DMLOG(DM_LOG_INFO, "get WLAN ConnectionAddr for deviceId %s", GetAnonyString(deviceId).c_str());
+        return addr;
+    }
+
+    addr = GetConnectAddrByType(deviceInfo, ConnectionAddrType::CONNECTION_ADDR_BLE);
+    if (addr != nullptr) {
+        DMLOG(DM_LOG_INFO, "get BLE ConnectionAddr for deviceId %s", GetAnonyString(deviceId).c_str());
+        return addr;
+    }
+
+    addr = GetConnectAddrByType(deviceInfo, ConnectionAddrType::CONNECTION_ADDR_BR);
+    if (addr != nullptr) {
+        DMLOG(DM_LOG_INFO, "get BR ConnectionAddr for deviceId %s", GetAnonyString(deviceId).c_str());
+        return addr;
+    }
+
+    DMLOG(DM_LOG_ERROR, "failed to get ConnectionAddr for deviceId %s", GetAnonyString(deviceId).c_str());
+    return nullptr;
+}
+
+void SoftbusAdapter::NodeBasicInfoCopyToDmDevice(DmDeviceInfo &dmDeviceInfo, NodeBasicInfo &nodeBasicInfo)
+{
+    (void)memset_s(&dmDeviceInfo, sizeof(DmDeviceInfo), 0, sizeof(DmDeviceInfo));
+    (void)memcpy_s(dmDeviceInfo.deviceId, sizeof(dmDeviceInfo.deviceId), nodeBasicInfo.networkId,
+        std::min(sizeof(dmDeviceInfo.deviceId), sizeof(nodeBasicInfo.networkId)));
+    (void)memcpy_s(dmDeviceInfo.deviceName, sizeof(dmDeviceInfo.deviceName), nodeBasicInfo.deviceName,
+        std::min(sizeof(dmDeviceInfo.deviceName), sizeof(nodeBasicInfo.deviceName)));
+    dmDeviceInfo.deviceTypeId = (DMDeviceType)nodeBasicInfo.deviceTypeId;
+}
+
+void SoftbusAdapter::DeviceInfoCopyToDmDevice(DmDeviceInfo &dmDeviceInfo, const DeviceInfo &deviceInfo)
+{
+    (void)memset_s(&dmDeviceInfo, sizeof(DmDeviceInfo), 0, sizeof(DmDeviceInfo));
+    (void)memcpy_s(dmDeviceInfo.deviceId, sizeof(dmDeviceInfo.deviceId), deviceInfo.devId,
+        std::min(sizeof(dmDeviceInfo.deviceId), sizeof(deviceInfo.devId)));
+    (void)memcpy_s(dmDeviceInfo.deviceName, sizeof(dmDeviceInfo.deviceName), deviceInfo.devName,
+        std::min(sizeof(dmDeviceInfo.deviceName), sizeof(deviceInfo.devName)));
+    dmDeviceInfo.deviceTypeId = (DMDeviceType)deviceInfo.devType;
+}
+
+void PublishServiceCallBack::OnPublishSuccess(int32_t publishId)
+{
+    DMLOG(DM_LOG_INFO, "service publish succeed, publishId: %d", publishId);
+}
+
+void PublishServiceCallBack::OnPublishFail(int32_t publishId, PublishFailReason reason)
+{
+    DMLOG(DM_LOG_INFO, "service publish failed, publishId: %d, reason: %d", publishId, reason);
 }
 } // namespace DistributedHardware
 } // namespace OHOS

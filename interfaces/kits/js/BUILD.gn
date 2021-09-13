@@ -11,72 +11,115 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//build/ohos.gni")
+if (defined(ohos_lite)) {
+  import("//build/lite/config/component/lite_component.gni")
+} else {
+  import("//build/ohos.gni")
+}
 import("//foundation/distributedhardware/devicemanager/devicemanager.gni")
 
-config("dmnativejs_config") {
-  visibility = [ ":*" ]
-  include_dirs = [
-    "//third_party/node/src",
-    "//foundation/ace/napi/native_engine",
-    "//foundation/ace/napi/interfaces/kits",
-    "//utils/native/base/include",
-    "include",
-    "${common_path}/log/include",
-    "${common_path}/utils/include",
-    "${innerkits_path}/native_cpp/include",
-  ]
-
-  cflags = [
-    "-Wall",
-    "-Werror",
-    "-Wdate-time",
-    "-Wfloat-equal",
-    "-Wshadow",
-    "-Wformat=2",
-    "-fdata-sections",
-    "-ffunction-sections",
-    "-Os",
-  ]
-
-  cflags_cc = [
-    "-Os",
-  ]
-}
-
-ohos_shared_library("devicemanager") {
-  sources = [
-    "src/native_devicemanager_js.cpp",
-    "src/dm_native_event.cpp",
+if (defined(ohos_lite)) {
+  shared_library("devicemanager") {
+    include_dirs = [
+      "//third_party/node/src",
+      "//third_party/json/include",
+      "${common_path}/include",
+      "//foundation/ace/napi/native_engine",
+      "//foundation/ace/napi/interfaces/kits",
+      "//utils/native/base/include",
+      "include",
+      "${utils_path}/include/log",
+      "${common_path}/include/ipc",
+      "${common_path}/include/ipc/model",
+      "${common_path}/include/ipc/lite",
+      "${innerkits_path}/native_cpp/include",
+    ]
+    include_dirs += [
+      "//utils/native/lite/include",
+      "//base/hiviewdfx/hilog_lite/interfaces/native/innerkits/hilog",
+      "//third_party/bounds_checking_function/include",
+      "//foundation/communication/ipc_lite/interfaces/kits",
+      "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
     ]
 
-  configs = [ ":dmnativejs_config" ]
+    sources = [
+      "src/dm_native_event.cpp",
+      "src/native_devicemanager_js.cpp",
+    ]
 
-  deps = [
-    "//utils/native/base:utils",
-    "//foundation/ace/napi:ace_napi",
-    "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
-  ]
+    deps = [
+      "${utils_path}:devicemanagerutils",
+      "//base/hiviewdfx/hilog_lite/frameworks/featured:hilog_shared",
+      "//foundation/communication/ipc_lite:liteipc_adapter",
+      "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
+      "//foundation/distributedschedule/samgr_lite/samgr:samgr",
+      "//third_party/bounds_checking_function:libsec_shared",
+      "//utils/native/lite:utils",
+    ]
 
-  defines = [
-    "DH_LOG_TAG=\"devicemanagerkit_js\"",
-    "LOG_DOMAIN=0xD004100",
-  ]
+    cflags_cc = build_flags
 
-  external_deps = [
-    "appexecfwk_standard:appexecfwk_base",
-    "appexecfwk_standard:appexecfwk_core",
-    "hiviewdfx_hilog_native:libhilog",
-    "ipc:ipc_core",
-    "safwk:system_ability_fwk",
-    "samgr_L2:samgr_proxy",
-  ]
+    defines = [
+      "LITE_DEVICE",
+      "HI_LOG_ENABLE",
+      "DH_LOG_TAG=\"devicemanagerkit_js\"",
+      "LOG_DOMAIN=0xD004100",
+    ]
+  }
+  group("devicemanager_native_js") {
+    deps = [ ":devicemanager" ]
+  }
+} else {
+  ohos_shared_library("devicemanager") {
+    include_dirs = [
+      "//third_party/node/src",
+      "//third_party/json/include",
+      "${common_path}/include",
+      "//foundation/ace/napi/native_engine",
+      "//foundation/ace/napi/interfaces/kits",
+      "//utils/native/base/include",
+      "include",
+      "${utils_path}/include/log",
+      "${common_path}/include/ipc",
+      "${innerkits_path}/native_cpp/include",
+      "${innerkits_path}/native_cpp/include/standard",
+    ]
 
-  subsystem_name = "distributedhardware"
-  relative_install_dir = "module/distributedhardware"
-  part_name = "device_manager_base"
-}
+    sources = [
+      "src/dm_native_event.cpp",
+      "src/native_devicemanager_js.cpp",
+    ]
 
-group("devicemanager_native_js") {
-  deps = [ ":devicemanager" ]
+    deps = [
+      "${utils_path}:devicemanagerutils",
+      "//foundation/ace/napi:ace_napi",
+      "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
+      "//utils/native/base:utils",
+    ]
+
+    cflags_cc = build_flags
+
+    defines = [
+      "HI_LOG_ENABLE",
+      "DH_LOG_TAG=\"devicemanagerkit_js\"",
+      "LOG_DOMAIN=0xD004100",
+    ]
+
+    external_deps = [
+      "appexecfwk_standard:appexecfwk_base",
+      "appexecfwk_standard:appexecfwk_core",
+      "hiviewdfx_hilog_native:libhilog",
+      "ipc:ipc_core",
+      "safwk:system_ability_fwk",
+      "samgr_L2:samgr_proxy",
+    ]
+
+    subsystem_name = "distributedhardware"
+    relative_install_dir = "module/distributedhardware"
+    part_name = "device_manager_base"
+  }
+
+  group("devicemanager_native_js") {
+    deps = [ ":devicemanager" ]
+  }
 }
