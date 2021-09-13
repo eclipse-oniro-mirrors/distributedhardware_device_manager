@@ -101,7 +101,7 @@ ON_IPC_READ_RESPONSE(GET_TRUST_DEVICE_LIST, MessageParcel &reply, std::shared_pt
             pRsp->SetErrCode(DEVICEMANAGER_IPC_TRANSACTION_FAILED);
             return DEVICEMANAGER_IPC_TRANSACTION_FAILED;
         }
-        for (int32_t i = 0; i < deviceTotalSize; ++i) {
+        for (int32_t i = 0; i < deviceNum; ++i) {
             pDmDeviceinfo = pDmDeviceinfo + i;
             deviceInfoVec.emplace_back(*pDmDeviceinfo);
         }
