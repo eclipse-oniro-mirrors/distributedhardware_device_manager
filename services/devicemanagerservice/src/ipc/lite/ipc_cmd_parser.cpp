@@ -161,12 +161,14 @@ ON_IPC_SERVER_CMD(GET_TRUST_DEVICE_LIST, IpcIo &req, IpcIo &reply)
 
 ON_IPC_SERVER_CMD(REGISTER_DEVICE_MANAGER_LISTENER, IpcIo &req, IpcIo &reply)
 {
-    RegisterDeviceManagerListener(&req, &reply);
+    int32_t errCode = RegisterDeviceManagerListener(&req, &reply);
+    IpcIoPushInt32(&reply, errCode);
 }
 
 ON_IPC_SERVER_CMD(UNREGISTER_DEVICE_MANAGER_LISTENER, IpcIo &req, IpcIo &reply)
 {
-    UnRegisterDeviceManagerListener(&req, &reply);
+    int32_t errCode = UnRegisterDeviceManagerListener(&req, &reply);
+    IpcIoPushInt32(&reply, errCode);
 }
 
 ON_IPC_SERVER_CMD(START_DEVICE_DISCOVER, IpcIo &req, IpcIo &reply)

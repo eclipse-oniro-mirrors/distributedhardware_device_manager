@@ -195,7 +195,6 @@ ON_IPC_CMD(SERVER_DEVICE_STATE_NOTIFY, IpcIo &reply, const IpcContext &ctx, void
     const DmDeviceInfo *deviceInfo = (const DmDeviceInfo*)IpcIoPopFlatObj(&reply, &size);
     if (pkgName == "" || len == 0 || deviceInfo == NULL) {
         DMLOG(DM_LOG_ERROR, "OnDeviceOnline, get para failed");
-        FreeBuffer(&ctx, ipcMsg);
         return;
     }
     switch (deviceState) {
@@ -212,7 +211,6 @@ ON_IPC_CMD(SERVER_DEVICE_STATE_NOTIFY, IpcIo &reply, const IpcContext &ctx, void
             DMLOG(DM_LOG_ERROR, "unknown device state:%d", deviceState);
             break;
     }
-    FreeBuffer(&ctx, ipcMsg);
 }
 
 ON_IPC_CMD(SERVER_DEVICE_FOUND, IpcIo &reply, const IpcContext &ctx, void *ipcMsg)
@@ -224,11 +222,9 @@ ON_IPC_CMD(SERVER_DEVICE_FOUND, IpcIo &reply, const IpcContext &ctx, void *ipcMs
     const DmDeviceInfo *deviceInfo = (const DmDeviceInfo*)IpcIoPopFlatObj(&reply, &size);
     if (pkgName == "" || len == 0 || deviceInfo == NULL) {
         DMLOG(DM_LOG_ERROR, "OnDeviceChanged, get para failed");
-        FreeBuffer(&ctx, ipcMsg);
         return;
     }
     DeviceManagerNotify::GetInstance().OnDeviceFound(pkgName, subscribeId, *deviceInfo);
-    FreeBuffer(&ctx, ipcMsg);
 }
 
 ON_IPC_CMD(SERVER_DISCOVER_FINISH, IpcIo &reply, const IpcContext &ctx, void *ipcMsg)
@@ -240,7 +236,6 @@ ON_IPC_CMD(SERVER_DISCOVER_FINISH, IpcIo &reply, const IpcContext &ctx, void *ip
 
     if (pkgName == "" || len == 0) {
         DMLOG(DM_LOG_ERROR, "OnDiscoverySuccess, get para failed");
-        FreeBuffer(&ctx, ipcMsg);
         return;
     }
     if (failedReason == DEVICEMANAGER_OK) {
@@ -248,7 +243,6 @@ ON_IPC_CMD(SERVER_DISCOVER_FINISH, IpcIo &reply, const IpcContext &ctx, void *ip
     } else {
         DeviceManagerNotify::GetInstance().OnDiscoverFailed(pkgName, subscribeId, failedReason);
     }
-    FreeBuffer(&ctx, ipcMsg);
 }
 
 ON_IPC_CMD(SERVER_AUTH_RESULT, IpcIo &reply, const IpcContext &ctx, void *ipcMsg)
@@ -263,11 +257,9 @@ ON_IPC_CMD(SERVER_AUTH_RESULT, IpcIo &reply, const IpcContext &ctx, void *ipcMsg
 
     if (pkgName == "" || len == 0 || deviceId == "" || devIdLen == 0) {
         DMLOG(DM_LOG_ERROR, "OnAuthResult, get para failed");
-        FreeBuffer(&ctx, ipcMsg);
         return;
     }
     DeviceManagerNotify::GetInstance().OnAuthResult(pkgName, deviceId, pinToken, status, reason);
-    FreeBuffer(&ctx, ipcMsg);
 }
 
 ON_IPC_CMD(SERVER_CHECK_AUTH_RESULT, IpcIo &reply, const IpcContext &ctx, void *ipcMsg)
@@ -281,11 +273,9 @@ ON_IPC_CMD(SERVER_CHECK_AUTH_RESULT, IpcIo &reply, const IpcContext &ctx, void *
 
     if (pkgName == "" || len == 0 || deviceId == "" || devIdLen == 0) {
         DMLOG(DM_LOG_ERROR, "OnAuthResult, get para failed");
-        FreeBuffer(&ctx, ipcMsg);
         return;
     }
     DeviceManagerNotify::GetInstance().OnCheckAuthResult(pkgName, deviceId, resultCode, flag);
-    FreeBuffer(&ctx, ipcMsg);
 }
 
 ON_IPC_SET_REQUEST(SERVER_GET_AUTHENTCATION_INFO, std::shared_ptr<IpcReq> pBaseReq, IpcIo& request,
@@ -363,7 +353,6 @@ ON_IPC_CMD(SERVER_DEVICEMANAGER_FA_NOTIFY, IpcIo &reply, const IpcContext &ctx, 
     std::string paramJson = (const char *)IpcIoPopString(&reply, &jsonLen);
     DeviceManagerNotify::GetInstance().OnFaCall(packagename, paramJson);
     IpcIoPushInt32(&reply, DEVICEMANAGER_OK);
-    FreeBuffer(&ctx, ipcMsg);
 }
 } // namespace DistributedHardware
 } // namespace OHOS
