@@ -42,7 +42,7 @@ namespace DistributedHardware {
 namespace {
 const std::string DEVICE_MANAGER_PACKAGE_NAME = "com.huawei.devicemanager";
 const int32_t CHECK_INTERVAL = 100000; // 100ms
-const int32_t SUBSCRIBE_ID_PREFIX_LEN = 16;
+const uint32_t SUBSCRIBE_ID_PREFIX_LEN = 16;
 const int32_t SUBSCRIBE_ID_MASK = 0x0000FFFF;
 const int32_t DISCOVER_DEVICEINFO_MAX_SIZE = 20;
 }
@@ -483,20 +483,28 @@ ConnectionAddr *SoftbusAdapter::GetConnectAddr(std::string deviceId)
 void SoftbusAdapter::NodeBasicInfoCopyToDmDevice(DmDeviceInfo &dmDeviceInfo, NodeBasicInfo &nodeBasicInfo)
 {
     (void)memset_s(&dmDeviceInfo, sizeof(DmDeviceInfo), 0, sizeof(DmDeviceInfo));
-    (void)memcpy_s(dmDeviceInfo.deviceId, sizeof(dmDeviceInfo.deviceId), nodeBasicInfo.networkId,
-        std::min(sizeof(dmDeviceInfo.deviceId), sizeof(nodeBasicInfo.networkId)));
-    (void)memcpy_s(dmDeviceInfo.deviceName, sizeof(dmDeviceInfo.deviceName), nodeBasicInfo.deviceName,
-        std::min(sizeof(dmDeviceInfo.deviceName), sizeof(nodeBasicInfo.deviceName)));
+    if (memcpy_s(dmDeviceInfo.deviceId, sizeof(dmDeviceInfo.deviceId), nodeBasicInfo.networkId,
+        std::min(sizeof(dmDeviceInfo.deviceId), sizeof(nodeBasicInfo.networkId))) != DEVICEMANAGER_OK) {
+        DMLOG(DM_LOG_ERROR, "memcpy failed");
+    }
+    if (memcpy_s(dmDeviceInfo.deviceName, sizeof(dmDeviceInfo.deviceName), nodeBasicInfo.deviceName,
+        std::min(sizeof(dmDeviceInfo.deviceName), sizeof(nodeBasicInfo.deviceName))) != DEVICEMANAGER_OK) {
+        DMLOG(DM_LOG_ERROR, "memcpy failed");
+    }
     dmDeviceInfo.deviceTypeId = (DMDeviceType)nodeBasicInfo.deviceTypeId;
 }
 
 void SoftbusAdapter::DeviceInfoCopyToDmDevice(DmDeviceInfo &dmDeviceInfo, const DeviceInfo &deviceInfo)
 {
     (void)memset_s(&dmDeviceInfo, sizeof(DmDeviceInfo), 0, sizeof(DmDeviceInfo));
-    (void)memcpy_s(dmDeviceInfo.deviceId, sizeof(dmDeviceInfo.deviceId), deviceInfo.devId,
-        std::min(sizeof(dmDeviceInfo.deviceId), sizeof(deviceInfo.devId)));
-    (void)memcpy_s(dmDeviceInfo.deviceName, sizeof(dmDeviceInfo.deviceName), deviceInfo.devName,
-        std::min(sizeof(dmDeviceInfo.deviceName), sizeof(deviceInfo.devName)));
+    if (memcpy_s(dmDeviceInfo.deviceId, sizeof(dmDeviceInfo.deviceId), deviceInfo.devId,
+        std::min(sizeof(dmDeviceInfo.deviceId), sizeof(deviceInfo.devId))) != DEVICEMANAGER_OK) {
+        DMLOG(DM_LOG_ERROR, "memcpy failed");
+    }
+    if (memcpy_s(dmDeviceInfo.deviceName, sizeof(dmDeviceInfo.deviceName), deviceInfo.devName,
+        std::min(sizeof(dmDeviceInfo.deviceName), sizeof(deviceInfo.devName))) != DEVICEMANAGER_OK) {
+        DMLOG(DM_LOG_ERROR, "memcpy failed");
+    }
     dmDeviceInfo.deviceTypeId = (DMDeviceType)deviceInfo.devType;
 }
 

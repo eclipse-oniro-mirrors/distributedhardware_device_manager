@@ -34,7 +34,7 @@ public:
     }
 
 private:
-    int32_t action_;
+    int32_t action_ {0};
 };
 } // namespace DistributedHardware
 } // namespace OHOS

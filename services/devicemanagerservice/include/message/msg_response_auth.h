@@ -45,14 +45,14 @@ public:
     std::vector<std::string> GetSyncGroupList();
 
 private:
-    std::shared_ptr<MsgHead> mHead_;
-    int32_t mReply_;
+    std::shared_ptr<MsgHead> mHead_ {nullptr};
+    int32_t mReply_ {SESSION_REPLY_UNKNOWN};
     std::string mNetId_;
     std::string mGroupId_;
     std::string mGroupName_;
     std::string mDeviceId_;
-    int32_t mPinCode_;
-    int64_t mRequestId_;
+    int32_t mPinCode_ {-1};
+    int64_t mRequestId_ {-1};
     std::vector<std::string> mSyncGroupList_;
 };
 }
