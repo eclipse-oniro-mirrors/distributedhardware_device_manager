@@ -21,7 +21,7 @@
 #include "dm_app_image_info.h"
 
 #define DM_MAX_DEVICE_ID_LEN (96)
-#define DM_MAX_DEVICE_NAME_LEN (65)
+#define DM_MAX_DEVICE_NAME_LEN (128)
 
 namespace OHOS {
 namespace DistributedHardware {

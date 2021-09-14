@@ -77,7 +77,6 @@ static int32_t DeathCb(const IpcContext *context, void *ipcMsg, IpcIo *data, voi
     sid.token = svcId.token;
     sid.cookie = svcId.cookie;
     UnregisterDeathCallback(sid, svcId.cbId);
-
     return DEVICEMANAGER_OK;
 }
 
@@ -85,13 +84,11 @@ int32_t RegisterDeviceManagerListener(IpcIo *req, IpcIo *reply)
 {
     DMLOG(DM_LOG_INFO, "register service listener.");
     size_t len = 0;
-    int32_t ret = DEVICEMANAGER_OK;
     uint8_t *name = IpcIoPopString(req, &len);
     SvcIdentity *svc = IpcIoPopSvc(req);
     if (name == NULL || svc == NULL || len == 0) {
         DMLOG(DM_LOG_ERROR, "get para failed");
-        IpcIoPushInt32(reply, ret);
-        return DEVICEMANAGER_OK;
+        return DEVICEMANAGER_INVALID_PARAM;
     }
 
     CommonSvcId svcId = {0};
@@ -106,26 +103,21 @@ int32_t RegisterDeviceManagerListener(IpcIo *req, IpcIo *reply)
     free(svc);
     svc = NULL;
 #endif
-
     char *pkgName = (char *)malloc(len + 1);
     if (pkgName == NULL) {
         DMLOG(DM_LOG_ERROR, "malloc failed!");
-        IpcIoPushInt32(reply, DEVICEMANAGER_FAILED);
-        return DEVICEMANAGER_FAILED;
+        return DEVICEMANAGER_MALLOC_ERROR;
     }
     if (strcpy_s(pkgName, len + 1, (const char *)name) != DEVICEMANAGER_OK) {
         DMLOG(DM_LOG_ERROR, "strcpy_s failed!");
         free(pkgName);
-        IpcIoPushInt32(reply, DEVICEMANAGER_FAILED);
-        return DEVICEMANAGER_FAILED;
+        return DEVICEMANAGER_COPY_FAILED;
     }
     uint32_t cbId = 0;
     RegisterDeathCallback(NULL, sid, DeathCb, pkgName, &cbId);
     svcId.cbId = cbId;
     std::string strPkgName = (const char *)name;
-    ret = IpcServerListenermgr::GetInstance().RegisterListener(strPkgName, &svcId);
-    IpcIoPushInt32(reply, ret);
-    return DEVICEMANAGER_OK;
+    return IpcServerListenermgr::GetInstance().RegisterListener(strPkgName, &svcId);
 }
 
 int32_t UnRegisterDeviceManagerListener(IpcIo *req, IpcIo *reply)
@@ -138,24 +130,23 @@ int32_t UnRegisterDeviceManagerListener(IpcIo *req, IpcIo *reply)
         return DEVICEMANAGER_FAILED;
     }
 
-    CommonSvcId svcId = {0};
-    if (IpcServerListenermgr::GetInstance().GetListenerByPkgName(pkgName, &svcId) != DEVICEMANAGER_OK) {
-        DMLOG(DM_LOG_ERROR, "not found listener by package name.");
-        return DEVICEMANAGER_FAILED;
-    }
     int32_t ret = IpcServerListenermgr::GetInstance().UnregisterListener(pkgName);
     if (ret == DEVICEMANAGER_OK) {
+        CommonSvcId svcId;
+        if (IpcServerListenermgr::GetInstance().GetListenerByPkgName(pkgName, &svcId) != DEVICEMANAGER_OK) {
+            DMLOG(DM_LOG_ERROR, "not found listener by package name.");
+            return DEVICEMANAGER_FAILED;
+        }
 #ifdef __LINUX__
         BinderRelease(svcId.ipcCtx, svcId.handle);
 #endif
-        SvcIdentity sid = {0};
+        SvcIdentity sid;
         sid.handle = svcId.handle;
         sid.token = svcId.token;
         sid.cookie = svcId.cookie;
         ret = UnregisterDeathCallback(sid, svcId.cbId);
     }
-    IpcIoPushInt32(reply, ret);
-    return DEVICEMANAGER_OK;
+    return ret;
 }
 
 static const char *GetName(Service *service)
