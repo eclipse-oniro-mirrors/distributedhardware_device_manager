@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 
+#include "constants.h"
 #include "nlohmann/json.hpp"
 
 #include "msg_head.h"
