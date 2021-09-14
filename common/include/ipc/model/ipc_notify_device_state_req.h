@@ -45,7 +45,7 @@ public:
         dmDeviceInfo_ = dmDeviceInfo;
     }
 private:
-    int32_t deviceState_;
+    int32_t deviceState_ {0};
     DmDeviceInfo dmDeviceInfo_;
 };
 } // namespace DistributedHardware

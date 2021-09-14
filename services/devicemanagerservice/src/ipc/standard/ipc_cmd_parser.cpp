@@ -229,8 +229,12 @@ ON_IPC_CMD(START_DEVICE_DISCOVER, MessageParcel &data, MessageParcel &reply)
 {
     std::string pkgName = data.ReadString();
     DmSubscribeInfo *subscribeInfo = (DmSubscribeInfo *)data.ReadRawData(sizeof(DmSubscribeInfo));
-    DMLOG(DM_LOG_INFO, "pkgName:%s, subscribeId: %d", pkgName.c_str(), subscribeInfo->subscribeId);
-    int32_t result = IpcServerAdapter::GetInstance().StartDeviceDiscovery(pkgName, *subscribeInfo);
+    int32_t result = DEVICEMANAGER_NULLPTR;
+
+    if (subscribeInfo != nullptr) {
+        DMLOG(DM_LOG_INFO, "pkgName:%s, subscribeId: %d", pkgName.c_str(), subscribeInfo->subscribeId);
+        result = IpcServerAdapter::GetInstance().StartDeviceDiscovery(pkgName, *subscribeInfo);
+    }
     if (!reply.WriteInt32(result)) {
         DMLOG(DM_LOG_ERROR, "write result failed");
         return DEVICEMANAGER_WRITE_FAILED;
@@ -260,8 +264,12 @@ ON_IPC_CMD(AUTHENTICATE_DEVICE, MessageParcel &data, MessageParcel &reply)
     int32_t appThumbnailLen = data.ReadInt32();
     uint8_t *appIcon = appIconLen > 0? (uint8_t *)data.ReadRawData(appIconLen) : nullptr;
     uint8_t *appThumbnail = appThumbnailLen > 0? (uint8_t *)data.ReadRawData(appThumbnailLen) : nullptr;
-    DmAppImageInfo imageInfo(appIcon, appIconLen, appThumbnail, appThumbnailLen);
-    int32_t result = IpcServerAdapter::GetInstance().AuthenticateDevice(pkgName, *deviceInfo, imageInfo, extra);
+    int32_t result = DEVICEMANAGER_NULLPTR;
+
+    if (appIcon != nullptr && appThumbnail != nullptr) {
+        DmAppImageInfo imageInfo(appIcon, appIconLen, appThumbnail, appThumbnailLen);
+        result = IpcServerAdapter::GetInstance().AuthenticateDevice(pkgName, *deviceInfo, imageInfo, extra);
+    }
     if (!reply.WriteInt32(result)) {
         DMLOG(DM_LOG_ERROR, "write result failed");
         return DEVICEMANAGER_WRITE_FAILED;

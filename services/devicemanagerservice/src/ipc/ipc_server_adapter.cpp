@@ -77,6 +77,9 @@ int32_t IpcServerAdapter::ModuleInit()
 int32_t IpcServerAdapter::GetTrustedDeviceList(std::string &pkgName, std::string &extra,
     DmDeviceInfo **info, int32_t *infoNum)
 {
+    if (info == nullptr || infoNum == nullptr) {
+        return DEVICEMANAGER_NULLPTR;
+    }
     DMLOG(DM_LOG_INFO, "In, pkgName: %s", pkgName.c_str());
     NodeBasicInfo *nodeInfo = nullptr;
     int32_t ret = SoftbusAdapter::GetTrustDevices(pkgName, &nodeInfo, infoNum);
@@ -91,11 +94,14 @@ int32_t IpcServerAdapter::GetTrustedDeviceList(std::string &pkgName, std::string
     for (int32_t i = 0; i < *infoNum; ++i) {
         NodeBasicInfo *nodeBasicInfo = nodeInfo + i;
         DmDeviceInfo *deviceInfo = *info + i;
-
-        (void)memcpy_s(deviceInfo->deviceId, sizeof(deviceInfo->deviceId), nodeBasicInfo->networkId,
-            std::min(sizeof(deviceInfo->deviceId), sizeof(nodeBasicInfo->networkId)));
-        (void)memcpy_s(deviceInfo->deviceName, sizeof(deviceInfo->deviceName), nodeBasicInfo->deviceName,
-            std::min(sizeof(deviceInfo->deviceName), sizeof(nodeBasicInfo->deviceName)));
+        if (memcpy_s(deviceInfo->deviceId, sizeof(deviceInfo->deviceId), nodeBasicInfo->networkId,
+            std::min(sizeof(deviceInfo->deviceId), sizeof(nodeBasicInfo->networkId))) != DEVICEMANAGER_OK) {
+            DMLOG(DM_LOG_ERROR, "memcpy failed");
+        }
+        if (memcpy_s(deviceInfo->deviceName, sizeof(deviceInfo->deviceName), nodeBasicInfo->deviceName,
+            std::min(sizeof(deviceInfo->deviceName), sizeof(nodeBasicInfo->deviceName))) != DEVICEMANAGER_OK) {
+            DMLOG(DM_LOG_ERROR, "memcpy failed");
+        }
         deviceInfo->deviceTypeId = (DMDeviceType)nodeBasicInfo->deviceTypeId;
     }
     FreeNodeInfo(nodeInfo);

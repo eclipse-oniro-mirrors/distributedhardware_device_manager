@@ -30,7 +30,8 @@ namespace OHOS {
 namespace DistributedHardware {
 class MsgRequestAuth {
 public:
-    MsgRequestAuth() {};
+    MsgRequestAuth() = default;
+    ~MsgRequestAuth() = default;
     MsgRequestAuth(std::string &token, std::string hostPkgName, std::string targetPkgName,
         const DmDeviceInfo &devReqInfo, const DmAppImageInfo &imageInfo, std::string &extras) : MsgRequestAuth(
         token, hostPkgName, targetPkgName, GROUP_VISIBILITY_IS_PRIVATE, devReqInfo, imageInfo, extras) {};
@@ -45,7 +46,7 @@ public:
     int32_t GetMsgCnt();
     std::string GetRequestDeviceId();
 public:
-    std::shared_ptr<MsgHead> mHead_;
+    std::shared_ptr<MsgHead> mHead_ {nullptr};
     std::string mHostPkg_;
     std::string mTargetPkg_;
     std::string mDeviceName_;
@@ -56,12 +57,12 @@ public:
     std::string mAppDescription_;
     std::string mAppIcon_;
     std::string mAppThumbnail_;
-    int32_t mAuthType_;
-    int32_t mGroupVisibility_;
-    int32_t mMsgSlice_;
-    int32_t mMsgCnt_ = 0;
-    int32_t mThumbnailSize_;
-    int32_t mAppIconSize_;
+    int32_t mAuthType_ {AUTH_TYPE_PIN};
+    int32_t mGroupVisibility_ {GROUP_VISIBILITY_IS_PRIVATE};
+    int32_t mMsgSlice_ {0};
+    int32_t mMsgCnt_ {0};
+    int32_t mThumbnailSize_ {0};
+    int32_t mAppIconSize_ {0};
 private:
     std::string ToHexString(int32_t value);
     std::string EncodeDevInfo();
