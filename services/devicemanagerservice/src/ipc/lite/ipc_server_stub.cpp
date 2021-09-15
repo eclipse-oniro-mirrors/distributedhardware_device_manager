@@ -129,14 +129,13 @@ int32_t UnRegisterDeviceManagerListener(IpcIo *req, IpcIo *reply)
         DMLOG(DM_LOG_ERROR, "get para failed");
         return DEVICEMANAGER_FAILED;
     }
-
+    CommonSvcId svcId;
+    if (IpcServerListenermgr::GetInstance().GetListenerByPkgName(pkgName, &svcId) != DEVICEMANAGER_OK) {
+        DMLOG(DM_LOG_ERROR, "not found listener by package name.");
+        return DEVICEMANAGER_FAILED;
+    }
     int32_t ret = IpcServerListenermgr::GetInstance().UnregisterListener(pkgName);
     if (ret == DEVICEMANAGER_OK) {
-        CommonSvcId svcId;
-        if (IpcServerListenermgr::GetInstance().GetListenerByPkgName(pkgName, &svcId) != DEVICEMANAGER_OK) {
-            DMLOG(DM_LOG_ERROR, "not found listener by package name.");
-            return DEVICEMANAGER_FAILED;
-        }
 #ifdef __LINUX__
         BinderRelease(svcId.ipcCtx, svcId.handle);
 #endif
