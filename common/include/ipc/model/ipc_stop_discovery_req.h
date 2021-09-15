@@ -35,7 +35,7 @@ public:
         subscribeId_ = subscribeId;
     }
 private:
-    uint16_t subscribeId_;
+    uint16_t subscribeId_ {0};
 };
 } // namespace DistributedHardware
 } // namespace OHOS
