@@ -36,8 +36,12 @@ static int32_t ClientIpcInterfaceMsgHandle(const IpcContext *ctx, void *ipcMsg, 
 
     uint32_t code = 0;
     GetCode(ipcMsg, &code);
-    DMLOG(DM_LOG_INFO, "receive ipc transact code(%u)", code);
-    return IpcCmdRegister::GetInstance().OnIpcCmd(code, *io, *ctx, ipcMsg);
+    int32_t errCode = DEVICEMANAGER_OK;
+
+    errCode = IpcCmdRegister::GetInstance().OnIpcCmd(code, *io, *ctx, ipcMsg);
+    DMLOG(DM_LOG_INFO, "receive ipc transact code:%u, retCode=%d", code, errCode);
+    FreeBuffer(ctx, ipcMsg);
+    return errCode;
 }
 
 int32_t IpcClientStub::Init()
