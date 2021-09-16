@@ -35,6 +35,46 @@ public:
         SaveData(appIcon_, appIconLen_, appThumbnail_, appThumbnailLen_);
     }
 
+    void ResetIcon(uint8_t *appIcon_, int32_t appIconLen_)
+    {
+        SaveIconData(appIcon_, appIconLen_);
+    }
+
+    void InitThumbnail(int32_t appThumbnailLen_)
+    {
+        if (appThumbnailLen_ <= 0 || appThumbnailLen_ > THUMB_MAX_LEN) {
+            appThumbnailLen = 0;
+            appThumbnail = nullptr;
+            return;
+        }
+
+        appThumbnail = new (std::nothrow) uint8_t[appThumbnailLen_] {0};
+        if (appThumbnail != nullptr) {
+            appThumbnailLen = appThumbnailLen_;
+        }
+    }
+
+    int32_t SetThumbnailData(uint8_t *srcBuffer, int32_t srcBufferLen, int32_t copyIndex, int32_t copyLen)
+    {
+        if (srcBuffer == nullptr ||  srcBufferLen <= 0 || copyLen > srcBufferLen || copyIndex < 0) {
+            return -1;
+        }
+
+        if ((copyIndex + copyLen) > appThumbnailLen) {
+            return -1;
+        }
+
+        if (appThumbnail == nullptr) {
+            return -1;
+        }
+
+        if (memcpy_s(appThumbnail + copyIndex, appThumbnailLen - copyLen, srcBuffer, copyLen) != 0) {
+            return -1;
+        }
+
+        return 0;
+    }
+
     ~DmAppImageInfo()
     {
         if (appIcon != nullptr) {
@@ -87,6 +127,12 @@ public:
 private:
     void SaveData(const uint8_t *appIcon_, int32_t appIconLen_, const uint8_t *appThumbnail_, int32_t appThumbnailLen_)
     {
+        SaveIconData(appIcon_, appIconLen_);
+        SaveThumbnailData(appThumbnail_, appThumbnailLen_);
+    }
+
+    void SaveIconData(const uint8_t *appIcon_, int32_t appIconLen_)
+    {
         if (appIconLen_ > 0 && appIconLen_ < ICON_MAX_LEN && appIcon_ != nullptr) {
             if (appIconLen < appIconLen_) {
                 if (appIcon != nullptr && appIconLen > 0) {
@@ -101,6 +147,10 @@ private:
                 (void)memcpy_s(appIcon, appIconLen, appIcon_, appIconLen_);
             }
         }
+    }
+
+    void SaveThumbnailData(const uint8_t *appThumbnail_, int32_t appThumbnailLen_)
+    {
         if (appThumbnailLen_ > 0 && appThumbnailLen_ < THUMB_MAX_LEN && appThumbnail_ != nullptr) {
             if (appThumbnailLen < appThumbnailLen_) {
                 if (appThumbnail != nullptr && appThumbnailLen > 0) {

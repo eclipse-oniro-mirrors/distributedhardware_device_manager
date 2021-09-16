@@ -25,6 +25,9 @@
                 "//foundation/distributedhardware/devicemanager/services/devicemanagerservice:devicemanagerservice",
                 "//foundation/distributedhardware/devicemanager/sa_profile:dm_sa_profile"
             ],
+            "test_list": [
+                "//foundation/distributedhardware/devicemanager/test:test"
+            ],
             "system_kits": []
         }
     },

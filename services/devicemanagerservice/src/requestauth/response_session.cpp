@@ -215,21 +215,7 @@ void ResponseSession::BuildAuthenticationInfo(DmAuthParam &authParam)
     authParam.pincode = mPincode_;
 
     if (mMsgRequestAuthPtr_ != nullptr) {
-        uint8_t *appIcon = nullptr;
-        int32_t appIconLen = 0;
-        uint8_t *appThumbnail = nullptr;
-        int32_t appThumbnailLen = 0;
-        mMsgRequestAuthPtr_->GetDecodeAppInfo(mMsgRequestAuthPtr_->mAppIcon_, &appIcon, appIconLen);
-        mMsgRequestAuthPtr_->GetDecodeAppInfo(mMsgRequestAuthPtr_->mAppThumbnail_, &appThumbnail, appThumbnailLen);
-        authParam.imageinfo.Reset(appIcon, appIconLen, appThumbnail, appThumbnailLen);
-        if (appIcon != nullptr) {
-            free(appIcon);
-            appIcon = nullptr;
-        }
-        if (appThumbnail != nullptr) {
-            free(appThumbnail);
-            appThumbnail = nullptr;
-        }
+        authParam.imageinfo = mMsgRequestAuthPtr_->mImageInfo_;
     }
 }
 
