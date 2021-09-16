@@ -23,9 +23,9 @@
 
 namespace OHOS {
 namespace DistributedHardware {
-class MockIpcClient : public IpcClientProxy ,public RefBase{
+class MockIpcClient : public IpcClientProxy, public RefBase{
 public:
-    MOCK_METHOD3(SendRequest,int32_t(int32_t cmdCode, std::shared_ptr<IpcReq> req, std::shared_ptr<IpcRsp> rsp));
+    MOCK_METHOD3(SendRequest, int32_t(int32_t cmdCode, std::shared_ptr<IpcReq> req, std::shared_ptr<IpcRsp> rsp));
 };
 } // namespace DistributedHardware
 } // namespace OHOS
