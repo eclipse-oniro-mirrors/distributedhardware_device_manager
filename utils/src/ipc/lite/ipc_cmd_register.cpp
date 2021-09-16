@@ -43,14 +43,14 @@ int32_t IpcCmdRegister::ReadResponse(int32_t cmdCode, IpcIo &reply, std::shared_
     return (readResponseMapIter->second)(reply, pBaseRsp);
 }
 
-int32_t IpcCmdRegister::OnIpcCmd(int32_t cmdCode, IpcIo &reply, const IpcContext &ctx, void *ipcMsg)
+int32_t IpcCmdRegister::OnIpcCmd(int32_t cmdCode, IpcIo &reply)
 {
     auto onIpcCmdMapIter = onIpcCmdFuncMap_.find(cmdCode);
     if (onIpcCmdMapIter == onIpcCmdFuncMap_.end()) {
         DMLOG(DM_LOG_ERROR, "cmdCode:%d not register OnIpcCmdFunc", cmdCode);
         return DEVICEMANAGER_IPC_NOT_REGISTER_FUNC;
     }
-    (onIpcCmdMapIter->second)(reply, ctx, ipcMsg);
+    (onIpcCmdMapIter->second)(reply);
     return DEVICEMANAGER_OK;
 }
 
