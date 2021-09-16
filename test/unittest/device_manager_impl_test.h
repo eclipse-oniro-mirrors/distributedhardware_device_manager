@@ -36,7 +36,7 @@ private:
     std::shared_ptr<DiscoverCallback> test_callback_ = nullptr;
 };
 
-class DeviceDiscoverCallback : public DiscoverCallback{
+class DeviceDiscoverCallback : public DiscoverCallback {
 public:
     DeviceDiscoverCallback() : DiscoverCallback() {}
     virtual ~DeviceDiscoverCallback() override {}
