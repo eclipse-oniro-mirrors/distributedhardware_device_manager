@@ -49,8 +49,8 @@ namespace DistributedHardware {
     IpcRegisterReadResponseFunc##cmdCode g_IpcRegisterReadResponseFunc##cmdCode; \
     static int32_t IpcReadResponse##cmdCode(paraA, paraB) \
 
-#define ON_IPC_CMD(cmdCode, paraA, paraB, paraC) \
-    static void IpcCmdProcess##cmdCode(paraA, paraB, paraC); \
+#define ON_IPC_CMD(cmdCode, paraA) \
+    static void IpcCmdProcess##cmdCode(paraA); \
     struct IpcRegisterCmdProcessFunc##cmdCode { \
         IpcRegisterCmdProcessFunc##cmdCode() \
         { \
@@ -58,7 +58,7 @@ namespace DistributedHardware {
         } \
     }; \
     IpcRegisterCmdProcessFunc##cmdCode g_IpcRegisterCmdProcessFunc##cmdCode; \
-    static void IpcCmdProcess##cmdCode(paraA, paraB, paraC) \
+    static void IpcCmdProcess##cmdCode(paraA) \
 
 #define ON_IPC_SERVER_CMD(cmdCode, paraA, paraB) \
     static void IpcServerCmdProcess##cmdCode(paraA, paraB); \
@@ -75,7 +75,7 @@ namespace DistributedHardware {
 using SetIpcRequestFunc = int32_t (*)(std::shared_ptr<IpcReq> pBaseReq, IpcIo &request,
     uint8_t *buffer, size_t bufferLen);
 using ReadResponseFunc = int32_t (*)(IpcIo &reply, std::shared_ptr<IpcRsp> pBaseRsp);
-using OnIpcCmdFunc = void (*)(IpcIo &reply, const IpcContext &ctx, void *ipcMsg);
+using OnIpcCmdFunc = void (*)(IpcIo &reply);
 using OnIpcServerCmdFunc = void (*)(IpcIo &req, IpcIo &reply);
 
 class IpcCmdRegister {
@@ -100,7 +100,7 @@ public:
     int32_t SetRequest(int32_t cmdCode, std::shared_ptr<IpcReq> pBaseReq, IpcIo &request,
         uint8_t *buffer, size_t buffLen);
     int32_t ReadResponse(int32_t cmdCode, IpcIo &reply, std::shared_ptr<IpcRsp> pBaseRsp);
-    int32_t OnIpcCmd(int32_t cmdCode, IpcIo &reply, const IpcContext &ctx, void *ipcMsg);
+    int32_t OnIpcCmd(int32_t cmdCode, IpcIo &reply);
     int32_t OnIpcServerCmd(int32_t cmdCode, IpcIo &req, IpcIo &reply);
 private:
     std::unordered_map<int32_t, SetIpcRequestFunc> setIpcRequestFuncMap_;

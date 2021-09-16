@@ -186,7 +186,7 @@ ON_IPC_READ_RESPONSE(CHECK_AUTHENTICATION, IpcIo &reply, std::shared_ptr<IpcRsp>
     return DEVICEMANAGER_OK;
 }
 
-ON_IPC_CMD(SERVER_DEVICE_STATE_NOTIFY, IpcIo &reply, const IpcContext &ctx, void *ipcMsg)
+ON_IPC_CMD(SERVER_DEVICE_STATE_NOTIFY, IpcIo &reply)
 {
     size_t len = 0;
     std::string pkgName = (const char *)IpcIoPopString(&reply, &len);
@@ -213,7 +213,7 @@ ON_IPC_CMD(SERVER_DEVICE_STATE_NOTIFY, IpcIo &reply, const IpcContext &ctx, void
     }
 }
 
-ON_IPC_CMD(SERVER_DEVICE_FOUND, IpcIo &reply, const IpcContext &ctx, void *ipcMsg)
+ON_IPC_CMD(SERVER_DEVICE_FOUND, IpcIo &reply)
 {
     size_t len = 0;
     std::string pkgName = (const char *)IpcIoPopString(&reply, &len);
@@ -227,7 +227,7 @@ ON_IPC_CMD(SERVER_DEVICE_FOUND, IpcIo &reply, const IpcContext &ctx, void *ipcMs
     DeviceManagerNotify::GetInstance().OnDeviceFound(pkgName, subscribeId, *deviceInfo);
 }
 
-ON_IPC_CMD(SERVER_DISCOVER_FINISH, IpcIo &reply, const IpcContext &ctx, void *ipcMsg)
+ON_IPC_CMD(SERVER_DISCOVER_FINISH, IpcIo &reply)
 {
     size_t len = 0;
     std::string pkgName = (const char *)IpcIoPopString(&reply, &len);
@@ -245,7 +245,7 @@ ON_IPC_CMD(SERVER_DISCOVER_FINISH, IpcIo &reply, const IpcContext &ctx, void *ip
     }
 }
 
-ON_IPC_CMD(SERVER_AUTH_RESULT, IpcIo &reply, const IpcContext &ctx, void *ipcMsg)
+ON_IPC_CMD(SERVER_AUTH_RESULT, IpcIo &reply)
 {
     size_t len = 0;
     std::string pkgName = (const char *)IpcIoPopString(&reply, &len);
@@ -262,7 +262,7 @@ ON_IPC_CMD(SERVER_AUTH_RESULT, IpcIo &reply, const IpcContext &ctx, void *ipcMsg
     DeviceManagerNotify::GetInstance().OnAuthResult(pkgName, deviceId, pinToken, status, reason);
 }
 
-ON_IPC_CMD(SERVER_CHECK_AUTH_RESULT, IpcIo &reply, const IpcContext &ctx, void *ipcMsg)
+ON_IPC_CMD(SERVER_CHECK_AUTH_RESULT, IpcIo &reply)
 {
     size_t len = 0;
     std::string pkgName = (const char *)IpcIoPopString(&reply, &len);
@@ -345,14 +345,13 @@ ON_IPC_READ_RESPONSE(SERVER_USER_AUTHORIZATION_OPERATION, IpcIo& reply, std::sha
     return DEVICEMANAGER_OK;
 }
 
-ON_IPC_CMD(SERVER_DEVICEMANAGER_FA_NOTIFY, IpcIo &reply, const IpcContext &ctx, void *ipcMsg)
+ON_IPC_CMD(SERVER_DEVICEMANAGER_FA_NOTIFY, IpcIo &reply)
 {
     size_t len = 0;
     std::string packagename = (const char *)IpcIoPopString(&reply, &len);
     size_t jsonLen = 0;
     std::string paramJson = (const char *)IpcIoPopString(&reply, &jsonLen);
     DeviceManagerNotify::GetInstance().OnFaCall(packagename, paramJson);
-    IpcIoPushInt32(&reply, DEVICEMANAGER_OK);
 }
 } // namespace DistributedHardware
 } // namespace OHOS

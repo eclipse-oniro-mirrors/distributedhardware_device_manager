@@ -38,7 +38,7 @@ static int32_t ClientIpcInterfaceMsgHandle(const IpcContext *ctx, void *ipcMsg, 
     GetCode(ipcMsg, &code);
     int32_t errCode = DEVICEMANAGER_OK;
 
-    errCode = IpcCmdRegister::GetInstance().OnIpcCmd(code, *io, *ctx, ipcMsg);
+    errCode = IpcCmdRegister::GetInstance().OnIpcCmd(code, *io);
     DMLOG(DM_LOG_INFO, "receive ipc transact code:%u, retCode=%d", code, errCode);
     FreeBuffer(ctx, ipcMsg);
     return errCode;
