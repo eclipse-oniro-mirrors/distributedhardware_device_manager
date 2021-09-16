@@ -18,7 +18,6 @@ if (defined(ohos_lite)) {
       "utils:devicemanagerutils",
       "services/devicemanagerservice:devicemanagerservice",
       "interfaces/inner_kits/native_cpp:devicemanagersdk",
-      "interfaces/kits/js:devicemanager",
     ]
   }
 }
