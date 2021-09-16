@@ -265,8 +265,8 @@ ON_IPC_CMD(AUTHENTICATE_DEVICE, MessageParcel &data, MessageParcel &reply)
     uint8_t *appIcon = appIconLen > 0? (uint8_t *)data.ReadRawData(appIconLen) : nullptr;
     uint8_t *appThumbnail = appThumbnailLen > 0? (uint8_t *)data.ReadRawData(appThumbnailLen) : nullptr;
 
-    DmAppImageInfo imageInfo(appIcon, appIconLen, appThumbnail, appThumbnailLen);
-    int32_t result = IpcServerAdapter::GetInstance().AuthenticateDevice(pkgName, *deviceInfo, imageInfo, extra);
+	DmAppImageInfo imageInfo(appIcon, appIconLen, appThumbnail, appThumbnailLen);
+	int32_t result = IpcServerAdapter::GetInstance().AuthenticateDevice(pkgName, *deviceInfo, imageInfo, extra);
 
     if (!reply.WriteInt32(result)) {
         DMLOG(DM_LOG_ERROR, "write result failed");
