@@ -41,7 +41,6 @@ public:
     std::vector<std::string> Encode();
     static std::shared_ptr<MsgRequestAuth> Decode(nlohmann::json &json, std::shared_ptr<MsgRequestAuth> msgIn);
     static void SetThumbnailSize(nlohmann::json &json, std::shared_ptr<MsgRequestAuth> msg);
-    void GetDecodeAppInfo(const std::string appString, uint8_t **outBuffer, int32_t &outBufferLen);
     int32_t GetMsgSlice();
     int32_t GetMsgCnt();
     std::string GetRequestDeviceId();
@@ -55,21 +54,19 @@ public:
     std::string mDeviceType_;
     std::string mAppName_;
     std::string mAppDescription_;
-    std::string mAppIcon_;
-    std::string mAppThumbnail_;
     int32_t mAuthType_ {AUTH_TYPE_PIN};
     int32_t mGroupVisibility_ {GROUP_VISIBILITY_IS_PRIVATE};
     int32_t mMsgSlice_ {0};
     int32_t mMsgCnt_ {0};
     int32_t mThumbnailSize_ {0};
     int32_t mAppIconSize_ {0};
+    DmAppImageInfo mImageInfo_;
 private:
     std::string ToHexString(int32_t value);
     std::string EncodeDevInfo();
-    static int32_t DecodeFirstPackageMsg(nlohmann::json &json, std::shared_ptr<MsgRequestAuth> msg);
     static void DecodeDeviceInfo(nlohmann::json &json, std::shared_ptr<MsgRequestAuth> msg);
-    static std::string StringSub(std::string &thumbStr, int32_t start, int32_t length);
-    int32_t GetEncodedAppInfo(const uint8_t *dataSrc, size_t srcLen, std::string &outString);
+    int32_t GetEncodedAppInfo(const uint8_t *dataSrc, int32_t srcLen, std::string &outString);
+    void GetDecodeAppInfo(const std::string appString, uint8_t **outBuffer, int32_t &outBufferLen);
     static bool IsMsgValid(std::shared_ptr<MsgRequestAuth> msgIn, nlohmann::json &json,  std::string &deviceId,
         int32_t index);
     static bool IsAppInfoValid(nlohmann::json &json);

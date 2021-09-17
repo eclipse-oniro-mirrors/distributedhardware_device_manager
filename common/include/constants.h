@@ -158,6 +158,10 @@ namespace DistributedHardware {
 
     const int32_t BUSINESS_FA_MIRGRATION = 0;
     const int32_t BUSINESS_RESOURCE_ACCESS = 1;
+
+    // Base64 Constants
+    const int32_t BASE64_BYTE_LEN_3 = 3;
+    const int32_t BASE64_BYTE_LEN_4 = 4;
 }
 }
 #endif
