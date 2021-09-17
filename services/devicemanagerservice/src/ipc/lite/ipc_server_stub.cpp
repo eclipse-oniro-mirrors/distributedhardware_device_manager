@@ -103,7 +103,6 @@ int32_t RegisterDeviceManagerListener(IpcIo *req, IpcIo *reply)
     free(svc);
     svc = NULL;
 #endif
-
     char *pkgName = (char *)malloc(len + 1);
     if (pkgName == NULL) {
         DMLOG(DM_LOG_ERROR, "malloc failed!");
@@ -130,7 +129,6 @@ int32_t UnRegisterDeviceManagerListener(IpcIo *req, IpcIo *reply)
         DMLOG(DM_LOG_ERROR, "get para failed");
         return DEVICEMANAGER_FAILED;
     }
-
     CommonSvcId svcId;
     if (IpcServerListenermgr::GetInstance().GetListenerByPkgName(pkgName, &svcId) != DEVICEMANAGER_OK) {
         DMLOG(DM_LOG_ERROR, "not found listener by package name.");
