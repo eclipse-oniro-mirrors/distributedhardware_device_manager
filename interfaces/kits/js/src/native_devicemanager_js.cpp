@@ -216,11 +216,11 @@ DeviceManagerNapi *DeviceManagerNapi::GetDeviceManagerNapi(std::string &buldleNa
 
 void DeviceManagerNapi::OnDeviceStateChange(DmNapiDevStateChangeAction action, const DmDeviceInfo &deviceInfo)
 {
-    napi_value result;
+    napi_value result = nullptr;
     napi_create_object(env_, &result);
     SetValueInt32(env_, "action", (int)action, result);
 
-    napi_value device;
+    napi_value device = nullptr;
     napi_create_object(env_, &device);
     SetValueUtf8String(env_, "deviceId", deviceInfo.deviceId, device);
     SetValueUtf8String(env_, "deviceName", deviceInfo.deviceName, device);
@@ -233,11 +233,11 @@ void DeviceManagerNapi::OnDeviceStateChange(DmNapiDevStateChangeAction action, c
 void DeviceManagerNapi::OnDeviceFound(uint16_t subscribeId, const DmDeviceInfo &deviceInfo)
 {
     DMLOG(DM_LOG_INFO, "OnDeviceFound for subscribeId %d", (int32_t)subscribeId);
-    napi_value result;
+    napi_value result = nullptr;
     napi_create_object(env_, &result);
     SetValueInt32(env_, "subscribeId", (int)subscribeId, result);
 
-    napi_value device;
+    napi_value device = nullptr;
     napi_create_object(env_, &device);
     SetValueUtf8String(env_, "deviceId", deviceInfo.deviceId, device);
     SetValueUtf8String(env_, "deviceName", deviceInfo.deviceName, device);
@@ -250,7 +250,7 @@ void DeviceManagerNapi::OnDeviceFound(uint16_t subscribeId, const DmDeviceInfo &
 void DeviceManagerNapi::OnDiscoverFailed(uint16_t subscribeId, int32_t failedReason)
 {
     DMLOG(DM_LOG_INFO, "OnDiscoverFailed for subscribeId %d", (int32_t)subscribeId);
-    napi_value result;
+    napi_value result = nullptr;
     napi_create_object(env_, &result);
     SetValueInt32(env_, "subscribeId", (int)subscribeId, result);
     SetValueInt32(env_, "reason", (int)failedReason, result);
@@ -260,7 +260,7 @@ void DeviceManagerNapi::OnDiscoverFailed(uint16_t subscribeId, int32_t failedRea
 void DeviceManagerNapi::OnDmfaCall(const std::string &paramJson)
 {
     DMLOG(DM_LOG_INFO, "OnCall for paramJson");
-    napi_value result;
+    napi_value result = nullptr;
     napi_create_object(env_, &result);
     SetValueUtf8String(env_, "param", paramJson, result);
     OnEvent("dmFaCallback", DM_NAPI_ARGS_ONE, &result);
@@ -333,7 +333,7 @@ void DeviceManagerNapi::OnVerifyResult(const std::string &deviceId, int32_t resu
 void DeviceManagerNapi::SetValueUtf8String(const napi_env &env, const std::string &fieldStr, const std::string &str,
     napi_value &result)
 {
-    napi_value value;
+    napi_value value = nullptr;
     napi_create_string_utf8(env, str.c_str(), NAPI_AUTO_LENGTH, &value);
     napi_set_named_property(env, result, fieldStr.c_str(), value);
 }
@@ -341,7 +341,7 @@ void DeviceManagerNapi::SetValueUtf8String(const napi_env &env, const std::strin
 void DeviceManagerNapi::SetValueInt32(const napi_env &env, const std::string &fieldStr, const int32_t intValue,
     napi_value &result)
 {
-    napi_value value;
+    napi_value value = nullptr;
     napi_create_int32(env, intValue, &value);
     napi_set_named_property(env, result, fieldStr.c_str(), value);
 }
@@ -350,7 +350,7 @@ void DeviceManagerNapi::DeviceInfoToJsArray(const napi_env &env,
     const std::vector<DmDeviceInfo> &vecDevInfo,
     const int32_t idx, napi_value &arrayResult)
 {
-    napi_value result;
+    napi_value result = nullptr;
     napi_create_object(env, &result);
 
     SetValueUtf8String(env, "deviceId", vecDevInfo[idx].deviceId, result);
@@ -369,7 +369,7 @@ void DeviceManagerNapi::DmAuthParamToJsAuthParamy(const napi_env &env,
     DMLOG(DM_LOG_INFO, "DmAuthParamToJsAuthParamy in");
     SetValueInt32(env, "authType", authParam.authType, paramResult);
 
-    napi_value extraInfo;
+    napi_value extraInfo = nullptr;
     napi_create_object(env, &extraInfo);
     SetValueInt32(env, "direction", authParam.direction, extraInfo);
     SetValueInt32(env, "pinToken", authParam.pinToken, extraInfo);
@@ -420,8 +420,8 @@ void DeviceManagerNapi::JsObjectToString(const napi_env &env, const napi_value &
     bool hasProperty = false;
     NAPI_CALL_RETURN_VOID(env, napi_has_named_property(env, object, fieldStr.c_str(), &hasProperty));
     if (hasProperty) {
-        napi_value field;
-        napi_valuetype valueType;
+        napi_value field = nullptr;
+        napi_valuetype valueType = napi_undefined;
 
         napi_get_named_property(env, object, fieldStr.c_str(), &field);
         NAPI_CALL_RETURN_VOID(env, napi_typeof(env, field, &valueType));
@@ -467,8 +467,8 @@ void DeviceManagerNapi::JsObjectToInt(const napi_env &env, const napi_value &obj
     bool hasProperty = false;
     NAPI_CALL_RETURN_VOID(env, napi_has_named_property(env, object, fieldStr.c_str(), &hasProperty));
     if (hasProperty) {
-        napi_value field;
-        napi_valuetype valueType;
+        napi_value field = nullptr;
+        napi_valuetype valueType = napi_undefined;
 
         napi_get_named_property(env, object, fieldStr.c_str(), &field);
         NAPI_CALL_RETURN_VOID(env, napi_typeof(env, field, &valueType));
@@ -485,8 +485,8 @@ void DeviceManagerNapi::JsObjectToBool(const napi_env &env, const napi_value &ob
     bool hasProperty = false;
     NAPI_CALL_RETURN_VOID(env, napi_has_named_property(env, object, fieldStr.c_str(), &hasProperty));
     if (hasProperty) {
-        napi_value field;
-        napi_valuetype valueType;
+        napi_value field = nullptr;
+        napi_valuetype valueType = napi_undefined;
 
         napi_get_named_property(env, object, fieldStr.c_str(), &field);
         NAPI_CALL_RETURN_VOID(env, napi_typeof(env, field, &valueType));
@@ -588,9 +588,9 @@ void DeviceManagerNapi::JsToDmBuffer(const napi_env &env, const napi_value &obje
         return;
     }
 
-    napi_value field;
+    napi_value field = nullptr;
     napi_get_named_property(env, object, fieldStr.c_str(), &field);
-    napi_typedarray_type type;
+    napi_typedarray_type type = napi_uint8_array;
     size_t length = 0;
     napi_value buffer = nullptr;
     size_t offset = 0;
@@ -626,7 +626,7 @@ void DeviceManagerNapi::JsToJsonObject(const napi_env &env, const napi_value &ob
         return;
     }
 
-    napi_value jsonField;
+    napi_value jsonField = nullptr;
     napi_get_named_property(env, object, fieldStr.c_str(), &jsonField);
     napi_valuetype jsValueType = napi_undefined;
     napi_value jsProNameList = nullptr;
@@ -794,7 +794,7 @@ napi_value DeviceManagerNapi::SetUserOperationSync(napi_env env, napi_callback_i
 {
     DMLOG(DM_LOG_INFO, "SetUserOperationSync in");
     GET_PARAMS(env, info, DM_NAPI_ARGS_ONE);
-    napi_valuetype valueType;
+    napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[0], &valueType);
     NAPI_ASSERT(env, valueType == napi_number, "Wrong argument type. Object expected.");
 
@@ -883,7 +883,7 @@ napi_value DeviceManagerNapi::StartDeviceDiscoverSync(napi_env env, napi_callbac
     DMLOG(DM_LOG_INFO, "StartDeviceDiscoverSync in");
     GET_PARAMS(env, info, DM_NAPI_ARGS_ONE);
     napi_value result = nullptr;
-    napi_valuetype valueType;
+    napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[0], &valueType);
     NAPI_ASSERT(env, valueType == napi_object, "Wrong argument type. Object expected.");
 
@@ -919,7 +919,7 @@ napi_value DeviceManagerNapi::StopDeviceDiscoverSync(napi_env env, napi_callback
     DMLOG(DM_LOG_INFO, "StopDeviceDiscoverSync in");
     GET_PARAMS(env, info, DM_NAPI_ARGS_ONE);
     napi_value result = nullptr;
-    napi_valuetype valueType;
+    napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[0], &valueType);
     NAPI_ASSERT(env, valueType == napi_number, "Wrong argument type. Object expected.");
 
@@ -948,11 +948,11 @@ napi_value DeviceManagerNapi::AuthenticateDevice(napi_env env, napi_callback_inf
     DMLOG(DM_LOG_INFO, "AuthenticateDevice in");
     GET_PARAMS(env, info, DM_NAPI_ARGS_THREE);
     napi_value result = nullptr;
-    napi_valuetype deviceInfoType;
+    napi_valuetype deviceInfoType = napi_undefined;
     napi_typeof(env, argv[0], &deviceInfoType);
     NAPI_ASSERT(env, deviceInfoType == napi_object, "Wrong argument type. Object expected.");
 
-    napi_valuetype authparamType;
+    napi_valuetype authparamType = napi_undefined;
     napi_typeof(env, argv[PARAM_INDEX_ONE], &authparamType);
     NAPI_ASSERT(env, authparamType == napi_object, "Wrong argument type. Object expected.");
 
@@ -997,7 +997,7 @@ napi_value DeviceManagerNapi::VerifyAuthInfo(napi_env env, napi_callback_info in
     DMLOG(DM_LOG_INFO, "VerifyAuthInfo in");
     GET_PARAMS(env, info, DM_NAPI_ARGS_TWO);
     napi_value result = nullptr;
-    napi_valuetype valueType;
+    napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[0], &valueType);
     NAPI_ASSERT(env, valueType == napi_object, "Wrong argument type. Object expected.");
 
@@ -1161,8 +1161,8 @@ void DeviceManagerNapi::HandleCreateDmCallBack(const napi_env &env, AsyncCallbac
             (void)status;
             AsyncCallbackInfo *asCallbackInfo = (AsyncCallbackInfo *)data;
             napi_value result[DM_NAPI_ARGS_TWO] = { 0 };
-            napi_value ctor;
-            napi_value argv;
+            napi_value ctor = nullptr;
+            napi_value argv = nullptr;
             napi_get_reference_value(env, sConstructor_, &ctor);
             napi_create_string_utf8(env, asCallbackInfo->bundleName, NAPI_AUTO_LENGTH, &argv);
             napi_status ret = napi_new_instance(env, ctor, DM_NAPI_ARGS_ONE, &argv, &result[1]);
@@ -1250,7 +1250,7 @@ napi_value DeviceManagerNapi::Constructor(napi_env env, napi_callback_info info)
 
 napi_value DeviceManagerNapi::Init(napi_env env, napi_value exports)
 {
-    napi_value dmClass;
+    napi_value dmClass = nullptr;
     napi_property_descriptor dmProperties[] = {
         DECLARE_NAPI_FUNCTION("release", ReleaseDeviceManager),
         DECLARE_NAPI_FUNCTION("getTrustedDeviceListSync", GetTrustedDeviceListSync),

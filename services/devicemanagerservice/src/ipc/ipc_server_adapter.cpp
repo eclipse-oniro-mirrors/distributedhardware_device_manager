@@ -90,21 +90,25 @@ int32_t IpcServerAdapter::GetTrustedDeviceList(std::string &pkgName, std::string
     *info = nullptr;
     if (*infoNum > 0) {
         *info = (DmDeviceInfo *)malloc(sizeof(DmDeviceInfo) * (*infoNum));
-    }
-    for (int32_t i = 0; i < *infoNum; ++i) {
-        NodeBasicInfo *nodeBasicInfo = nodeInfo + i;
-        DmDeviceInfo *deviceInfo = *info + i;
-        if (memcpy_s(deviceInfo->deviceId, sizeof(deviceInfo->deviceId), nodeBasicInfo->networkId,
-            std::min(sizeof(deviceInfo->deviceId), sizeof(nodeBasicInfo->networkId))) != DEVICEMANAGER_OK) {
-            DMLOG(DM_LOG_ERROR, "memcpy failed");
+        if (*info != nullptr) {
+            for (int32_t i = 0; i < *infoNum; ++i) {
+                NodeBasicInfo *nodeBasicInfo = nodeInfo + i;
+                DmDeviceInfo *deviceInfo = *info + i;
+                if (memcpy_s(deviceInfo->deviceId, sizeof(deviceInfo->deviceId), nodeBasicInfo->networkId,
+                    std::min(sizeof(deviceInfo->deviceId), sizeof(nodeBasicInfo->networkId))) != DEVICEMANAGER_OK) {
+                    DMLOG(DM_LOG_ERROR, "memcpy failed");
+                }
+                if (memcpy_s(deviceInfo->deviceName, sizeof(deviceInfo->deviceName), nodeBasicInfo->deviceName,
+                    std::min(sizeof(deviceInfo->deviceName), sizeof(nodeBasicInfo->deviceName))) != DEVICEMANAGER_OK) {
+                    DMLOG(DM_LOG_ERROR, "memcpy failed");
+                }
+                deviceInfo->deviceTypeId = (DMDeviceType)nodeBasicInfo->deviceTypeId;
+            }
         }
-        if (memcpy_s(deviceInfo->deviceName, sizeof(deviceInfo->deviceName), nodeBasicInfo->deviceName,
-            std::min(sizeof(deviceInfo->deviceName), sizeof(nodeBasicInfo->deviceName))) != DEVICEMANAGER_OK) {
-            DMLOG(DM_LOG_ERROR, "memcpy failed");
-        }
-        deviceInfo->deviceTypeId = (DMDeviceType)nodeBasicInfo->deviceTypeId;
     }
-    FreeNodeInfo(nodeInfo);
+    if (nodeInfo != nullptr) {
+        FreeNodeInfo(nodeInfo);
+    }
     DMLOG(DM_LOG_INFO, "success, pkgName:%s, deviceCount %d", pkgName.c_str(), *infoNum);
     return DEVICEMANAGER_OK;
 }

@@ -359,8 +359,7 @@ void HichainAuthenCallBack::onFinish(int64_t requestId, int32_t operationCode, c
 
     if (operationCode == GroupOperationCode::GROUP_CREATE) {
         DMLOG(DM_LOG_INFO, "Create group success");
-        std::string returnStr = returnData;
-        HichainConnector::GetInstance().OnGroupCreated(requestId, returnStr);
+        HichainConnector::GetInstance().OnGroupCreated(requestId, data);
     }
 
     if (operationCode == GroupOperationCode::MEMBER_DELETE) {
