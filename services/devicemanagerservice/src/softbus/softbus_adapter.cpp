@@ -304,7 +304,10 @@ int32_t SoftbusAdapter::StartDiscovery(std::string &pkgName, SubscribeInfo *info
         subinfo->subscribeIdOrigin = info->subscribeId;
         subinfo->subscribeIdPrefix = subscribeIdPrefix++;
         subinfo->info = *info;
-        subinfo->info.subscribeId = (subinfo->subscribeIdPrefix << SUBSCRIBE_ID_PREFIX_LEN) | info->subscribeId;
+
+        uint32_t uSubscribeId = static_cast<uint32_t>(info->subscribeId);
+        uSubscribeId = (subinfo->subscribeIdPrefix << SUBSCRIBE_ID_PREFIX_LEN) | uSubscribeId;
+        subinfo->info.subscribeId = static_cast<int32_t>(uSubscribeId);
     }
     if (vectorIter == subinfoVector.end()) {
         subinfoVector.push_back(subinfo);

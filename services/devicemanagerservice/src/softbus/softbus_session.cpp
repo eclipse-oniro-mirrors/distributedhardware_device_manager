@@ -217,9 +217,9 @@ void SoftbusSession::GetPeerDeviceId(int32_t sessionId, std::string &peerDevId)
     char peerDeviceId[DEVICE_UUID_LENGTH] = {0};
     int32_t ret = ::GetPeerDeviceId(sessionId, &peerDeviceId[0], DEVICE_UUID_LENGTH);
     if (ret == 0) {
-        DMLOG(DM_LOG_INFO, "GetPeerDeviceId success for session:%d, peerDeviceId:%s", sessionId,
-            GetAnonyString(peerDeviceId).c_str());
         peerDevId = peerDeviceId;
+        DMLOG(DM_LOG_INFO, "GetPeerDeviceId success for session:%d, peerDeviceId:%s", sessionId,
+            GetAnonyString(peerDevId).c_str());
         return;
     }
 

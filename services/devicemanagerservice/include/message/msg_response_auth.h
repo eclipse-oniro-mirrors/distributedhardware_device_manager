@@ -44,7 +44,6 @@ public:
     void SavePinCode(int32_t pinCode);
     int64_t GetRequestId();
     std::vector<std::string> GetSyncGroupList();
-
 private:
     std::shared_ptr<MsgHead> mHead_ {nullptr};
     int32_t mReply_ {SESSION_REPLY_UNKNOWN};

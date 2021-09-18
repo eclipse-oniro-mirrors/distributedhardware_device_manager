@@ -48,6 +48,13 @@ ResponseSession::ResponseSession()
 {
     mSessionStatus_ = ResponseSessionStatus::SESSION_INIT;
     sem_init(&mSem_, 0, 0);
+    mRequestId_ = -1;
+    mGroupId_ = "";
+    mGroupName_ = "";
+    mReqDeviceId_ = "";
+    mMsgRequestAuthPtr_ = nullptr;
+    mChannelId_ = -1;
+    mPincode_ = -1;
 }
 
 int64_t ResponseSession::GetRequestId()
