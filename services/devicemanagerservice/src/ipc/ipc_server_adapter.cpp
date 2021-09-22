@@ -82,14 +82,17 @@ int32_t IpcServerAdapter::GetTrustedDeviceList(std::string &pkgName, std::string
     }
     DMLOG(DM_LOG_INFO, "In, pkgName: %s", pkgName.c_str());
     NodeBasicInfo *nodeInfo = nullptr;
+    *info = nullptr;
+    *infoNum = 0;
     int32_t ret = SoftbusAdapter::GetTrustDevices(pkgName, &nodeInfo, infoNum);
-    if (ret != DEVICEMANAGER_OK) {
-        DMLOG(DM_LOG_ERROR, "DM_GetSoftbusTrustDevices failed with ret %d", ret);
+    if (ret != DEVICEMANAGER_OK || *infoNum <= 0 || nodeInfo == nullptr) {
+        DMLOG(DM_LOG_ERROR, "GetTrustDevices errCode:%d, num:%d", ret, *infoNum);
         return ret;
     }
-    *info = nullptr;
-    if (*infoNum > 0) {
-        *info = (DmDeviceInfo *)malloc(sizeof(DmDeviceInfo) * (*infoNum));
+    *info = (DmDeviceInfo *)malloc(sizeof(DmDeviceInfo) * (*infoNum));
+    if (*info == nullptr) {
+        FreeNodeInfo(nodeInfo);
+        return DEVICEMANAGER_MALLOC_ERROR;
     }
     for (int32_t i = 0; i < *infoNum; ++i) {
         NodeBasicInfo *nodeBasicInfo = nodeInfo + i;

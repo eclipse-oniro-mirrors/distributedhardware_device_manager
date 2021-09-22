@@ -61,6 +61,8 @@ RequestSession::RequestSession(std::string &hostPkgName, const DmDeviceInfo &dev
     mTargetPkgName = targetPkgName;
     mStatus_ = StatusType::STATUS_INIT;
     mPinToken_ = IpcServerAdapter::GenRandInt(MIN_PIN_TOKEN, MAX_PIN_TOKEN);
+    mChannelId_ = -1;
+    mRequestId_ = -1;
     char randStr[TOKEN_LEN] = {0};
     bool res = EncryptUtils::MbedtlsGenRandomStr(randStr, sizeof(randStr), false);
     if (res == false) {
