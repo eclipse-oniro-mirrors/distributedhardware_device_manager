@@ -36,6 +36,7 @@
             ]
           }
         ],
+        "visible": true,
         "name": "com.ohos.devicemanagerui.MainAbility",
         "icon": "$media:icon",
         "description": "$string:mainability_description",

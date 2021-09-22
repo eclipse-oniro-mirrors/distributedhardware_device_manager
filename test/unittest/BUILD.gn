@@ -13,7 +13,7 @@
 
 import("//build/test.gni")
 import("//foundation/distributedhardware/devicemanager/devicemanager.gni")
-module_out_path = "graphic_standard/vsync"
+module_out_path = "deviceManager_stander/inner_kits"
 
 group("unittest") {
   testonly = true
