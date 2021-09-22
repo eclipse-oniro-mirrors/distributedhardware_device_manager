@@ -144,7 +144,9 @@ private:
             }
             if (appIcon != nullptr) {
                 appIconLen = appIconLen_;
-                (void)memcpy_s(appIcon, appIconLen, appIcon_, appIconLen_);
+                if (memcpy_s(appIcon, appIconLen, appIcon_, appIconLen_) != 0) {
+                    return;
+                }
             }
         }
     }
@@ -162,7 +164,9 @@ private:
             }
             if (appThumbnail != nullptr) {
                 appThumbnailLen = appThumbnailLen_;
-                (void)memcpy_s(appThumbnail, appThumbnailLen, appThumbnail_, appThumbnailLen_);
+                if (memcpy_s(appThumbnail, appThumbnailLen, appThumbnail_, appThumbnailLen_) != 0) {
+                    return;
+                }
             }
         }
     }

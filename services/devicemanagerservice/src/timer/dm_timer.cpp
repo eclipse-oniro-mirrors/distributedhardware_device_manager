@@ -26,6 +26,7 @@ DmTimer::DmTimer(std::string &name)
 {
     mStatus_ = DmTimerStatus::DM_STATUS_INIT;
     mTimerName_ = name;
+    mEpFd_ = 0;
 }
 
 DmTimer::~DmTimer()
@@ -133,7 +134,9 @@ void DmTimer::Release()
     mStatus_ = DmTimerStatus::DM_STATUS_INIT;
     close(mTimeFd_[0]);
     close(mTimeFd_[1]);
-    close(mEpFd_);
+    if (mEpFd_ >= 0) {
+        close(mEpFd_);
+    }
     mTimeFd_[0] = 0;
     mTimeFd_[1] = 0;
     mEpFd_ = 0;
