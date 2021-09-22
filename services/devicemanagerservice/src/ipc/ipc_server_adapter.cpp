@@ -85,29 +85,29 @@ int32_t IpcServerAdapter::GetTrustedDeviceList(std::string &pkgName, std::string
     *info = nullptr;
     *infoNum = 0;
     int32_t ret = SoftbusAdapter::GetTrustDevices(pkgName, &nodeInfo, infoNum);
-    if (ret != DEVICEMANAGER_OK || *infoNum <= 0) {
+    if (ret != DEVICEMANAGER_OK || *infoNum <= 0 || nodeInfo == nullptr) {
         DMLOG(DM_LOG_ERROR, "GetTrustDevices errCode:%d, num:%d", ret, *infoNum);
         return ret;
     }
     *info = (DmDeviceInfo *)malloc(sizeof(DmDeviceInfo) * (*infoNum));
-    if (*info != nullptr) {
-        for (int32_t i = 0; i < *infoNum; ++i) {
-            NodeBasicInfo *nodeBasicInfo = nodeInfo + i;
-            DmDeviceInfo *deviceInfo = *info + i;
-            if (memcpy_s(deviceInfo->deviceId, sizeof(deviceInfo->deviceId), nodeBasicInfo->networkId,
-                std::min(sizeof(deviceInfo->deviceId), sizeof(nodeBasicInfo->networkId))) != DEVICEMANAGER_OK) {
-                DMLOG(DM_LOG_ERROR, "memcpy failed");
-            }
-            if (memcpy_s(deviceInfo->deviceName, sizeof(deviceInfo->deviceName), nodeBasicInfo->deviceName,
-                std::min(sizeof(deviceInfo->deviceName), sizeof(nodeBasicInfo->deviceName))) != DEVICEMANAGER_OK) {
-                DMLOG(DM_LOG_ERROR, "memcpy failed");
-            }
-            deviceInfo->deviceTypeId = (DMDeviceType)nodeBasicInfo->deviceTypeId;
-        }
-    }
-    if (nodeInfo != nullptr) {
+    if (*info == nullptr) {
         FreeNodeInfo(nodeInfo);
+        return DEVICEMANAGER_MALLOC_ERROR;
     }
+    for (int32_t i = 0; i < *infoNum; ++i) {
+        NodeBasicInfo *nodeBasicInfo = nodeInfo + i;
+        DmDeviceInfo *deviceInfo = *info + i;
+        if (memcpy_s(deviceInfo->deviceId, sizeof(deviceInfo->deviceId), nodeBasicInfo->networkId,
+            std::min(sizeof(deviceInfo->deviceId), sizeof(nodeBasicInfo->networkId))) != DEVICEMANAGER_OK) {
+            DMLOG(DM_LOG_ERROR, "memcpy failed");
+        }
+        if (memcpy_s(deviceInfo->deviceName, sizeof(deviceInfo->deviceName), nodeBasicInfo->deviceName,
+            std::min(sizeof(deviceInfo->deviceName), sizeof(nodeBasicInfo->deviceName))) != DEVICEMANAGER_OK) {
+            DMLOG(DM_LOG_ERROR, "memcpy failed");
+        }
+        deviceInfo->deviceTypeId = (DMDeviceType)nodeBasicInfo->deviceTypeId;
+    }
+    FreeNodeInfo(nodeInfo);
     DMLOG(DM_LOG_INFO, "success, pkgName:%s, deviceCount %d", pkgName.c_str(), *infoNum);
     return DEVICEMANAGER_OK;
 }
