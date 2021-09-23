@@ -21,6 +21,4 @@ services_path = "${devicemanager_path}/services"
 
 innerkits_path = "${devicemanager_path}/interfaces/inner_kits"
 
-build_flags = [
-  "-Werror",
-]
+build_flags = [ "-Werror" ]
