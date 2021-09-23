@@ -41,8 +41,6 @@ ohos_shared_library("devicemanager") {
     "//utils/native/base:utils",
   ]
 
-  cflags_cc = build_flags
-
   defines = [
     "HI_LOG_ENABLE",
     "DH_LOG_TAG=\"devicemanagerkit_js\"",
