@@ -17,6 +17,8 @@
 
 #include <thread>
 
+#include "securec.h"
+
 namespace OHOS {
 namespace DistributedHardware {
 namespace {
@@ -25,8 +27,14 @@ const int32_t MILL_SECONDS_PER_SECOND = 1000;
 DmTimer::DmTimer(std::string &name)
 {
     mStatus_ = DmTimerStatus::DM_STATUS_INIT;
-    mTimerName_ = name;
+    mTimeOutSec_ = 0;
+    mHandle_ = nullptr;
+    mHandleData_ = nullptr;
+    (void)memset_s(mTimeFd_, sizeof(mTimeFd_), 0, sizeof(mTimeFd_));
+    (void)memset_s(&mEv_, sizeof(mEv_), 0, sizeof(mEv_));
+    (void)memset_s(mEvents_, sizeof(mEvents_), 0, sizeof(mEvents_));
     mEpFd_ = 0;
+    mTimerName_ = name;
 }
 
 DmTimer::~DmTimer()

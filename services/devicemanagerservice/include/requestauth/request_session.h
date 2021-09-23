@@ -57,21 +57,28 @@ private:
     void SyncDmPrivateGroup(std::vector<std::string> &remoteGroupList);
 
 private:
-    int32_t mSessionType_;
-    int32_t mStatus_;
+    enum StatusType : int32_t {
+        STATUS_INIT = 0,
+        STATUS_WAITING_REPLY = 2,
+        STATUS_WATING_SCAN_OR_INPUT = 3,
+        STATUS_WAITING_ADD_GROUP = 4,
+        STATUS_FINISH = 6,
+    };
+    int32_t mSessionType_ {SESSION_TYPE_IS_APP_AUTH};
+    int32_t mStatus_ {StatusType::STATUS_INIT};
     std::string mHostPkgName_;
     std::string mTargetPkgName;
     std::string mToken_;
-    int32_t mPinToken_;
+    int32_t mPinToken_ {MIN_PIN_TOKEN};
     DmDeviceInfo mDevInfo_;
     DmAppImageInfo mImageInfo_;
-    long long mChannelId_;
+    long long mChannelId_ {-1};
     bool mIsChannelOpened_ {false};
     std::string mRemoteDeviceId_;
     std::string mRemoteNetId_;
     std::string mRemoteGroupId_;
     std::string mRemoteGroupName_;
-    int64_t mRequestId_;
+    int64_t mRequestId_ {-1};
     std::shared_ptr<MsgResponseAuth> responseMsgPtr_;
 };
 }
