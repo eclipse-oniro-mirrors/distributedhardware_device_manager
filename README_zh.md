@@ -2,7 +2,7 @@
 
 ## 简介
 
-DeviceManager组件在OpenHarmony上提供分布式设备账号无关的认证组网能力，并为开发者提供了一套分布式设备的监听、发现、认证接口。
+DeviceManager组件在OpenHarmony上提供账号无关的分布式设备的认证组网能力，并为开发者提供了一套用于分布式设备间监听、发现和认证的接口。
 
 其组成及依赖如下所示：
 
@@ -89,7 +89,7 @@ foundation/distributedhardware/devicemanager
 ## 接口说明
 
 当前版本设备管理服务不具备权限管理的能力，接口中的system api仅供系统调用，后续版本会进行严格的权限管控。
-参见[**interface_sdk-js仓库的**](https://gitee.com/openharmony/interface_sdk-js/) *ohos.distributedHardware.deviceManager.d.ts*
+接口参见[**interface_sdk-js仓库的**](https://gitee.com/openharmony/interface_sdk-js/) *ohos.distributedHardware.deviceManager.d.ts*
 
 - 公共接口：
 
@@ -232,7 +232,7 @@ dmClass.authenticateDevice(this.deviceInfo, authParam, (err, data) => {
 
   DeviceManager作为认证被控端，授权提示界面、PIN码显示界面由DeviceManager_UI FA默认进行显示；
 
-  DeviceManager作为认证发起端，PIN码输入界面可以选择由DeviceManager_UI FA进行显示，还是由开发者自行显示。开发者如需自己定制PIN码输入界面，需要在authenticateDevice接口的认证参数中，指定displayOwner参数为1。
+  DeviceManager作为认证发起端，PIN码输入界面可以选择由DeviceManager_UI FA进行显示，还是由开发者自行显示。开发者如需自己定制PIN码输入界面，需要在authenticateDevice接口的认证参数AuthParam中，extraInfo属性里面指定displayOwner参数为1（DISPLAY_OWNER_OTHER）。
 
 ### 相关仓
 ****
