@@ -31,14 +31,6 @@
 
 namespace OHOS {
 namespace DistributedHardware {
-enum StatusType : int32_t {
-    STATUS_INIT = 0,
-    STATUS_WAITING_REPLY = 2,
-    STATUS_WATING_SCAN_OR_INPUT = 3,
-    STATUS_WAITING_ADD_GROUP = 4,
-    STATUS_FINISH = 6,
-};
-
 RequestSession::RequestSession(std::string &hostPkgName, const DmDeviceInfo &devReqInfo,
     const DmAppImageInfo &imageInfo, std::string &extrasJson)
 {
@@ -53,16 +45,12 @@ RequestSession::RequestSession(std::string &hostPkgName, const DmDeviceInfo &dev
         return;
     }
     std::string targetPkgName = jsonObject[TARGET_PKG_NAME_KEY];
-    mSessionType_ = SESSION_TYPE_IS_APP_AUTH;
     mDevInfo_ = devReqInfo;
     mImageInfo_ = imageInfo;
     DMLOG(DM_LOG_ERROR, "imageinfo appIcon:%p:%p", mImageInfo_.GetAppIcon(), imageInfo.GetAppIcon());
     mHostPkgName_ = hostPkgName;
     mTargetPkgName = targetPkgName;
-    mStatus_ = StatusType::STATUS_INIT;
     mPinToken_ = IpcServerAdapter::GenRandInt(MIN_PIN_TOKEN, MAX_PIN_TOKEN);
-    mChannelId_ = -1;
-    mRequestId_ = -1;
     char randStr[TOKEN_LEN] = {0};
     bool res = EncryptUtils::MbedtlsGenRandomStr(randStr, sizeof(randStr), false);
     if (res == false) {

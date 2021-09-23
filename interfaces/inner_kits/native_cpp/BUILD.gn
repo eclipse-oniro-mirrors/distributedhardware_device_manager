@@ -97,8 +97,6 @@ if (defined(ohos_lite)) {
       "src/notify/device_manager_notify.cpp",
     ]
 
-    cflags_cc = build_flags
-
     deps = [
       "${utils_path}:devicemanagerutils",
       "//utils/native/base:utils",
