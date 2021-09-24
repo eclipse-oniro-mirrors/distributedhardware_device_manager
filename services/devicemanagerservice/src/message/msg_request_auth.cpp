@@ -45,8 +45,8 @@ MsgRequestAuth::MsgRequestAuth(std::string &token, std::string hostPkgName, std:
     }
 
     mAuthType_ = jsonObject.contains(AUTH_TYPE) ? (int32_t)jsonObject[AUTH_TYPE] : AUTH_TYPE_QR;
-    mHead_ = std::make_shared<MsgHead>(mAuthType_ == AUTH_TYPE_QR ? DmMsgType::MSG_TYPE_REQ_AUTH :
-        DmMsgType::MSG_TYPE_AUTH_BY_PIN);
+    mHead_ = std::make_shared<MsgHead>((mAuthType_ == AUTH_TYPE_QR) ? (DmMsgType::MSG_TYPE_REQ_AUTH) :
+        (DmMsgType::MSG_TYPE_AUTH_BY_PIN));
     char localDeviceId[DEVICE_UUID_LENGTH] = {0};
     GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
     mDeviceName_ = devReqInfo.deviceName;
