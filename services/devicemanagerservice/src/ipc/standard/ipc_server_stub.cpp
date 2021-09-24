@@ -69,9 +69,11 @@ bool IpcServerStub::Init()
         registerToService_ = true;
     }
 
-    std::thread {[] {
-        IpcServerAdapter::GetInstance().ModuleInit();
-    }}.detach();
+    std::thread {
+        [] {
+            IpcServerAdapter::GetInstance().ModuleInit();
+        }
+    }.detach();
     return true;
 }
 
