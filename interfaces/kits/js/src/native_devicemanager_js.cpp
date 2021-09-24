@@ -392,7 +392,7 @@ void DeviceManagerNapi::DmAuthParamToJsAuthParamy(const napi_env &env,
         napi_create_arraybuffer(env, appIconLen, &appIcon, &appIconBuffer);
         if (appIcon != nullptr &&
             memcpy_s(appIcon, appIconLen, reinterpret_cast<const void*>(authParam.imageinfo.GetAppIcon()),
-            appIconLen) == 0) {
+                appIconLen) == 0) {
             napi_value appIconArray = nullptr;
             napi_create_typedarray(env, napi_uint8_array, appIconLen, appIconBuffer, 0, &appIconArray);
             napi_set_named_property(env, paramResult, "appIcon", appIconArray);
