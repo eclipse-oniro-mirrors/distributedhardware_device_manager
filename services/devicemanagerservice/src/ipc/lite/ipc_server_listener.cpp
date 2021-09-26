@@ -74,6 +74,9 @@ int32_t IpcServerListener::SendAll(int32_t cmdCode, std::shared_ptr<IpcReq> req,
         SvcIdentity svc;
         IpcIo io;
         uint8_t data[MAX_DM_IPC_LEN] = {0};
+        std::string pkgName = kv.first;
+
+        req->SetPkgName(pkgName);
         if (IpcCmdRegister::GetInstance().SetRequest(cmdCode, req, io, data, MAX_DM_IPC_LEN) != DEVICEMANAGER_OK) {
             DMLOG(DM_LOG_DEBUG, "SetRequest failed cmdCode:%d", cmdCode);
             continue;

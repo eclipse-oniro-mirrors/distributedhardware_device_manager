@@ -28,8 +28,8 @@ namespace OHOS {
 namespace DistributedHardware {
 class RequestSession {
 public:
-    RequestSession(std::string &hostPkgName, const DmDeviceInfo &devReqInfo, const DmAppImageInfo &imageInfo,
-        std::string &extrasJson);
+    RequestSession(std::string &hostPkgName, std::string &targetPkgName, const DmDeviceInfo &devReqInfo,
+        const DmAppImageInfo &imageInfo);
     ~RequestSession() = default;
     std::vector<std::string> GetRequestCommand(std::string &extrasJson);
     int32_t GetPinToken();

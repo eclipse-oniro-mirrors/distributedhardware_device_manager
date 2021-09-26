@@ -68,7 +68,7 @@ public:
             return -1;
         }
 
-        if (memcpy_s(appThumbnail + copyIndex, appThumbnailLen - copyLen, srcBuffer, copyLen) != 0) {
+        if (memcpy_s(appThumbnail + copyIndex, appThumbnailLen - copyIndex, srcBuffer, copyLen) != 0) {
             return -1;
         }
 
