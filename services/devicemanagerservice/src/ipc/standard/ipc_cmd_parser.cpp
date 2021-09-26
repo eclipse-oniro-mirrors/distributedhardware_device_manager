@@ -356,8 +356,7 @@ ON_IPC_SET_REQUEST(SERVER_DEVICEMANAGER_FA_NOTIFY, std::shared_ptr<IpcReq> pBase
         DMLOG(DM_LOG_ERROR, "write pkgName failed");
         return DEVICEMANAGER_FLATTEN_OBJECT;
     }
-    if (!data.WriteString(paramJson))
-    {
+    if (!data.WriteString(paramJson)) {
         DMLOG(DM_LOG_ERROR, "write paramJson failed");
         return DEVICEMANAGER_FLATTEN_OBJECT;
     }
