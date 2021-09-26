@@ -31,23 +31,12 @@
 
 namespace OHOS {
 namespace DistributedHardware {
-RequestSession::RequestSession(std::string &hostPkgName, const DmDeviceInfo &devReqInfo,
-    const DmAppImageInfo &imageInfo, std::string &extrasJson)
+RequestSession::RequestSession(std::string &hostPkgName, std::string &targetPkgName, const DmDeviceInfo &devReqInfo,
+    const DmAppImageInfo &imageInfo)
 {
     DMLOG(DM_LOG_INFO, "RequestSession construction started");
-    nlohmann::json jsonObject = nlohmann::json::parse(extrasJson, nullptr, false);
-    if (jsonObject.is_discarded()) {
-        DMLOG(DM_LOG_ERROR, "extrasJson error");
-    }
-
-    if (!jsonObject.contains(TARGET_PKG_NAME_KEY)) {
-        DMLOG(DM_LOG_ERROR, "TARGET_PKG_NAME is not in extrasJson");
-        return;
-    }
-    std::string targetPkgName = jsonObject[TARGET_PKG_NAME_KEY];
     mDevInfo_ = devReqInfo;
     mImageInfo_ = imageInfo;
-    DMLOG(DM_LOG_ERROR, "imageinfo appIcon:%p:%p", mImageInfo_.GetAppIcon(), imageInfo.GetAppIcon());
     mHostPkgName_ = hostPkgName;
     mTargetPkgName = targetPkgName;
     mPinToken_ = IpcServerAdapter::GenRandInt(MIN_PIN_TOKEN, MAX_PIN_TOKEN);

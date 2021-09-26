@@ -64,6 +64,11 @@ void AuthManager::AuthAppGroup(std::string &hostPkgName, const DmDeviceInfo &dev
         DMLOG(DM_LOG_ERROR, "AuthAppGroup extrasJson error");
         return;
     }
+    if (!jsonObject.contains(TARGET_PKG_NAME_KEY)) {
+        DMLOG(DM_LOG_ERROR, "TARGET_PKG_NAME is not in extrasJson");
+        return;
+    }
+    std::string targetPkgName = jsonObject[TARGET_PKG_NAME_KEY];
 
     if (!jsonObject.contains(DISPLAY_OWNER)) {
         DMLOG(DM_LOG_WARN, "AuthAppGroup DISPLAY_OWNER error");
@@ -77,7 +82,7 @@ void AuthManager::AuthAppGroup(std::string &hostPkgName, const DmDeviceInfo &dev
         mPendingReqSessionPtr_->NotifyHostAppAuthResult(ERROR_DUPLICATE_REQUEST);
         return;
     }
-    auto curSessionPtr = std::make_shared<RequestSession>(hostPkgName, devReqInfo, imageInfo, extrasJson);
+    auto curSessionPtr = std::make_shared<RequestSession>(hostPkgName, targetPkgName, devReqInfo, imageInfo);
     mPendingReqSessionPtr_ = curSessionPtr;
     std::vector<std::string> msgInfo = curSessionPtr->GetRequestCommand(extrasJson);
     int32_t channelId = SoftbusSession::GetInstance().SendMessages(devReqInfo.deviceId, msgInfo);
