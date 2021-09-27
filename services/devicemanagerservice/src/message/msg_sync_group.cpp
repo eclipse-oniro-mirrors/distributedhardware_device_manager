@@ -16,6 +16,7 @@
 #include "msg_sync_group.h"
 #include "device_manager_log.h"
 #include "constants.h"
+#include "device_manager_errno.h"
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -35,6 +36,32 @@ void MsgSyncGroup::Encode(nlohmann::json &json)
     mHead_->Encode(json);
     json[TAG_DEVICE_ID] = mDeviceId_;
     json[TAG_GROUPIDS] = mGroupIdList_;
+}
+
+int32_t MsgSyncGroup::Decode(nlohmann::json &json)
+{
+    DMLOG(DM_LOG_INFO, "MsgSyncGroup decode started");
+    if (!json.contains(TAG_DEVICE_ID) || !json.contains(TAG_GROUPIDS)) {
+        DMLOG(DM_LOG_ERROR, "MsgSyncGroup::decode err ");
+        return MSG_DECODE_PARA_FAILED;
+    }
+
+    MsgHead msgHead;
+    mHead_ = msgHead.Decode(json);
+    mDeviceId_ = json[TAG_DEVICE_ID];
+    mGroupIdList_ = (std::vector<std::string>)json[TAG_GROUPIDS];
+    DMLOG(DM_LOG_INFO, "MsgSyncGroup decode completed");
+    return DEVICEMANAGER_OK;
+}
+
+std::string MsgSyncGroup::GetDeviceId()
+{
+    return mDeviceId_;
+}
+
+std::vector<std::string> MsgSyncGroup::GetGroupIdList()
+{
+    return mGroupIdList_;
 }
 }
 }

@@ -24,6 +24,7 @@
 #include "softbus_session.h"
 #include "encrypt_utils.h"
 #include "ipc_server_listener_adapter.h"
+#include "msg_sync_group.h"
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -44,6 +45,9 @@ void AuthManager::OnReceiveMsg(long long channelId, std::string &message)
         case MSG_TYPE_REQ_AUTH:
         case MSG_TYPE_AUTH_BY_PIN:
             OnReceiveMessage(channelId, message, msgType);
+            break;
+        case MSG_TYPE_SYNC_GROUP:
+            SyncDmPrivateGroup(message);
             break;
         default:
             DMLOG(DM_LOG_INFO, "msgType not support yet, msgType: %d", msgType);
@@ -152,6 +156,17 @@ void AuthManager::OnReceiveMessage(long long channelId, std::string &message, in
     } else {
         DMLOG(DM_LOG_ERROR, "error message type");
     }
+}
+
+void AuthManager::SyncDmPrivateGroup(std::string &message)
+{
+    std::shared_ptr<MsgSyncGroup> msgSyncGroupPtr = MsgCodec::DecodeSyncGroup(message);
+    if (msgSyncGroupPtr == nullptr) {
+        DMLOG(DM_LOG_ERROR, "decode syncGroup message err");
+        return;
+    }
+    std::vector<std::string> groupIdList = msgSyncGroupPtr->GetGroupIdList();
+    HichainConnector::GetInstance().SyncGroups(msgSyncGroupPtr->GetDeviceId(), groupIdList);
 }
 
 void AuthManager::MoveSessionToWaitScanMap()

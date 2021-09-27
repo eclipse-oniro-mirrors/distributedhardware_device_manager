@@ -27,9 +27,13 @@ namespace OHOS {
 namespace DistributedHardware {
 class MsgSyncGroup {
 public:
+    MsgSyncGroup() {};
     MsgSyncGroup(std::vector<std::string> &groupList, std::string &deviceId);
     ~MsgSyncGroup() = default;
     void Encode(nlohmann::json &json);
+    int32_t Decode(nlohmann::json &json);
+    std::string GetDeviceId();
+    std::vector<std::string> GetGroupIdList();
 
 private:
     std::shared_ptr<MsgHead> mHead_;

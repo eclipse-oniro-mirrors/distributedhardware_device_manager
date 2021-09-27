@@ -95,5 +95,19 @@ std::shared_ptr<MsgResponseAuth> MsgCodec::DecodeResponseAuth(std::string &jsonS
     }
     return nullptr;
 }
+
+std::shared_ptr<MsgSyncGroup> MsgCodec::DecodeSyncGroup(std::string &jsonStr)
+{
+    nlohmann::json jsonObject = nlohmann::json::parse(jsonStr, nullptr, false);
+    if (jsonObject.is_discarded()) {
+        DMLOG(DM_LOG_ERROR, "DecodeSyncGroup jsonStr error");
+        return nullptr;
+    }
+    std::shared_ptr<MsgSyncGroup> msgSyncGroupPtr = std::make_shared<MsgSyncGroup>();
+    if (msgSyncGroupPtr->Decode(jsonObject) == 0) {
+        return msgSyncGroupPtr;
+    }
+    return nullptr;
+}
 }
 }
