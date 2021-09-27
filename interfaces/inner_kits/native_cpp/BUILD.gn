@@ -58,8 +58,6 @@ if (defined(ohos_lite)) {
       "LOG_DOMAIN=0xD004100",
     ]
 
-    cflags_cc = build_flags
-
     deps = [
       "${utils_path}:devicemanagerutils",
       "//base/hiviewdfx/hilog_lite/frameworks/featured:hilog_shared",
