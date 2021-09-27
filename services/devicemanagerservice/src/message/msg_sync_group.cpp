@@ -49,7 +49,7 @@ int32_t MsgSyncGroup::Decode(nlohmann::json &json)
     MsgHead msgHead;
     mHead_ = msgHead.Decode(json);
     mDeviceId_ = json[TAG_DEVICE_ID];
-    mGroupIdList_ = static_cast<std::vector<std::string>>(json[TAG_GROUPIDS]);
+    mGroupIdList_ = json.at(TAG_GROUPIDS).get<std::vector<std::string>>();
     DMLOG(DM_LOG_INFO, "MsgSyncGroup decode completed");
     return DEVICEMANAGER_OK;
 }
