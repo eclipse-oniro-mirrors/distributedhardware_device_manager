@@ -51,7 +51,6 @@ config("device_manager_test_common_public_config") {
 
   cflags = [
     "-Wall",
-    "-Werror",
     "-g3",
     "-Dprivate=public",
     "-Dprotected=public",
