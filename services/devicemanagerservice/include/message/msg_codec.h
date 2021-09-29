@@ -39,6 +39,7 @@ public:
     static std::shared_ptr<MsgRequestAuth> DecodeRequestAuth(std::string &jsonStr,
         std::shared_ptr<MsgRequestAuth> msgRequestAuth);
     static std::shared_ptr<MsgResponseAuth> DecodeResponseAuth(std::string &jsonStr);
+    static std::shared_ptr<MsgSyncGroup> DecodeSyncGroup(std::string &jsonStr);
 };
 }
 }
