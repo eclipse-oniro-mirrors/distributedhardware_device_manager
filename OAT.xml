@@ -57,9 +57,9 @@ Note:If the text contains special characters, please escape them according to th
 <configuration>
     <oatconfig>
         <filefilterlist>
-            <filefilter name="appIconPolicyFilter" desc="Filters for app icon" >
+            <filefilter name="binaryFileTypePolicyFilter" desc="Filters for binary file policies" >
                 <filteritem type="filepath" name="display/entry/src/main/resources/base/media/.*" desc="pictures used for app icon"/>
-				<filteritem type="filepath" name="figures/.*" desc="pictures used to display project structure"/>
+			    <filteritem type="filepath" name="figures/.*" desc="pictures used to display project structure"/>
             </filefilter>
         </filefilterlist>
     </oatconfig>
