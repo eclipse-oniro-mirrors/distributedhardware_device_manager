@@ -220,6 +220,14 @@ void RequestSession::SyncDmPrivateGroup(std::vector<std::string> &remoteGroupLis
     HichainConnector::GetInstance().SyncGroups(mRemoteDeviceId_, remoteGroupList);
     DMLOG(DM_LOG_INFO, "RequestSession::syncDmPrivateGroup started");
     std::vector<std::string> localGroups = {};
+    std::vector<GroupInfo> groupList = {};
+
+    HichainConnector::GetInstance().GetRelatedGroups(mRemoteDeviceId_, groupList);
+    HichainConnector::GetInstance().GetSyncGroupList(groupList, localGroups);
+    if (mRemoteGroupId_ != "") {
+        localGroups.push_back(mRemoteGroupId_);
+    }
+
     std::string synGroupMsg = MsgCodec::EncodeSyncGroup(localGroups, mRemoteDeviceId_);
     SoftbusSession::GetInstance().SendMsg(mChannelId_, synGroupMsg);
     DMLOG(DM_LOG_INFO, "RequestSession::SyncDmPrivateGroup completed");
