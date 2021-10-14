@@ -79,6 +79,9 @@ public:
     void OnGroupCreated(int64_t requestId, const std::string &returnData);
     void GetSyncGroupList(std::vector<GroupInfo> &groupList, std::vector<std::string> &syncGroupList);
     void OnMemberJoin(int64_t requestId, int32_t status);
+    int32_t GetGroupInfo(std::string queryParams, std::vector<GroupInfo> &groupList);
+    int32_t IsGroupCreated(std::string groupName, GroupInfo &groupInfo);
+
 private:
     std::string GetConnectPara(std::string deviceId, std::shared_ptr<MsgResponseAuth> msgResponseAuth);
     bool IsGroupInfoInvalid(GroupInfo &group);
