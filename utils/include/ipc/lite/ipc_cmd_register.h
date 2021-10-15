@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <unordered_map>
+#include <memory>
 
 #include "liteipc_adapter.h"
 #include "single_instance.h"

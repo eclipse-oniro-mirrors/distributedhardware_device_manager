@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 #include "device_manager_callback.h"
 #include "dm_subscribe_info.h"

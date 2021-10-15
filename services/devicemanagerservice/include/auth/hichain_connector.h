@@ -87,15 +87,9 @@ private:
     bool IsGroupInfoInvalid(GroupInfo &group);
 
 private:
-    std::atomic<int32_t> requestIdIndex_ {0};
     std::shared_ptr<HichainConnectorCallback> hichainConnectorCallback_ = nullptr;
     const DeviceGroupManager *deviceGroupManager_ = nullptr;
-    DeviceAuthCallback deviceAuthCallback_ = {
-        .onTransmit = nullptr,
-        .onFinish = HichainAuthenCallBack::onFinish,
-        .onError = HichainAuthenCallBack::onError,
-        .onRequest = HichainAuthenCallBack::onRequest,
-    };
+    DeviceAuthCallback deviceAuthCallback_ ;
 };
 } // namespace DistributedHardware
 } // namespace OHOS

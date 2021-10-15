@@ -18,9 +18,6 @@
 #include <cstdlib>
 #include <string>
 #include <unistd.h>
-#include <map>
-#include <vector>
-#include <memory>
 
 #include <securec.h>
 
@@ -41,6 +38,7 @@ namespace OHOS {
 namespace DistributedHardware {
 namespace {
 const std::string DEVICE_MANAGER_PACKAGE_NAME = "com.huawei.devicemanager";
+const char *DM_CAPABILITY_OSD = "osdCapability";
 const int32_t CHECK_INTERVAL = 100000; // 100ms
 const uint32_t SUBSCRIBE_ID_PREFIX_LEN = 16;
 const int32_t SUBSCRIBE_ID_MASK = 0x0000FFFF;
