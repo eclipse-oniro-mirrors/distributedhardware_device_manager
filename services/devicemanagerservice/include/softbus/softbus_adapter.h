@@ -20,6 +20,7 @@
 #include <mutex>
 #include <map>
 #include <memory>
+#include <vector>
 #include "softbus_bus_center.h"
 #include "discovery_service.h"
 #include "dm_device_info.h"

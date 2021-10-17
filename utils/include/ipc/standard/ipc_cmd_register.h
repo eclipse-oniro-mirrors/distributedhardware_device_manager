@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <unordered_map>
+#include <memory>
 
 #include "iremote_broker.h"
 #include "single_instance.h"

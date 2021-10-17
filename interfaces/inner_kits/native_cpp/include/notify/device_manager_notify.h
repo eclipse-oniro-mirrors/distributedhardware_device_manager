@@ -20,6 +20,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <memory>
 
 #include "dm_device_info.h"
 #include "dm_subscribe_info.h"

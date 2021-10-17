@@ -37,7 +37,7 @@ const std::string DM_NAPI_EVENT_DEVICE_FOUND = "deviceFound";
 const std::string DM_NAPI_EVENT_DEVICE_DISCOVER_FAIL = "discoverFail";
 const std::string DM_NAPI_EVENT_DMFA_CALLBACK = "dmFaCallback";
 const std::string DM_NAPI_EVENT_DEVICE_SERVICE_DIE = "serviceDie";
-
+const char *DM_CAPABILITY_OSD = "osdCapability";
 const std::string DEVICE_MANAGER_NAPI_CLASS_NAME = "DeviceManager";
 
 const int32_t DM_NAPI_ARGS_ONE = 1;

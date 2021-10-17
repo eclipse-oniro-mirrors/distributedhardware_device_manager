@@ -106,7 +106,7 @@ void MsgRequestAuth::GetDecodeAppInfo(const std::string appString, uint8_t **out
     size_t outLen = 0;
     int32_t ret = EncryptUtils::MbedtlsBase64Decode(buffer, tempBufLen, &outLen,
         (const uint8_t*)appString.c_str(), appString.length());
-    if (ret != 0 || outLen > tempBufLen) {
+    if (ret != 0 || static_cast<int32_t>(outLen) > tempBufLen) {
         DMLOG(DM_LOG_ERROR, "MbedtlsBase64Decode failed, ret %d, outLen %d, tempBufLen %d",
             ret, outLen, tempBufLen);
         outBufferLen = 0;

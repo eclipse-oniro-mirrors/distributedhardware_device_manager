@@ -58,8 +58,6 @@ typedef enum DmExchangeFreq {
     DM_FREQ_BUTT
 } DmExchangeFreq;
 
-const static char *DM_CAPABILITY_OSD = "osdCapability";
-
 typedef struct DmSubscribeInfo {
     /** Service ID */
     uint16_t subscribeId;

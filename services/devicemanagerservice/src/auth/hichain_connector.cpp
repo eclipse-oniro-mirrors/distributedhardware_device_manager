@@ -89,6 +89,12 @@ int HichainConnector::Init()
         DMLOG(DM_LOG_INFO, "HichainConnector::init, failed to init group manager!");
         return -1;
     }
+
+    deviceAuthCallback_.onTransmit = nullptr;
+    deviceAuthCallback_.onFinish = HichainAuthenCallBack::onFinish;
+    deviceAuthCallback_.onError = HichainAuthenCallBack::onError;
+    deviceAuthCallback_.onRequest = HichainAuthenCallBack::onRequest;
+
     deviceGroupManager_->regCallback(DEVICE_MANAGER_APP.c_str(), &deviceAuthCallback_);
     DMLOG(DM_LOG_INFO, "HichainConnector::init, init hichain adapter success.");
     return 0;
