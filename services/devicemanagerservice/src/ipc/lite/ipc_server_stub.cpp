@@ -33,8 +33,8 @@
 
 namespace {
     const int32_t WAIT_FOR_SERVER = 2;
-    const int32_t STACK_SIZE = 0x800;
-    const int32_t QUEUE_SIZE = 20;
+    const int32_t STACK_SIZE = 0x1000;
+    const int32_t QUEUE_SIZE = 32;
 }
 
 using namespace OHOS::DistributedHardware;
