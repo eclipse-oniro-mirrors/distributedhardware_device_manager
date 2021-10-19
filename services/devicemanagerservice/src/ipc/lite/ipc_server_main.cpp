@@ -26,7 +26,7 @@ using namespace OHOS::DistributedHardware;
 
 static void InitAll()
 {
-    const int32_t DM_SERVICE_INIT_DELAY = 5;
+    const int32_t DM_SERVICE_INIT_DELAY = 2;
 
     sleep(DM_SERVICE_INIT_DELAY);
     if (IpcServerStubInit() != DEVICEMANAGER_OK) {

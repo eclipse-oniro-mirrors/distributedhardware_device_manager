@@ -19,7 +19,7 @@
 namespace OHOS {
 namespace DistributedHardware {
 #define DEVICE_MANAGER_SERVICE_NAME "dev_mgr_svc"
-#define MAX_DM_IPC_LEN 4096
+#define MAX_DM_IPC_LEN 2048
 
 #define DECLARE_IPC_MODEL(className)        \
 public:                                     \
