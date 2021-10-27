@@ -29,7 +29,7 @@ IMPLEMENT_SINGLE_INSTANCE(IpcClientStub);
 static int32_t ClientIpcInterfaceMsgHandle(const IpcContext *ctx, void *ipcMsg, IpcIo *io, void *arg)
 {
     (void)arg;
-    if (ipcMsg == nullptr || io == nullptr || ctx == nullptr) {
+    if (ipcMsg == nullptr || io == nullptr) {
         DMLOG(DM_LOG_ERROR, "invalid param");
         return DEVICEMANAGER_INVALID_PARAM;
     }
