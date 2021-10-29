@@ -43,8 +43,8 @@ private:
 private:
     int32_t SendData(int32_t sessionId, const void *data, int32_t len);
 private:
-    const char *PKG_NAME = "com.huawei.devicemanager";
-    const char *SESSION_NAME = "com.huawei.devicemanager.resident";
+    const char *PKG_NAME = "ohos.distributedhardware.devicemanager";
+    const char *SESSION_NAME = "ohos.distributedhardware.devicemanager.resident";
     std::set<int32_t> sessionIdSet_;
     std::vector<std::string> messages_ {};
 };

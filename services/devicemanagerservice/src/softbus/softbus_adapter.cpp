@@ -37,7 +37,7 @@
 namespace OHOS {
 namespace DistributedHardware {
 namespace {
-const std::string DEVICE_MANAGER_PACKAGE_NAME = "com.huawei.devicemanager";
+const std::string DEVICE_MANAGER_PACKAGE_NAME = "ohos.distributedhardware.devicemanager";
 const char *DM_CAPABILITY_OSD = "osdCapability";
 const int32_t CHECK_INTERVAL = 100000; // 100ms
 const uint32_t SUBSCRIBE_ID_PREFIX_LEN = 16;
