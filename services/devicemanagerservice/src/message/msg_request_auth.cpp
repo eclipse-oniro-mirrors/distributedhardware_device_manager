@@ -16,7 +16,6 @@
 #include <sstream>
 #include <iomanip>
 
-#include "msg_request_auth.h"
 #include "device_manager_log.h"
 #include "constants.h"
 #include "encrypt_utils.h"
@@ -26,6 +25,8 @@
 #include "msg_request_auth.h"
 #include "parameter.h"
 #include "softbus_session.h"
+#include "softbus_bus_center.h"
+#include "msg_request_auth.h"
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -47,9 +48,16 @@ MsgRequestAuth::MsgRequestAuth(std::string &token, std::string hostPkgName, std:
     mAuthType_ = jsonObject.contains(AUTH_TYPE) ? (int32_t)jsonObject[AUTH_TYPE] : AUTH_TYPE_QR;
     mHead_ = std::make_shared<MsgHead>((mAuthType_ == AUTH_TYPE_QR) ? (DmMsgType::MSG_TYPE_REQ_AUTH) :
         (DmMsgType::MSG_TYPE_AUTH_BY_PIN));
+    std::string deviceManagerPkgName = "ohos.distributedhardware.devicemanager";
+    NodeBasicInfo localBasicInfo;
+    int32_t ret = GetLocalNodeDeviceInfo(deviceManagerPkgName.c_str(), &localBasicInfo);
+    if (ret != 0) {
+        DMLOG(DM_LOG_ERROR, "GetLocalNodeDeviceInfo err: %d", ret);
+        return;
+    }
+    mDeviceName_ = localBasicInfo.deviceName;
     char localDeviceId[DEVICE_UUID_LENGTH] = {0};
     GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
-    mDeviceName_ = devReqInfo.deviceName;
     mDeviceId_ = localDeviceId;
     mToken_ = token;
     mHostPkg_ = hostPkgName;
@@ -60,7 +68,7 @@ MsgRequestAuth::MsgRequestAuth(std::string &token, std::string hostPkgName, std:
     mImageInfo_ = imageInfo;
     mThumbnailSize_ = mImageInfo_.GetAppThumbnailLen();
     mAppIconSize_ = mImageInfo_.GetAppIconLen();
-    mDeviceType_ = ToHexString(devReqInfo.deviceTypeId);
+    mDeviceType_ = ToHexString(localBasicInfo.deviceTypeId);
     DMLOG(DM_LOG_INFO, "MsgRequestAuth construction completed");
 }
 

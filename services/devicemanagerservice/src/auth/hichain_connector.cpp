@@ -46,7 +46,7 @@ const std::string BR_MAC = "BR_MAC";
 const std::string BLE_MAC = "BLE_MAC";
 const std::string ETH_IP = "ETH_IP";
 const std::string ETH_PORT = "ETH_PORT";
-const std::string DEVICE_MANAGER_APP = "com.huawei.devicemanager";
+const std::string DEVICE_MANAGER_APP = "ohos.distributedhardware.devicemanager";
 const std::string DEVICE_MANAGER_GROUPNAME = "DMPeerToPeerGroup";
 
 const int64_t MIN_REQUEST_ID = 1000000000;
