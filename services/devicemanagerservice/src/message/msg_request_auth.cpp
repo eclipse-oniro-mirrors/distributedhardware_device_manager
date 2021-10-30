@@ -16,7 +16,6 @@
 #include <sstream>
 #include <iomanip>
 
-#include "msg_request_auth.h"
 #include "device_manager_log.h"
 #include "constants.h"
 #include "encrypt_utils.h"
@@ -27,6 +26,7 @@
 #include "parameter.h"
 #include "softbus_session.h"
 #include "softbus_bus_center.h"
+#include "msg_request_auth.h"
 
 namespace OHOS {
 namespace DistributedHardware {
