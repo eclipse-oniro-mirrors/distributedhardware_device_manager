@@ -96,7 +96,10 @@ if (defined(ohos_lite)) {
       "src/log/dm_log.cpp",
     ]
 
-    deps = [ "//utils/native/base:utils" ]
+    deps = [
+      "//third_party/mbedtls:mbedtls_shared",
+      "//utils/native/base:utils",
+    ]
 
     defines = [
       "HI_LOG_ENABLE",
