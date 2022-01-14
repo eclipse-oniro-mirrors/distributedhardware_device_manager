@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include<iostream>
+#include <iostream>
 
 #include "dm_log.h"
 #include "dm_constants.h"
@@ -27,25 +27,26 @@
 
 namespace OHOS {
 namespace DistributedHardware {
-void DmDeviceStateManagerTest::SetUp() 
+void DmDeviceStateManagerTest::SetUp()
 {
 }
 
-void DmDeviceStateManagerTest::TearDown() 
+void DmDeviceStateManagerTest::TearDown()
 {
 }
 
-void DmDeviceStateManagerTest::SetUpTestCase() 
+void DmDeviceStateManagerTest::SetUpTestCase()
 {
 }
 
-void DmDeviceStateManagerTest::TearDownTestCase() 
+void DmDeviceStateManagerTest::TearDownTestCase()
 {
 }
 namespace {
-std::shared_ptr<SoftbusConnector> softbusConnector  = std::make_shared<SoftbusConnector>();
+std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
 std::shared_ptr<DeviceManagerServiceListener> listener_ = std::make_shared<DeviceManagerServiceListener>();
-std::shared_ptr<DmDeviceStateManager> dmDeviceStateManager  = std::make_shared<DmDeviceStateManager>(softbusConnector, listener_);
+std::shared_ptr<DmDeviceStateManager> dmDeviceStateManager =
+    std::make_shared<DmDeviceStateManager>(softbusConnector, listener_);
 
 /**
  * @tc.name: DmDeviceStateManager_001
@@ -53,7 +54,7 @@ std::shared_ptr<DmDeviceStateManager> dmDeviceStateManager  = std::make_shared<D
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(DmDeviceStateManagerTest, DmDeviceStateManager_001, testing::ext::TestSize.Level0) 
+HWTEST_F(DmDeviceStateManagerTest, DmDeviceStateManager_001, testing::ext::TestSize.Level0)
 {
     std::shared_ptr<DmDeviceStateManager> p = std::make_shared<DmDeviceStateManager>(softbusConnector, listener_);
     ASSERT_NE(p, nullptr);
@@ -65,7 +66,7 @@ HWTEST_F(DmDeviceStateManagerTest, DmDeviceStateManager_001, testing::ext::TestS
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(DmDeviceStateManagerTest, DmDeviceStateManager_002, testing::ext::TestSize.Level0) 
+HWTEST_F(DmDeviceStateManagerTest, DmDeviceStateManager_002, testing::ext::TestSize.Level0)
 {
     std::shared_ptr<DmDeviceStateManager> p = std::make_shared<DmDeviceStateManager>(softbusConnector, listener_);
     p.reset();
@@ -74,17 +75,18 @@ HWTEST_F(DmDeviceStateManagerTest, DmDeviceStateManager_002, testing::ext::TestS
 
 /**
  * @tc.name: OnDeviceOnline_001
- * @tc.desc: set info.deviceId to some para, and return it 
+ * @tc.desc: set info.deviceId to some para, and return it
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(DmDeviceStateManagerTest, OnDeviceOnline_001, testing::ext::TestSize.Level0) 
+HWTEST_F(DmDeviceStateManagerTest, OnDeviceOnline_001, testing::ext::TestSize.Level0)
 {
     std::string pkgName = "123";
-    DmDeviceInfo info ;
-    strncpy (info.deviceId, "123", sizeof(info.deviceId));
+    DmDeviceInfo info;
+    strncpy(info.deviceId, "123", sizeof(info.deviceId));
     dmDeviceStateManager->OnDeviceOnline(pkgName, info);
-    std::shared_ptr<IpcNotifyDeviceStateReq> pReq = std::static_pointer_cast<IpcNotifyDeviceStateReq > (listener_->ipcServerListener_.req_);
+    std::shared_ptr<IpcNotifyDeviceStateReq> pReq =
+        std::static_pointer_cast<IpcNotifyDeviceStateReq>(listener_->ipcServerListener_.req_);
     DmDeviceInfo ret = pReq->GetDeviceInfo();
     int result = strcmp(info.deviceId, ret.deviceId);
     EXPECT_EQ(result, 0);
@@ -92,17 +94,18 @@ HWTEST_F(DmDeviceStateManagerTest, OnDeviceOnline_001, testing::ext::TestSize.Le
 
 /**
  * @tc.name: OnDeviceOffline_001
- * @tc.desc: set info.deviceId to some para, and return it 
+ * @tc.desc: set info.deviceId to some para, and return it
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(DmDeviceStateManagerTest, OnDeviceOffline_001, testing::ext::TestSize.Level0) 
+HWTEST_F(DmDeviceStateManagerTest, OnDeviceOffline_001, testing::ext::TestSize.Level0)
 {
     std::string pkgName;
     DmDeviceInfo info;
     strncpy(info.deviceId, "123", sizeof(info.deviceId));
     dmDeviceStateManager->OnDeviceOffline(pkgName, info);
-    std::shared_ptr<IpcNotifyDeviceStateReq > pReq = std::static_pointer_cast<IpcNotifyDeviceStateReq >(listener_->ipcServerListener_.req_);
+    std::shared_ptr<IpcNotifyDeviceStateReq> pReq =
+        std::static_pointer_cast<IpcNotifyDeviceStateReq>(listener_->ipcServerListener_.req_);
     DmDeviceInfo ret = pReq->GetDeviceInfo();
     int result = strcmp(info.deviceId, ret.deviceId);
     EXPECT_EQ(result, 0);
@@ -110,17 +113,18 @@ HWTEST_F(DmDeviceStateManagerTest, OnDeviceOffline_001, testing::ext::TestSize.L
 
 /**
  * @tc.name: OnDeviceChanged_001
- * @tc.desc: set info.deviceId to some para, and return it 
+ * @tc.desc: set info.deviceId to some para, and return it
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(DmDeviceStateManagerTest, OnDeviceChanged_001, testing::ext::TestSize.Level0) 
+HWTEST_F(DmDeviceStateManagerTest, OnDeviceChanged_001, testing::ext::TestSize.Level0)
 {
     std::string pkgName;
-    DmDeviceInfo info ;
-    strncpy (info.deviceId, "123", sizeof(info.deviceId));
+    DmDeviceInfo info;
+    strncpy(info.deviceId, "123", sizeof(info.deviceId));
     dmDeviceStateManager->OnDeviceChanged(pkgName, info);
-    std::shared_ptr<IpcNotifyDeviceStateReq> pReq = std::static_pointer_cast<IpcNotifyDeviceStateReq >(listener_->ipcServerListener_.req_);
+    std::shared_ptr<IpcNotifyDeviceStateReq> pReq =
+        std::static_pointer_cast<IpcNotifyDeviceStateReq>(listener_->ipcServerListener_.req_);
     DmDeviceInfo ret = pReq->GetDeviceInfo();
     int result = strcmp(info.deviceId, ret.deviceId);
     EXPECT_EQ(result, 0);
@@ -128,18 +132,19 @@ HWTEST_F(DmDeviceStateManagerTest, OnDeviceChanged_001, testing::ext::TestSize.L
 
 /**
  * @tc.name: OnDeviceReady_001
- * @tc.desc: set info.deviceId to some para, and return it 
+ * @tc.desc: set info.deviceId to some para, and return it
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(DmDeviceStateManagerTest, OnProfileReady_001, testing::ext::TestSize.Level0) 
+HWTEST_F(DmDeviceStateManagerTest, OnProfileReady_001, testing::ext::TestSize.Level0)
 {
     std::string pkgName;
     std::string deviceId;
-    DmDeviceInfo info ;
-    strncpy (info.deviceId, "123", sizeof(info.deviceId));
+    DmDeviceInfo info;
+    strncpy(info.deviceId, "123", sizeof(info.deviceId));
     dmDeviceStateManager->OnProfileReady(pkgName, deviceId);
-    std::shared_ptr<IpcNotifyDeviceStateReq> pReq = std::static_pointer_cast<IpcNotifyDeviceStateReq >(listener_->ipcServerListener_.req_);
+    std::shared_ptr<IpcNotifyDeviceStateReq> pReq =
+        std::static_pointer_cast<IpcNotifyDeviceStateReq>(listener_->ipcServerListener_.req_);
     DmDeviceInfo ret = pReq->GetDeviceInfo();
     int result = strcmp(info.deviceId, ret.deviceId);
     ASSERT_GE(result, 0);
@@ -151,13 +156,14 @@ HWTEST_F(DmDeviceStateManagerTest, OnProfileReady_001, testing::ext::TestSize.Le
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(DmDeviceStateManagerTest, OnDeviceReady_001, testing::ext::TestSize.Level0) 
+HWTEST_F(DmDeviceStateManagerTest, OnDeviceReady_001, testing::ext::TestSize.Level0)
 {
     std::string pkgName;
-    DmDeviceInfo info ;
-    strncpy (info.deviceId, "123", sizeof(info.deviceId));
+    DmDeviceInfo info;
+    strncpy(info.deviceId, "123", sizeof(info.deviceId));
     dmDeviceStateManager->OnDeviceReady(pkgName, info);
-    std::shared_ptr<IpcNotifyDeviceStateReq> pReq = std::static_pointer_cast<IpcNotifyDeviceStateReq >(listener_->ipcServerListener_.req_);
+    std::shared_ptr<IpcNotifyDeviceStateReq> pReq =
+        std::static_pointer_cast<IpcNotifyDeviceStateReq>(listener_->ipcServerListener_.req_);
     DmDeviceInfo ret = pReq->GetDeviceInfo();
     int result = strcmp(info.deviceId, ret.deviceId);
     ASSERT_GE(result, 0);
@@ -169,13 +175,14 @@ HWTEST_F(DmDeviceStateManagerTest, OnDeviceReady_001, testing::ext::TestSize.Lev
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(DmDeviceStateManagerTest, OnDeviceChanged_002, testing::ext::TestSize.Level0) 
+HWTEST_F(DmDeviceStateManagerTest, OnDeviceChanged_002, testing::ext::TestSize.Level0)
 {
     std::string pkgName;
-    DmDeviceInfo info ;
+    DmDeviceInfo info;
     strncpy(info.deviceId, "123", sizeof(info.deviceId));
     dmDeviceStateManager->OnDeviceChanged(pkgName, info);
-    std::shared_ptr<IpcNotifyDeviceStateReq> pReq = std::static_pointer_cast<IpcNotifyDeviceStateReq >(listener_->ipcServerListener_.req_);
+    std::shared_ptr<IpcNotifyDeviceStateReq> pReq =
+        std::static_pointer_cast<IpcNotifyDeviceStateReq>(listener_->ipcServerListener_.req_);
     DmDeviceInfo ret = pReq->GetDeviceInfo();
     int result = strcmp(info.deviceId, ret.deviceId);
     ASSERT_GE(result, 0);
@@ -187,11 +194,11 @@ HWTEST_F(DmDeviceStateManagerTest, OnDeviceChanged_002, testing::ext::TestSize.L
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(DmDeviceStateManagerTest, RegisterSoftbusStateCallback_001, testing::ext::TestSize.Level0) 
+HWTEST_F(DmDeviceStateManagerTest, RegisterSoftbusStateCallback_001, testing::ext::TestSize.Level0)
 {
     int ret = dmDeviceStateManager->RegisterSoftbusStateCallback();
     EXPECT_EQ(ret, DM_OK);
 }
-}
-}
-}
+} // namespace
+} // namespace DistributedHardware
+} // namespace OHOS

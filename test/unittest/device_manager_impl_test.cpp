@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -53,8 +53,7 @@ HWTEST_F(DeviceManagerImplTest, AuthenticateDevice1, testing::ext::TestSize.Leve
     DmDeviceInfo dmDeviceInfo;
     std::string extra = "";
     std::shared_ptr<AuthenticateCallback> callback = nullptr;
-    int32_t ret =
-        DeviceManager::GetInstance().AuthenticateDevice(packName, authType, dmDeviceInfo, extra, callback);
+    int32_t ret = DeviceManager::GetInstance().AuthenticateDevice(packName, authType, dmDeviceInfo, extra, callback);
     ASSERT_EQ(ret, DM_INVALID_VALUE);
 }
 
@@ -70,8 +69,7 @@ HWTEST_F(DeviceManagerImplTest, AuthenticateDevice2, testing::ext::TestSize.Leve
     EXPECT_CALL(*mockInstance, SendRequest(testing::_, testing::_, testing::_))
         .Times(1)
         .WillOnce(testing::Return(DM_FAILED));
-    int32_t ret =
-        DeviceManager::GetInstance().AuthenticateDevice(packName, authType, dmDeviceInfo, extra, callback);
+    int32_t ret = DeviceManager::GetInstance().AuthenticateDevice(packName, authType, dmDeviceInfo, extra, callback);
     ASSERT_EQ(ret, DM_IPC_FAILED);
     DeviceManagerImpl::GetInstance().ipcClientProxy_ = nullptr;
 }
@@ -88,8 +86,7 @@ HWTEST_F(DeviceManagerImplTest, AuthenticateDevice3, testing::ext::TestSize.Leve
     EXPECT_CALL(*mockInstance, SendRequest(testing::_, testing::_, testing::_))
         .Times(1)
         .WillOnce(testing::Return(DM_OK));
-    int32_t ret =
-        DeviceManager::GetInstance().AuthenticateDevice(packName, authType, dmDeviceInfo, extra, callback);
+    int32_t ret = DeviceManager::GetInstance().AuthenticateDevice(packName, authType, dmDeviceInfo, extra, callback);
     ASSERT_EQ(ret, DM_OK);
     DeviceManagerImpl::GetInstance().ipcClientProxy_ = nullptr;
 }

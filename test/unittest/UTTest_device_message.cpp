@@ -50,7 +50,7 @@ HWTEST_F(AuthMessageProcessorTest, CreateNegotiateMessage_001, testing::ext::Tes
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    std::shared_ptr<AuthMessageProcessor> authMessageProcessor= std::make_shared<AuthMessageProcessor>(data);
+    std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
     int32_t msgType = MSG_TYPE_NEGOTIATE;
     nlohmann::json jsonObj;
     jsonObj[TAG_VER] = DM_ITF_VER;
@@ -78,12 +78,12 @@ HWTEST_F(AuthMessageProcessorTest, CreateSyncGroupMessage_001, testing::ext::Tes
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    std::shared_ptr<AuthMessageProcessor> authMessageProcessor= std::make_shared<AuthMessageProcessor>(data);
-    authMessageProcessor->authRequestContext_= std::make_shared<DmAuthRequestContext>();
+    std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
+    authMessageProcessor->authRequestContext_ = std::make_shared<DmAuthRequestContext>();
     nlohmann::json jsona;
     nlohmann::json jsonObj;
     authMessageProcessor->authRequestContext_->deviceId = "132416546";
-    std::vector<std::string> syncGroupList ;
+    std::vector<std::string> syncGroupList;
     syncGroupList.push_back("1111");
     authMessageProcessor->authRequestContext_->syncGroupList = syncGroupList;
     jsona[TAG_DEVICE_ID] = authMessageProcessor->authRequestContext_->deviceId;
@@ -106,7 +106,7 @@ HWTEST_F(AuthMessageProcessorTest, CreateResponseAuthMessage_001, testing::ext::
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    std::shared_ptr<AuthMessageProcessor> authMessageProcessor= std::make_shared<AuthMessageProcessor>(data);
+    std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
     authMessageProcessor->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
     nlohmann::json jsona;
     nlohmann::json jsonObj;
@@ -144,11 +144,11 @@ HWTEST_F(AuthMessageProcessorTest, CreateResponseFinishMessage_001, testing::ext
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    std::shared_ptr<AuthMessageProcessor> authMessageProcessor= std::make_shared<AuthMessageProcessor>(data);
+    std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
     authMessageProcessor->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
     nlohmann::json jsona;
     nlohmann::json jsonObj;
-    authMessageProcessor->authResponseContext_->reply= 1;
+    authMessageProcessor->authResponseContext_->reply = 1;
     jsona[TAG_REPLY] = authMessageProcessor->authResponseContext_->reply;
     authMessageProcessor->CreateResponseFinishMessage(jsonObj);
     std::string str1 = jsona.dump();
@@ -168,9 +168,9 @@ HWTEST_F(AuthMessageProcessorTest, ParseResponseFinishMessage_001, testing::ext:
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    std::shared_ptr<AuthMessageProcessor> authMessageProcessor= std::make_shared<AuthMessageProcessor>(data);
-    std::shared_ptr<DmAuthResponseContext> authResponseContext= std::make_shared<DmAuthResponseContext>();
-    authMessageProcessor->authResponseContext_= std::make_shared<DmAuthResponseContext>();
+    std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
+    std::shared_ptr<DmAuthResponseContext> authResponseContext = std::make_shared<DmAuthResponseContext>();
+    authMessageProcessor->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
     nlohmann::json jsonObj;
     authMessageProcessor->authResponseContext_->reply = 1;
     jsonObj[TAG_REPLY] = authMessageProcessor->authResponseContext_->reply;
@@ -191,7 +191,7 @@ HWTEST_F(AuthMessageProcessorTest, ParseAuthResponseMessage_001, testing::ext::T
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    std::shared_ptr<AuthMessageProcessor> authMessageProcessor= std::make_shared<AuthMessageProcessor>(data);
+    std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
     std::shared_ptr<DmAuthResponseContext> authResponseContext = std::make_shared<DmAuthResponseContext>();
     nlohmann::json jsona;
     authResponseContext->reply = 0;
@@ -225,7 +225,7 @@ HWTEST_F(AuthMessageProcessorTest, ParseAuthRequestMessage_001, testing::ext::Te
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    std::shared_ptr<AuthMessageProcessor> authMessageProcessor= std::make_shared<AuthMessageProcessor>(data);
+    std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
     std::shared_ptr<DmAuthResponseContext> authResponseContext = std::make_shared<DmAuthResponseContext>();
     authMessageProcessor->SetResponseContext(authResponseContext);
     nlohmann::json json;
@@ -241,7 +241,7 @@ HWTEST_F(AuthMessageProcessorTest, ParseAuthRequestMessage_001, testing::ext::Te
     jsonThumbnail[TAG_REPLY] = authResponseContext->reply;
     jsonThumbnail[TAG_AUTH_TYPE] = authResponseContext->authType;
     jsonThumbnail[TAG_NET_ID] = authResponseContext->networkId;
-    jsonThumbnail[TAG_GROUP_ID] = authResponseContext->groupId ;
+    jsonThumbnail[TAG_GROUP_ID] = authResponseContext->groupId;
     jsonThumbnail[TAG_GROUP_NAME] = authResponseContext->groupName;
     jsonThumbnail[TAG_REQUEST_ID] = authResponseContext->requestId;
     authMessageProcessor->authSplitJsonList_.push_back(jsonThumbnail);
@@ -261,7 +261,7 @@ HWTEST_F(AuthMessageProcessorTest, ParseAuthRequestMessage_002, testing::ext::Te
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    std::shared_ptr<AuthMessageProcessor> authMessageProcessor= std::make_shared<AuthMessageProcessor>(data);
+    std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
     std::shared_ptr<DmAuthResponseContext> authResponseContext = std::make_shared<DmAuthResponseContext>();
     authMessageProcessor->SetResponseContext(authResponseContext);
     nlohmann::json json;
@@ -277,7 +277,7 @@ HWTEST_F(AuthMessageProcessorTest, ParseAuthRequestMessage_002, testing::ext::Te
     jsonThumbnail[TAG_REPLY] = authResponseContext->reply;
     jsonThumbnail[TAG_AUTH_TYPE] = authResponseContext->authType;
     jsonThumbnail[TAG_NET_ID] = authResponseContext->networkId;
-    jsonThumbnail[TAG_GROUP_ID] = authResponseContext->groupId ;
+    jsonThumbnail[TAG_GROUP_ID] = authResponseContext->groupId;
     jsonThumbnail[TAG_GROUP_NAME] = authResponseContext->groupName;
     jsonThumbnail[TAG_REQUEST_ID] = authResponseContext->requestId;
     authMessageProcessor->authSplitJsonList_.push_back(jsonThumbnail);
@@ -297,11 +297,11 @@ HWTEST_F(AuthMessageProcessorTest, ParseNegotiateMessage_001, testing::ext::Test
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    std::shared_ptr<AuthMessageProcessor> authMessageProcessor= std::make_shared<AuthMessageProcessor>(data);
+    std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
     std::shared_ptr<DmAuthResponseContext> authResponseContext = std::make_shared<DmAuthResponseContext>();
     authMessageProcessor->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
     nlohmann::json jsonObj;
-    jsonObj[TAG_CRYPTO_SUPPORT]="CRYPTOSUPPORT";
+    jsonObj[TAG_CRYPTO_SUPPORT] = "CRYPTOSUPPORT";
     jsonObj[TAG_CRYPTO_SUPPORT] = authMessageProcessor->authResponseContext_->cryptoSupport;
     authMessageProcessor->SetResponseContext(authResponseContext);
     authMessageProcessor->ParseNegotiateMessage(jsonObj);
@@ -320,11 +320,11 @@ HWTEST_F(AuthMessageProcessorTest, ParseNegotiateMessage_002, testing::ext::Test
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    std::shared_ptr<AuthMessageProcessor> authMessageProcessor= std::make_shared<AuthMessageProcessor>(data);
+    std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
     std::shared_ptr<DmAuthResponseContext> authResponseContext = std::make_shared<DmAuthResponseContext>();
     authMessageProcessor->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
     nlohmann::json jsonObj;
-    jsonObj[TAG_CRYPTO_NAME]="CRYPTONAME";
+    jsonObj[TAG_CRYPTO_NAME] = "CRYPTONAME";
     jsonObj[TAG_CRYPTO_NAME] = authResponseContext->cryptoSupport;
     authMessageProcessor->SetResponseContext(authResponseContext);
     authMessageProcessor->ParseNegotiateMessage(jsonObj);
@@ -343,11 +343,11 @@ HWTEST_F(AuthMessageProcessorTest, ParseNegotiateMessage_003, testing::ext::Test
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    std::shared_ptr<AuthMessageProcessor> authMessageProcessor= std::make_shared<AuthMessageProcessor>(data);
+    std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
     std::shared_ptr<DmAuthResponseContext> authResponseContext = std::make_shared<DmAuthResponseContext>();
     authMessageProcessor->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
     nlohmann::json jsonObj;
-    jsonObj[TAG_CRYPTO_VERSION]="CRYPTOVERSION";
+    jsonObj[TAG_CRYPTO_VERSION] = "CRYPTOVERSION";
     jsonObj[TAG_CRYPTO_VERSION] = authResponseContext->cryptoSupport;
     authMessageProcessor->SetResponseContext(authResponseContext);
     authMessageProcessor->ParseNegotiateMessage(jsonObj);
@@ -366,11 +366,11 @@ HWTEST_F(AuthMessageProcessorTest, ParseNegotiateMessage_004, testing::ext::Test
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    std::shared_ptr<AuthMessageProcessor> authMessageProcessor= std::make_shared<AuthMessageProcessor>(data);
+    std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
     std::shared_ptr<DmAuthResponseContext> authResponseContext = std::make_shared<DmAuthResponseContext>();
     authMessageProcessor->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
     nlohmann::json jsonObj;
-    jsonObj[TAG_DEVICE_ID]="DEVICEID";
+    jsonObj[TAG_DEVICE_ID] = "DEVICEID";
     jsonObj[TAG_DEVICE_ID] = authResponseContext->deviceId;
     authMessageProcessor->SetResponseContext(authResponseContext);
     authMessageProcessor->ParseNegotiateMessage(jsonObj);
@@ -389,11 +389,11 @@ HWTEST_F(AuthMessageProcessorTest, ParseNegotiateMessage_005, testing::ext::Test
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    std::shared_ptr<AuthMessageProcessor> authMessageProcessor= std::make_shared<AuthMessageProcessor>(data);
+    std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
     std::shared_ptr<DmAuthResponseContext> authResponseContext = std::make_shared<DmAuthResponseContext>();
     authMessageProcessor->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
     nlohmann::json jsonObj;
-    jsonObj[TAG_LOCAL_DEVICE_ID]="LOCALDEVICEID";
+    jsonObj[TAG_LOCAL_DEVICE_ID] = "LOCALDEVICEID";
     jsonObj[TAG_LOCAL_DEVICE_ID] = authResponseContext->localDeviceId;
     authMessageProcessor->SetResponseContext(authResponseContext);
     authMessageProcessor->ParseNegotiateMessage(jsonObj);
@@ -504,10 +504,10 @@ HWTEST_F(AuthMessageProcessorTest, GetResponseContext_002, testing::ext::TestSiz
     std::shared_ptr<DmAuthManager> data = std::make_shared<DmAuthManager>(softbusConnector, listener);
     std::shared_ptr<AuthMessageProcessor> authMessageProcessor = std::make_shared<AuthMessageProcessor>(data);
     authMessageProcessor->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
-    std::shared_ptr<DmAuthResponseContext> authResponseContext  = authMessageProcessor->GetResponseContext();
+    std::shared_ptr<DmAuthResponseContext> authResponseContext = authMessageProcessor->GetResponseContext();
     ASSERT_NE(authResponseContext, nullptr);
     sleep(15);
 }
-}
-}
-}
+} // namespace
+} // namespace DistributedHardware
+} // namespace OHOS

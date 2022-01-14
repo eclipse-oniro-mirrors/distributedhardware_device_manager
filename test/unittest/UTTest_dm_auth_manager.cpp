@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,11 +38,11 @@ void DmAuthManagerTest::TearDownTestCase()
 }
 
 namespace {
-    std::string AUTHENTICATE_TIMEOUT_TASK = "authenticateTimeoutTask";
-    std::string NEGOTIATE_TIMEOUT_TASK = "negotiateTimeoutTask";
-    std::string CONFIRM_TIMEOUT_TASK = "confirmTimeoutTask";
-    std::string INPUT_TIMEOUT_TASK = "inputTimeoutTask";
-    std::string ADD_TIMEOUT_TASK = "addTimeoutTask";
+std::string AUTHENTICATE_TIMEOUT_TASK = "authenticateTimeoutTask";
+std::string NEGOTIATE_TIMEOUT_TASK = "negotiateTimeoutTask";
+std::string CONFIRM_TIMEOUT_TASK = "confirmTimeoutTask";
+std::string INPUT_TIMEOUT_TASK = "inputTimeoutTask";
+std::string ADD_TIMEOUT_TASK = "addTimeoutTask";
 
 /**
  * @tc.name: DmAuthManager::AuthenticateDevice_001
@@ -129,7 +129,7 @@ HWTEST_F(DmAuthManagerTest, AuthenticateDevice_004, testing::ext::TestSize.Level
     int32_t authType = 4;
     const std::string deviceId = "222";
     const std::string extra = "targetPkgName";
-    authRequestContext->targetPkgName =  "targetPkgName";
+    authRequestContext->targetPkgName = "targetPkgName";
     int32_t ret = authManager->AuthenticateDevice(pkgName, authType, deviceId, extra);
     ASSERT_EQ(ret, DM_INPUT_PARA_EMPTY);
 }
@@ -152,8 +152,8 @@ HWTEST_F(DmAuthManagerTest, AuthenticateDevice_005, testing::ext::TestSize.Level
     int32_t authType = 1;
     const std::string deviceId = "222";
     const std::string extra = "targetPkgName";
-    authRequestContext->targetPkgName =  "targetPkgName";
-    json[TARGET_PKG_NAME_KEY] =  authRequestContext->targetPkgName;
+    authRequestContext->targetPkgName = "targetPkgName";
+    json[TARGET_PKG_NAME_KEY] = authRequestContext->targetPkgName;
     int32_t ret = authManager->AuthenticateDevice(pkgName, authType, deviceId, extra);
     ASSERT_EQ(ret, DM_OK);
 }
@@ -176,8 +176,8 @@ HWTEST_F(DmAuthManagerTest, AuthenticateDevice_006, testing::ext::TestSize.Level
     int32_t authType = 1;
     const std::string deviceId = "222";
     const std::string extra = "appName";
-    authRequestContext->targetPkgName =  "appName";
-    json[APP_NAME_KEY] =  authRequestContext->targetPkgName;
+    authRequestContext->targetPkgName = "appName";
+    json[APP_NAME_KEY] = authRequestContext->targetPkgName;
     int32_t ret = authManager->AuthenticateDevice(pkgName, authType, deviceId, extra);
     ASSERT_EQ(ret, DM_OK);
 }
@@ -200,8 +200,8 @@ HWTEST_F(DmAuthManagerTest, AuthenticateDevice_007, testing::ext::TestSize.Level
     int32_t authType = 1;
     const std::string deviceId = "222";
     const std::string extra = "appDescription";
-    authRequestContext->targetPkgName =  "appDescription";
-    json[APP_DESCRIPTION_KEY] =  authRequestContext->targetPkgName;
+    authRequestContext->targetPkgName = "appDescription";
+    json[APP_DESCRIPTION_KEY] = authRequestContext->targetPkgName;
     int32_t ret = authManager->AuthenticateDevice(pkgName, authType, deviceId, extra);
     ASSERT_EQ(ret, DM_OK);
 }
@@ -224,8 +224,8 @@ HWTEST_F(DmAuthManagerTest, AuthenticateDevice_008, testing::ext::TestSize.Level
     int32_t authType = 1;
     const std::string deviceId = "222";
     const std::string extra = "appThumbnail";
-    authRequestContext->targetPkgName =  "appThumbnail";
-    json[APP_THUMBNAIL] =  authRequestContext->targetPkgName;
+    authRequestContext->targetPkgName = "appThumbnail";
+    json[APP_THUMBNAIL] = authRequestContext->targetPkgName;
     int32_t ret = authManager->AuthenticateDevice(pkgName, authType, deviceId, extra);
     ASSERT_EQ(ret, DM_OK);
 }
@@ -248,8 +248,8 @@ HWTEST_F(DmAuthManagerTest, AuthenticateDevice_009, testing::ext::TestSize.Level
     int32_t authType = 1;
     const std::string deviceId = "222";
     const std::string extra = "appIcon";
-    authRequestContext->targetPkgName =  "appIcon";
-    json[APP_ICON_KEY] =  authRequestContext->targetPkgName;
+    authRequestContext->targetPkgName = "appIcon";
+    json[APP_ICON_KEY] = authRequestContext->targetPkgName;
     int32_t ret = authManager->AuthenticateDevice(pkgName, authType, deviceId, extra);
     ASSERT_EQ(ret, DM_OK);
 }
@@ -290,7 +290,7 @@ HWTEST_F(DmAuthManagerTest, VerifyAuthentication_001, testing::ext::TestSize.Lev
     authManager->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
     authManager->authRequestContext_ = std::make_shared<DmAuthRequestContext>();
     authManager->authRequestState_ = std::make_shared<AuthRequestNetworkState>();
-    authManager->authResponseContext_=nullptr;
+    authManager->authResponseContext_ = nullptr;
     authManager->SetAuthRequestState(authRequestState);
     int32_t ret = authManager->HandleAuthenticateTimeout();
     ASSERT_EQ(ret, DM_FAILED);
@@ -311,7 +311,7 @@ HWTEST_F(DmAuthManagerTest, HandleAuthenticateTimeout_001, testing::ext::TestSiz
     authManager->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
     authManager->authRequestContext_ = std::make_shared<DmAuthRequestContext>();
     authManager->authRequestState_ = std::make_shared<AuthRequestNetworkState>();
-    authManager->authResponseContext_=nullptr;
+    authManager->authResponseContext_ = nullptr;
     authManager->SetAuthRequestState(authRequestState);
     int32_t ret = authManager->HandleAuthenticateTimeout();
     ASSERT_EQ(ret, DM_FAILED);
@@ -373,11 +373,12 @@ HWTEST_F(DmAuthManagerTest, SendAuthRequest_001, testing::ext::TestSize.Level0)
     std::shared_ptr<DmTimer> negotiateStartTimer = std::make_shared<DmTimer>(NEGOTIATE_TIMEOUT_TASK);
     authManager->timerMap_[NEGOTIATE_TIMEOUT_TASK] = negotiateStartTimer;
     authManager->authMessageProcessor_ = std::make_shared<AuthMessageProcessor>(authManager);
-    authManager->authResponseContext_ = std::make_shared<DmAuthResponseContext>();;
+    authManager->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
+    ;
     authManager->authRequestState_ = std::make_shared<AuthRequestFinishState>();
     authManager->authResponseContext_->cryptoSupport = true;
     authManager->SetAuthRequestState(authRequestState);
-    int32_t sessionId=1;
+    int32_t sessionId = 1;
     int32_t ret = authManager->SendAuthRequest(sessionId);
     ASSERT_EQ(ret, DM_FAILED);
 }
@@ -420,7 +421,7 @@ HWTEST_F(DmAuthManagerTest, StartAuthProcess_002, testing::ext::TestSize.Level0)
     authManager->authResponseState_ = std::make_shared<AuthResponseConfirmState>();
     authManager->authMessageProcessor_ = std::make_shared<AuthMessageProcessor>(authManager);
     authManager->SetAuthResponseState(authResponseState);
-    authManager->authResponseContext_->sessionId=111;
+    authManager->authResponseContext_->sessionId = 111;
     int32_t action = 1;
     int32_t ret = authManager->StartAuthProcess(action);
     ASSERT_EQ(ret, DM_OK);
@@ -444,8 +445,8 @@ HWTEST_F(DmAuthManagerTest, CreateGroup_001, testing::ext::TestSize.Level0)
     authManager->authResponseState_ = std::make_shared<AuthResponseConfirmState>();
     authManager->authMessageProcessor_ = std::make_shared<AuthMessageProcessor>(authManager);
     authManager->SetAuthResponseState(authResponseState);
-    authManager->authResponseContext_->requestId=111;
-    authManager->authResponseContext_->groupName="111";
+    authManager->authResponseContext_->requestId = 111;
+    authManager->authResponseContext_->groupName = "111";
     int32_t action = 1;
     int32_t ret = authManager->StartAuthProcess(action);
     ASSERT_EQ(ret, DM_OK);
@@ -470,11 +471,11 @@ HWTEST_F(DmAuthManagerTest, AddMember_001, testing::ext::TestSize.Level0)
     authManager->authMessageProcessor_ = std::make_shared<AuthMessageProcessor>(authManager);
     authManager->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
     nlohmann::json jsonObject;
-    authManager->authResponseContext_->groupId="111";
-    authManager->authResponseContext_->groupName="222";
-    authManager->authResponseContext_->code=123;
-    authManager->authResponseContext_->requestId=234;
-    authManager->authResponseContext_->deviceId="234";
+    authManager->authResponseContext_->groupId = "111";
+    authManager->authResponseContext_->groupName = "222";
+    authManager->authResponseContext_->code = 123;
+    authManager->authResponseContext_->requestId = 234;
+    authManager->authResponseContext_->deviceId = "234";
     jsonObject[TAG_GROUP_ID] = authManager->authResponseContext_->groupId;
     jsonObject[TAG_GROUP_NAME] = authManager->authResponseContext_->groupName;
     jsonObject[PIN_CODE_KEY] = authManager->authResponseContext_->code;
@@ -556,10 +557,11 @@ HWTEST_F(DmAuthManagerTest, GetPinCode_001, testing::ext::TestSize.Level0)
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
     std::shared_ptr<DmAuthManager> authManager = std::make_shared<DmAuthManager>(softbusConnector, listener);
-    authManager->authResponseContext_ = std::make_shared<DmAuthResponseContext>();;
+    authManager->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
+    ;
     int32_t ret = authManager->GetPinCode();
     ASSERT_EQ(ret, authManager->authResponseContext_->code);
 }
-}
-}
-}
+} // namespace
+} // namespace DistributedHardware
+} // namespace OHOS

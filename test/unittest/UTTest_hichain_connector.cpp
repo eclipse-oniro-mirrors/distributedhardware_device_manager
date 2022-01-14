@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,16 +28,16 @@
 
 namespace OHOS {
 namespace DistributedHardware {
-void HichainConnectorTest::SetUp() 
+void HichainConnectorTest::SetUp()
 {
 }
-void HichainConnectorTest::TearDown() 
+void HichainConnectorTest::TearDown()
 {
 }
-void HichainConnectorTest::SetUpTestCase() 
+void HichainConnectorTest::SetUpTestCase()
 {
 }
-void HichainConnectorTest::TearDownTestCase() 
+void HichainConnectorTest::TearDownTestCase()
 {
 }
 namespace {
@@ -47,12 +47,12 @@ namespace {
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest, CreateGroup_001, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, CreateGroup_001, testing::ext::TestSize.Level0)
 {
     int64_t requestId = 123456;
     std::string groupName = "dfggg";
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
-    hichainConnector-> deviceGroupManager_ = nullptr;
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
+    hichainConnector->deviceGroupManager_ = nullptr;
     int ret = hichainConnector->CreateGroup(requestId, groupName);
     EXPECT_EQ(ret, DM_INVALID_VALUE);
 }
@@ -63,11 +63,11 @@ HWTEST_F(HichainConnectorTest, CreateGroup_001, testing::ext::TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest, CreateGroup_002, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, CreateGroup_002, testing::ext::TestSize.Level0)
 {
     int64_t requestId = 123456;
     std::string groupName = "uuiioo";
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret = hichainConnector->CreateGroup(requestId, groupName);
     EXPECT_EQ(ret, DM_OK);
 }
@@ -78,9 +78,9 @@ HWTEST_F(HichainConnectorTest, CreateGroup_002, testing::ext::TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest, GetGroupInfo_001, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, GetGroupInfo_001, testing::ext::TestSize.Level0)
 {
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     std::string groupName = "dcdkdkd1";
     nlohmann::json jsonObj;
     jsonObj[FIELD_GROUP_NAME] = groupName.c_str();
@@ -106,7 +106,7 @@ HWTEST_F(HichainConnectorTest, GetGroupInfo_003, testing::ext::TestSize.Level0)
     aa.groupName = "afa";
     std::vector<GroupInfo> groupList;
     groupList.push_back(aa);
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret = hichainConnector->GetGroupInfo(queryParams, groupList);
     EXPECT_EQ(ret, 0);
 }
@@ -119,7 +119,7 @@ HWTEST_F(HichainConnectorTest, GetGroupInfo_003, testing::ext::TestSize.Level0)
  * @tc.require: AR000GHSJK
  */
 
-HWTEST_F(HichainConnectorTest, IsGroupInfoInvalid_001, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, IsGroupInfoInvalid_001, testing::ext::TestSize.Level0)
 {
     GroupInfo group;
     group.groupName = "dkdkkdkdk";
@@ -139,7 +139,7 @@ HWTEST_F(HichainConnectorTest, IsGroupInfoInvalid_001, testing::ext::TestSize.Le
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest, IsGroupInfoInvalid_002, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, IsGroupInfoInvalid_002, testing::ext::TestSize.Level0)
 {
     GroupInfo group;
     group.groupName = "test";
@@ -160,7 +160,7 @@ HWTEST_F(HichainConnectorTest, IsGroupInfoInvalid_002, testing::ext::TestSize.Le
  */
 HWTEST_F(HichainConnectorTest, DelMemberFromGroup_001, testing::ext::TestSize.Level0)
 {
-    std::string groupId ;
+    std::string groupId;
     std::string deviceId;
     std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret = hichainConnector->DelMemberFromGroup(groupId, deviceId);
@@ -177,7 +177,7 @@ HWTEST_F(HichainConnectorTest, DelMemberFromGroup_002, testing::ext::TestSize.Le
 {
     std::string groupId = "34451";
     std::string deviceId = "123";
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret = hichainConnector->DelMemberFromGroup(groupId, deviceId);
     EXPECT_EQ(ret, DM_OK);
 }
@@ -188,7 +188,7 @@ HWTEST_F(HichainConnectorTest, DelMemberFromGroup_002, testing::ext::TestSize.Le
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest, GenRequestId_001, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, GenRequestId_001, testing::ext::TestSize.Level0)
 {
     std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret = hichainConnector->GenRequestId();
@@ -201,7 +201,7 @@ HWTEST_F(HichainConnectorTest, GenRequestId_001, testing::ext::TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest, from_json_001, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, from_json_001, testing::ext::TestSize.Level0)
 {
     GroupInfo groupInfo;
     groupInfo.groupName = "aaaa";
@@ -210,12 +210,12 @@ HWTEST_F(HichainConnectorTest, from_json_001, testing::ext::TestSize.Level0)
     groupInfo.groupType = 5;
     groupInfo.groupVisibility = 5;
     nlohmann::json jsonObject;
-    jsonObject[FIELD_GROUP_NAME] =   groupInfo.groupName;
-    jsonObject[FIELD_GROUP_ID] = groupInfo.groupId ;
-    jsonObject[ FIELD_GROUP_OWNER] = groupInfo.groupOwner;
-    jsonObject[ FIELD_GROUP_TYPE] = groupInfo.groupType;
+    jsonObject[FIELD_GROUP_NAME] = groupInfo.groupName;
+    jsonObject[FIELD_GROUP_ID] = groupInfo.groupId;
+    jsonObject[FIELD_GROUP_OWNER] = groupInfo.groupOwner;
+    jsonObject[FIELD_GROUP_TYPE] = groupInfo.groupType;
     jsonObject[FIELD_GROUP_VISIBILITY] = groupInfo.groupVisibility;
-    from_json(jsonObject,  groupInfo);
+    from_json(jsonObject, groupInfo);
     EXPECT_EQ(groupInfo.groupName, "aaaa");
     EXPECT_EQ(groupInfo.groupId, "345678");
     EXPECT_EQ(groupInfo.groupOwner, "lllll");
@@ -229,7 +229,7 @@ HWTEST_F(HichainConnectorTest, from_json_001, testing::ext::TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest, HiChainConnector_001, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, HiChainConnector_001, testing::ext::TestSize.Level0)
 {
     std::shared_ptr<HiChainConnector> m_HiChainConnector = std::make_shared<HiChainConnector>();
     ASSERT_NE(m_HiChainConnector, nullptr);
@@ -241,7 +241,7 @@ HWTEST_F(HichainConnectorTest, HiChainConnector_001, testing::ext::TestSize.Leve
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest, HiChainConnector_002, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, HiChainConnector_002, testing::ext::TestSize.Level0)
 {
     std::shared_ptr<HiChainConnector> m_HiChainConnector = std::make_shared<HiChainConnector>();
     m_HiChainConnector.reset();
@@ -254,14 +254,15 @@ HWTEST_F(HichainConnectorTest, HiChainConnector_002, testing::ext::TestSize.Leve
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest, RegisterHiChainCallback_001, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, RegisterHiChainCallback_001, testing::ext::TestSize.Level0)
 {
     std::string pkgName = "com.softbus.test";
     std::shared_ptr<DeviceManagerServiceListener> listener_ = std::make_shared<DeviceManagerServiceListener>();
-    std::shared_ptr<SoftbusConnector> softbusConnector  = std::make_shared<SoftbusConnector>();
+    std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DmAuthManager> discoveryMgr_ = std::make_shared<DmAuthManager>(softbusConnector, listener_);
     std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
-    int ret = hichainConnector->RegisterHiChainCallback(pkgName, std::shared_ptr<IHiChainConnectorCallback>(discoveryMgr_));
+    int ret =
+        hichainConnector->RegisterHiChainCallback(pkgName, std::shared_ptr<IHiChainConnectorCallback>(discoveryMgr_));
     int ret1 = HiChainConnector::hiChainConnectorCallbackMap_.count(pkgName);
     EXPECT_EQ(ret1, 1);
     EXPECT_EQ(ret, DM_OK);
@@ -272,15 +273,15 @@ HWTEST_F(HichainConnectorTest, RegisterHiChainCallback_001, testing::ext::TestSi
  * @tc.desc: Call the RegisterHiChainCallback function with a return value of DM_OK
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest, IsGroupCreated_001, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, IsGroupCreated_001, testing::ext::TestSize.Level0)
 {
     std::string groupName = "dcdkdkd1";
     nlohmann::json jsonObj;
     jsonObj[FIELD_GROUP_NAME] = groupName.c_str();
     std::string queryParams = jsonObj.dump();
-    std::vector<GroupInfo> groupList ;
-    GroupInfo  groupInfo;
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::vector<GroupInfo> groupList;
+    GroupInfo groupInfo;
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     bool ret = hichainConnector->IsGroupCreated(groupName, groupInfo);
     EXPECT_EQ(ret, false);
 }
@@ -293,9 +294,9 @@ HWTEST_F(HichainConnectorTest, IsGroupCreated_001, testing::ext::TestSize.Level0
  */
 HWTEST_F(HichainConnectorTest, AddMember_001, testing::ext::TestSize.Level0)
 {
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     hichainConnector->deviceGroupManager_ = nullptr;
-    std::string deviceId ;
+    std::string deviceId;
     std::string connectInfo;
     int ret = hichainConnector->AddMember(deviceId, connectInfo);
     EXPECT_EQ(ret, -1);
@@ -311,7 +312,7 @@ HWTEST_F(HichainConnectorTest, AddMember_002, testing::ext::TestSize.Level0)
 {
     std::string deviceId;
     std::string connectInfo;
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret = hichainConnector->AddMember(deviceId, connectInfo);
     EXPECT_EQ(ret, DM_FAILED);
 }
@@ -326,7 +327,7 @@ HWTEST_F(HichainConnectorTest, AddMember3, testing::ext::TestSize.Level0)
 {
     std::string deviceId = "123456";
     std::string connectInfo = "dkdkk";
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret = hichainConnector->AddMember(deviceId, connectInfo);
     ASSERT_GE(ret, 1);
 }
@@ -352,13 +353,13 @@ HWTEST_F(HichainConnectorTest, onRequest_001, testing::ext::TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest, GetConnectPara_001, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, GetConnectPara_001, testing::ext::TestSize.Level0)
 {
     std::string pkgName = "softbus";
     std::shared_ptr<DeviceManagerServiceListener> listener_ = std::make_shared<DeviceManagerServiceListener>();
-    std::shared_ptr<SoftbusConnector> softbusConnector  = std::make_shared<SoftbusConnector>();
+    std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DmAuthManager> discoveryMgr_ = std::make_shared<DmAuthManager>(softbusConnector, listener_);
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     hichainConnector->RegisterHiChainCallback(pkgName, std::shared_ptr<IHiChainConnectorCallback>(discoveryMgr_));
     std::string deviceId = "23445";
     std::string reqDeviceId = "234566";
@@ -379,9 +380,9 @@ HWTEST_F(HichainConnectorTest, GetConnectPara_002, testing::ext::TestSize.Level0
     std::string reqDeviceId = "234566";
     std::string pkgName = "softbus";
     std::shared_ptr<DeviceManagerServiceListener> listener_ = std::make_shared<DeviceManagerServiceListener>();
-    std::shared_ptr<SoftbusConnector> softbusConnector  = std::make_shared<SoftbusConnector>();
+    std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DmAuthManager> discoveryMgr_ = std::make_shared<DmAuthManager>(softbusConnector, listener_);
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     hichainConnector->RegisterHiChainCallback(pkgName, std::shared_ptr<IHiChainConnectorCallback>(discoveryMgr_));
     std::string ret = hichainConnector->GetConnectPara(deviceId, reqDeviceId);
     EXPECT_EQ(ret, "");
@@ -393,10 +394,10 @@ HWTEST_F(HichainConnectorTest, GetConnectPara_002, testing::ext::TestSize.Level0
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest,  DeleteGroup_001, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, DeleteGroup_001, testing::ext::TestSize.Level0)
 {
     std::string groupId = "34567";
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret = hichainConnector->DeleteGroup(groupId);
     EXPECT_EQ(ret, DM_OK);
 }
@@ -411,7 +412,7 @@ HWTEST_F(HichainConnectorTest, GetRelatedGroups_001, testing::ext::TestSize.Leve
 {
     std::string DeviceId = "123";
     std::vector<GroupInfo> groupList;
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret = hichainConnector->GetRelatedGroups(DeviceId, groupList);
     EXPECT_EQ(ret, DM_FAILED);
 }
@@ -426,7 +427,7 @@ HWTEST_F(HichainConnectorTest, GetRelatedGroups_003, testing::ext::TestSize.Leve
 {
     std::string DeviceId = "12345";
     std::vector<GroupInfo> groupList;
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret = hichainConnector->GetRelatedGroups(DeviceId, groupList);
     EXPECT_EQ(ret, DM_FAILED);
 }
@@ -437,11 +438,11 @@ HWTEST_F(HichainConnectorTest, GetRelatedGroups_003, testing::ext::TestSize.Leve
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest,  SyncGroups_001, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, SyncGroups_001, testing::ext::TestSize.Level0)
 {
     std::string deviceId = "34567";
     std::vector<std::string> remoteGroupIdList;
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret = hichainConnector->SyncGroups(deviceId, remoteGroupIdList);
     EXPECT_EQ(ret, DM_OK);
 }
@@ -452,11 +453,11 @@ HWTEST_F(HichainConnectorTest,  SyncGroups_001, testing::ext::TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest,  GetSyncGroupList_001, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, GetSyncGroupList_001, testing::ext::TestSize.Level0)
 {
     std::vector<GroupInfo> groupList;
     std::vector<std::string> syncGroupList;
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret = hichainConnector->GetSyncGroupList(groupList, syncGroupList);
     EXPECT_EQ(ret, DM_FAILED);
 }
@@ -467,22 +468,21 @@ HWTEST_F(HichainConnectorTest,  GetSyncGroupList_001, testing::ext::TestSize.Lev
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest,  GetSyncGroupList_002, testing::ext::TestSize.Level0) 
+HWTEST_F(HichainConnectorTest, GetSyncGroupList_002, testing::ext::TestSize.Level0)
 {
     std::vector<GroupInfo> groupList;
     GroupInfo groupList1;
     groupList1.groupName = "hichainconnector";
     groupList1.groupId = "123456";
-    groupList1.groupOwner ="doftbus";
+    groupList1.groupOwner = "doftbus";
     groupList1.groupType = 1;
     groupList1.groupVisibility = 2;
     groupList.push_back(groupList1);
     std::vector<std::string> syncGroupList;
-    std::shared_ptr<HiChainConnector> hichainConnector  = std::make_shared<HiChainConnector>();
+    std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret = hichainConnector->GetSyncGroupList(groupList, syncGroupList);
     EXPECT_EQ(ret, DM_OK);
 }
-}
-}
-}
-
+} // namespace
+} // namespace DistributedHardware
+} // namespace OHOS

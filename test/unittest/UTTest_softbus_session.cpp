@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -135,34 +135,6 @@ HWTEST_F(SoftbusSessionTest, SoftbusSession_002, testing::ext::TestSize.Level0)
     m_SoftbusSession.reset();
     EXPECT_EQ(m_SoftbusSession, nullptr);
 }
-
-/**
- * @tc.name: OnSessionClosed_001
- * @tc.desc: set  some corrort para,and return DM_OK
- * @tc.type: FUNC
- * @tc.require: AR000GHSJK
- */
-// HWTEST_F(SoftbusSessionTest, OnSessionClosed_001, testing::ext::TestSize.Level0)
-// {
-//     int32_t sessionId = 3;
-//     int ret = softbusSession->OnSessionClosed(sessionId);
-//     EXPECT_EQ(ret, DM_OK);
-// }
-
-/**
- * @tc.name: OnBytesReceived_002
- * @tc.desc: set  sessionId = 3 and return DM_OK
- * @tc.type: FUNC
- * @tc.require: AR000GHSJK
- */
-// HWTEST_F(SoftbusSessionTest, OnBytesReceived_002, testing::ext::TestSize.Level0)
-// {
-//     int32_t sessionId = 3;
-//     void *data;
-//     uint32_t dataLen = 1;
-//     int ret = softbusSession->OnBytesReceived(sessionId, data, dataLen);
-//     EXPECT_EQ(ret, DM_OK);
-// }
 
 /**
  * @tc.name: CloseAuthSession_001

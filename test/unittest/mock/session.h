@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,7 @@
  *
  * @since 1.0
  * @version 1.0
-*/
+ */
 
 /**
  * @file session.h
@@ -62,7 +62,7 @@ typedef enum {
     TYPE_BUTT,
 } SessionType;
 
-typedef enum  {
+typedef enum {
     INVALID = -1,
     /*
      * Send any segment of a frame each time.
@@ -82,7 +82,7 @@ typedef enum  {
     VIDEO_SLICE_STREAM,
 } StreamType;
 
-typedef enum  {
+typedef enum {
     LINK_TYPE_WIFI_WLAN_5G = 1,
     LINK_TYPE_WIFI_WLAN_2G = 2,
     LINK_TYPE_WIFI_P2P = 3,
@@ -124,15 +124,10 @@ typedef struct {
 } FrameInfo;
 
 typedef struct {
-
     int (*OnSessionOpened)(int sessionId, int result);
-
     void (*OnSessionClosed)(int sessionId);
-
     void (*OnBytesReceived)(int sessionId, const void *data, unsigned int dataLen);
-
     void (*OnMessageReceived)(int sessionId, const void *data, unsigned int dataLen);
-
     void (*OnStreamReceived)(int sessionId, const StreamData *data, const StreamData *ext, const FrameInfo *param);
 } ISessionListener;
 
@@ -153,8 +148,8 @@ int CreateSessionServer(const char *pkgName, const char *sessionName, const ISes
 
 int RemoveSessionServer(const char *pkgName, const char *sessionName);
 
-int OpenSession(const char *mySessionName, const char *peerSessionName, const char *peerDeviceId,
-    const char *groupId, const SessionAttribute* attr);
+int OpenSession(const char *mySessionName, const char *peerSessionName, const char *peerDeviceId, const char *groupId,
+                const SessionAttribute *attr);
 
 void CloseSession(int sessionId);
 
@@ -168,13 +163,12 @@ int GetMySessionName(int sessionId, char *sessionName, unsigned int len);
 
 int GetPeerSessionName(int sessionId, char *sessionName, unsigned int len);
 
-
 int GetPeerDeviceId(int sessionId, char *devId, unsigned int len);
 
 int GetSessionSide(int sessionId);
 
-int SetFileReceiveListener(const char *pkgName, const char *sessionName,
-    const IFileReceiveListener *recvListener, const char *rootDir);
+int SetFileReceiveListener(const char *pkgName, const char *sessionName, const IFileReceiveListener *recvListener,
+                           const char *rootDir);
 
 int SetFileSendListener(const char *pkgName, const char *sessionName, const IFileSendListener *sendListener);
 
@@ -182,4 +176,4 @@ int SendFile(int sessionId, const char *sFileList[], const char *dFileList[], ui
 #ifdef __cplusplus
 }
 #endif
-#endif  // SESSION_H
+#endif // SESSION_H
