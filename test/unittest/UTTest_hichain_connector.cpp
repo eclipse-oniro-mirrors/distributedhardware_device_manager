@@ -41,6 +41,11 @@ void HichainConnectorTest::TearDownTestCase()
 {
 }
 namespace {
+
+std::shared_ptr<DeviceManagerServiceListener> listener_ = std::make_shared<DeviceManagerServiceListener>();
+std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
+std::shared_ptr<DmAuthManager> discoveryMgr_ = std::make_shared<DmAuthManager>(softbusConnector, listener_);
+
 /**
  * @tc.name: CreateGroup_001
  * @tc.desc: Set the deviceGroupManager_ pointer to CreateGroup to NULlptr and return DM_INVALID_VALUE
@@ -256,9 +261,6 @@ HWTEST_F(HichainConnectorTest, HiChainConnector_002, testing::ext::TestSize.Leve
  */
 HWTEST_F(HichainConnectorTest, RegisterHiChainCallback_001, testing::ext::TestSize.Level0)
 {
-    std::shared_ptr<DeviceManagerServiceListener> listener_ = std::make_shared<DeviceManagerServiceListener>();
-    std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
-    std::shared_ptr<DmAuthManager> discoveryMgr_ = std::make_shared<DmAuthManager>(softbusConnector, listener_);
     std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     int ret =
         hichainConnector->RegisterHiChainCallback(std::shared_ptr<IHiChainConnectorCallback>(discoveryMgr_));
@@ -352,9 +354,6 @@ HWTEST_F(HichainConnectorTest, onRequest_001, testing::ext::TestSize.Level0)
  */
 HWTEST_F(HichainConnectorTest, GetConnectPara_001, testing::ext::TestSize.Level0)
 {
-    std::shared_ptr<DeviceManagerServiceListener> listener_ = std::make_shared<DeviceManagerServiceListener>();
-    std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
-    std::shared_ptr<DmAuthManager> discoveryMgr_ = std::make_shared<DmAuthManager>(softbusConnector, listener_);
     std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     hichainConnector->RegisterHiChainCallback(std::shared_ptr<IHiChainConnectorCallback>(discoveryMgr_));
     std::string deviceId = "23445";
@@ -374,9 +373,6 @@ HWTEST_F(HichainConnectorTest, GetConnectPara_002, testing::ext::TestSize.Level0
 {
     std::string deviceId;
     std::string reqDeviceId = "234566";
-    std::shared_ptr<DeviceManagerServiceListener> listener_ = std::make_shared<DeviceManagerServiceListener>();
-    std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
-    std::shared_ptr<DmAuthManager> discoveryMgr_ = std::make_shared<DmAuthManager>(softbusConnector, listener_);
     std::shared_ptr<HiChainConnector> hichainConnector = std::make_shared<HiChainConnector>();
     hichainConnector->RegisterHiChainCallback(std::shared_ptr<IHiChainConnectorCallback>(discoveryMgr_));
     std::string ret = hichainConnector->GetConnectPara(deviceId, reqDeviceId);
@@ -413,12 +409,12 @@ HWTEST_F(HichainConnectorTest, GetRelatedGroups_001, testing::ext::TestSize.Leve
 }
 
 /**
- * @tc.name: GetRelatedGroups_003
+ * @tc.name: GetRelatedGroups_002
  * @tc.desc: set DeviceId  = 12345,groupList null and return DM_FAILED
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(HichainConnectorTest, GetRelatedGroups_003, testing::ext::TestSize.Level0)
+HWTEST_F(HichainConnectorTest, GetRelatedGroups_002, testing::ext::TestSize.Level0)
 {
     std::string DeviceId = "12345";
     std::vector<GroupInfo> groupList;

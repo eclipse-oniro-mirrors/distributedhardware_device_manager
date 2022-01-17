@@ -231,7 +231,7 @@ void AuthMessageProcessor::ParseAuthResponseMessage(nlohmann::json &json)
     LOGI("AuthMessageProcessor::ParseAuthResponseMessage ");
 }
 
-void AuthMessageProcessor::ParseAuthRequestMessage()
+int32_t AuthMessageProcessor::ParseAuthRequestMessage()
 {
     nlohmann::json jsonObject = authSplitJsonList_.front();
     authResponseContext_->deviceId = jsonObject[TAG_DEVICE_ID];
@@ -244,8 +244,10 @@ void AuthMessageProcessor::ParseAuthRequestMessage()
         authResponseContext_->groupId = jsonObject[TAG_GROUP_ID];
         authResponseContext_->groupName = jsonObject[TAG_GROUP_NAME];
         authResponseContext_->requestId = jsonObject[TAG_REQUEST_ID];
+        return DM_FAILED;
     }
     authSplitJsonList_.clear();
+    return DM_OK;
 }
 
 void AuthMessageProcessor::ParseNegotiateMessage(const nlohmann::json &json)

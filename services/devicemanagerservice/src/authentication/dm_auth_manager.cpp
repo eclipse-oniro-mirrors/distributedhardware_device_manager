@@ -83,28 +83,24 @@ int32_t DmAuthManager::AuthenticateDevice(const std::string &pkgName, int32_t au
     std::shared_ptr<IAuthentication> authentication = authenticationMap_[authType];
     if (authentication == nullptr) {
         LOGE("DmAuthManager::AuthenticateDevice authType %d not support.", authType);
-        listener_->OnAuthResult(pkgName, deviceId, "", AuthState::AUTH_REQUEST_INIT,
-            std::to_string(DM_AUTH_NOT_SUPPORT));
+        listener_->OnAuthResult(pkgName, deviceId, "", AuthState::AUTH_REQUEST_INIT, DM_AUTH_NOT_SUPPORT);
         return DM_AUTH_NOT_SUPPORT;
     }
-    if (authRequestState_ != nullptr && authResponseState_ != nullptr) {
-        LOGE("DmAuthManager::AuthenticateDevice %s is request authentication.",
-             authRequestState_->GetAuthContext()->hostPkgName.c_str());
-        listener_->OnAuthResult(pkgName, deviceId, "", AuthState::AUTH_REQUEST_INIT,
-            std::to_string(DM_AUTH_BUSINESS_BUSY));
+
+    if (authRequestState_ != nullptr || authResponseState_ != nullptr) {
+        LOGE("DmAuthManager::AuthenticateDevice %s is request authentication.",pkgName.c_str());
+         listener_->OnAuthResult(pkgName, deviceId, "", AuthState::AUTH_REQUEST_INIT, DM_AUTH_BUSINESS_BUSY);
         return DM_AUTH_BUSINESS_BUSY;
     }
 
     if (!softbusConnector_->HaveDeviceInMap(deviceId)) {
         LOGE("AuthenticateDevice failed, the discoveryDeviceInfoMap_ not have this device");
-        listener_->OnAuthResult(pkgName, deviceId, "", AuthState::AUTH_REQUEST_INIT,
-            std::to_string(DM_AUTH_INPUT_FAILED));
+        listener_->OnAuthResult(pkgName, deviceId, "", AuthState::AUTH_REQUEST_INIT, DM_AUTH_INPUT_FAILED);
         return DM_AUTH_INPUT_FAILED;
     }
     if (extra.empty()) {
         LOGE("AuthenticateDevice failed, extra is empty");
-        listener_->OnAuthResult(pkgName, deviceId, "", AuthState::AUTH_REQUEST_INIT,
-            std::to_string(DM_AUTH_BUSINESS_BUSY));
+        listener_->OnAuthResult(pkgName, deviceId, "", AuthState::AUTH_REQUEST_INIT, DM_AUTH_BUSINESS_BUSY);
         return DM_INPUT_PARA_EMPTY;
     }
 
@@ -197,6 +193,8 @@ int32_t DmAuthManager::VerifyAuthentication(const std::string &authParam)
             break;
         default:
             CancelDisplay();
+            authRequestContext_->reason = DM_AUTH_INPUT_FAILED;
+            authResponseContext_->state = authRequestState_->GetStateType();
             authRequestState_->TransitionTo(std::make_shared<AuthRequestFinishState>());
             break;
     }
@@ -208,7 +206,7 @@ void DmAuthManager::OnSessionOpened(int32_t sessionId, int32_t sessionSide, int3
 {
     LOGI("DmAuthManager::OnSessionOpened sessionId=%d result=%d", sessionId, result);
     if (sessionSide == AUTH_SESSION_SIDE_SERVER) {
-        if (authResponseState_ == nullptr) {
+        if (authResponseState_ == nullptr && authRequestState_ == nullptr) {
             authMessageProcessor_ = std::make_shared<AuthMessageProcessor>(shared_from_this());
             authResponseState_ = std::make_shared<AuthResponseInitState>();
             authResponseState_->SetAuthManager(shared_from_this());
@@ -230,13 +228,14 @@ void DmAuthManager::OnSessionOpened(int32_t sessionId, int32_t sessionSide, int3
             softbusConnector_->GetSoftbusSession()->SendData(sessionId, message);
         }
     } else {
-        if (authRequestState_->GetStateType() == AuthState::AUTH_REQUEST_INIT) {
+        if (authResponseState_ == nullptr && authRequestState_ != nullptr && 
+            authRequestState_->GetStateType() == AuthState::AUTH_REQUEST_INIT){
             authRequestContext_->sessionId = sessionId;
             authRequestState_->SetAuthContext(authRequestContext_);
             authMessageProcessor_->SetRequestContext(authRequestContext_);
             authRequestState_->TransitionTo(std::make_shared<AuthRequestNegotiateState>());
         } else {
-            LOGE("DmAuthManager::OnSessionOpened but request state %d is wrong", authRequestState_->GetStateType());
+            LOGE("DmAuthManager::OnSessionOpened but request state is wrong");
         }
     }
 }
@@ -352,7 +351,7 @@ void DmAuthManager::OnMemberJoin(int64_t requestId, int32_t status)
     }
 }
 
-void DmAuthManager::HandleAuthenticateTimeout()
+int32_t DmAuthManager::HandleAuthenticateTimeout()
 {
     LOGI("DmAuthManager::HandleAuthenticateTimeout start");
     if (authRequestState_ != nullptr && authRequestState_->GetStateType() != AuthState::AUTH_REQUEST_FINISH) {
@@ -368,9 +367,10 @@ void DmAuthManager::HandleAuthenticateTimeout()
         authResponseState_->TransitionTo(std::make_shared<AuthResponseFinishState>());
     }
     LOGI("DmAuthManager::HandleAuthenticateTimeout start complete");
+    return DM_OK;
 }
 
-void DmAuthManager::EstablishAuthChannel(const std::string &deviceId)
+int32_t DmAuthManager::EstablishAuthChannel(const std::string &deviceId)
 {
     int32_t sessionId = softbusConnector_->GetSoftbusSession()->OpenAuthSession(deviceId);
     if (sessionId < 0) {
@@ -380,6 +380,7 @@ void DmAuthManager::EstablishAuthChannel(const std::string &deviceId)
         authRequestContext_->reason = DM_AUTH_OPEN_SESSION_FAILED;
         authRequestState_->TransitionTo(std::make_shared<AuthRequestFinishState>());
     }
+    return DM_OK;
 }
 
 void DmAuthManager::StartNegotiate(const int32_t &sessionId)
@@ -417,7 +418,7 @@ void DmAuthManager::RespNegotiate(const int32_t &sessionId)
         LOGE("DmAuthManager::AuthenticateDevice authType %d not support.", authResponseContext_->authType);
         authResponseContext_->reply = DM_AUTH_NOT_SUPPORT;
     }
-    
+
     std::string message = authMessageProcessor_->CreateSimpleMessage(MSG_TYPE_RESP_NEGOTIATE);
     nlohmann::json jsonObject = nlohmann::json::parse(message, nullptr, false);
     if (jsonObject.is_discarded()) {
@@ -460,7 +461,7 @@ void DmAuthManager::SendAuthRequest(const int32_t &sessionId)
     confirmStartTimer->Start(CONFIRM_TIMEOUT, TimeOut, this);
 }
 
-void DmAuthManager::StartAuthProcess(const int32_t &action)
+int32_t DmAuthManager::StartAuthProcess(const int32_t &action)
 {
     LOGI("DmAuthManager:: StartAuthProcess");
     authResponseContext_->reply = action;
@@ -472,6 +473,7 @@ void DmAuthManager::StartAuthProcess(const int32_t &action)
         std::string message = authMessageProcessor_->CreateSimpleMessage(MSG_TYPE_RESP_AUTH);
         softbusConnector_->GetSoftbusSession()->SendData(authResponseContext_->sessionId, message);
     }
+    return DM_OK;
 }
 
 void DmAuthManager::StartRespAuthProcess()
@@ -491,15 +493,16 @@ void DmAuthManager::StartRespAuthProcess()
     }
 }
 
-void DmAuthManager::CreateGroup()
+int32_t DmAuthManager::CreateGroup()
 {
     LOGI("DmAuthManager:: CreateGroup");
     authResponseContext_->groupName = GenerateGroupName();
     authResponseContext_->requestId = GenRandLongLong(MIN_REQUEST_ID, MAX_REQUEST_ID);
     hiChainConnector_->CreateGroup(authResponseContext_->requestId, authResponseContext_->groupName);
+    return DM_OK;
 }
 
-void DmAuthManager::AddMember(const std::string &deviceId)
+int32_t DmAuthManager::AddMember(const std::string &deviceId)
 {
     LOGI("DmAuthManager::AddMember start");
     nlohmann::json jsonObject;
@@ -514,10 +517,11 @@ void DmAuthManager::AddMember(const std::string &deviceId)
     joinStartTimer->Start(ADD_TIMEOUT, TimeOut, this);
     int32_t ret = hiChainConnector_->AddMember(deviceId, connectInfo);
     if (ret != 0) {
-        return;
+        return DM_FAILED;
     }
     LOGI("DmAuthManager::authRequestContext CancelDisplay start");
     CancelDisplay();
+    return DM_OK;
 }
 
 std::string DmAuthManager::GetConnectAddr(std::string deviceId)
@@ -528,13 +532,14 @@ std::string DmAuthManager::GetConnectAddr(std::string deviceId)
     return connectAddr;
 }
 
-void DmAuthManager::JoinNetwork()
+int32_t DmAuthManager::JoinNetwork()
 {
     LOGE("DmAuthManager JoinNetwork start");
     timerMap_[AUTHENTICATE_TIMEOUT_TASK]->Stop(SESSION_CANCEL_TIMEOUT);
     authResponseContext_->state = AuthState::AUTH_REQUEST_FINISH;
     authRequestContext_->reason = DM_OK;
     authRequestState_->TransitionTo(std::make_shared<AuthRequestFinishState>());
+    return DM_OK;
 }
 
 void DmAuthManager::AuthenticateFinish()
@@ -568,8 +573,7 @@ void DmAuthManager::AuthenticateFinish()
         }
 
         listener_->OnAuthResult(authRequestContext_->hostPkgName, authRequestContext_->deviceId,
-                                authRequestContext_->token, authResponseContext_->state,
-                                std::to_string(authRequestContext_->reason));
+                                authRequestContext_->token, authResponseContext_->state, authRequestContext_->reason);
 
         softbusConnector_->GetSoftbusSession()->CloseAuthSession(authRequestContext_->sessionId);
 
@@ -632,14 +636,16 @@ bool DmAuthManager::GetIsCryptoSupport()
     return isCryptoSupport_;
 }
 
-void DmAuthManager::SetAuthRequestState(std::shared_ptr<AuthRequestState> authRequestState)
+int32_t DmAuthManager::SetAuthRequestState(std::shared_ptr<AuthRequestState> authRequestState)
 {
     authRequestState_ = authRequestState;
+    return DM_OK;
 }
 
-void DmAuthManager::SetAuthResponseState(std::shared_ptr<AuthResponseState> authResponseState)
+int32_t DmAuthManager::SetAuthResponseState(std::shared_ptr<AuthResponseState> authResponseState)
 {
     authResponseState_ = authResponseState;
+    return DM_OK;
 }
 
 int32_t DmAuthManager::GetPinCode()
@@ -712,6 +718,8 @@ int32_t DmAuthManager::OnUserOperation(int32_t action)
             CancelDisplay();
             break;
         case USER_OPERATION_TYPE_CANCEL_PINCODE_INPUT:
+            authRequestContext_->reason = DM_AUTH_DONT_AUTH;
+            authResponseContext_->state = authRequestState_->GetStateType();
             AuthenticateFinish();
             break;
         default:

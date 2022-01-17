@@ -135,23 +135,23 @@ public:
     void OnMemberJoin(int64_t requestId, int32_t status);
 
     // auth state machine
-    void EstablishAuthChannel(const std::string &deviceId);
+    int32_t EstablishAuthChannel(const std::string &deviceId);
     void StartNegotiate(const int32_t &sessionId);
     void RespNegotiate(const int32_t &sessionId);
     void SendAuthRequest(const int32_t &sessionId);
-    void StartAuthProcess(const int32_t &authType);
+    int32_t StartAuthProcess(const int32_t &authType);
     void StartRespAuthProcess();
-    void CreateGroup();
-    void AddMember(const std::string &deviceId);
+    int32_t CreateGroup();
+    int32_t AddMember(const std::string &deviceId);
     std::string GetConnectAddr(std::string deviceId);
-    void JoinNetwork();
+    int32_t JoinNetwork();
     void AuthenticateFinish();
     bool GetIsCryptoSupport();
-    void SetAuthRequestState(std::shared_ptr<AuthRequestState> authRequestState);
-    void SetAuthResponseState(std::shared_ptr<AuthResponseState> authResponseState);
+    int32_t SetAuthRequestState(std::shared_ptr<AuthRequestState> authRequestState);
+    int32_t SetAuthResponseState(std::shared_ptr<AuthResponseState> authResponseState);
     int32_t GetPinCode();
     std::string GenerateGroupName();
-    void HandleAuthenticateTimeout();
+    int32_t HandleAuthenticateTimeout();
     void CancelDisplay();
     int32_t GeneratePincode();
     void ShowConfigDialog();
