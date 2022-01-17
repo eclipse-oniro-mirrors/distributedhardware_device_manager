@@ -51,7 +51,6 @@ public:
     int32_t SetUserOperation(std::string &pkgName, int32_t action);
 private:
     DeviceManagerService() = default;
-private: 
     bool intFlag_ = false;
     std::shared_ptr<DmAuthManager> authMgr_;
     std::shared_ptr<DmDeviceInfoManager> deviceInfoMgr_;

@@ -89,13 +89,11 @@ int32_t DeviceManagerService::Init()
         }
         authMgr_->RegisterCallback();
     }
-
     DmCommonEventManager &dmCommonEventManager = DmCommonEventManager::GetInstance();
     CommomEventCallback callback = std::bind(&DmAuthManager::UserSwitchEventCallback, *authMgr_.get());
     if (dmCommonEventManager.SubscribeServiceEvent(CommonEventSupport::COMMON_EVENT_USER_SWITCHED, callback)) {
         LOGI("subscribe service event success");
-    } 
-
+    }
     LOGI("Init success, singleton initialized");
     intFlag_ = true;
     return DM_OK;

@@ -37,7 +37,6 @@ void AuthMessageProcessorTest::TearDownTestCase()
 }
 
 namespace {
-
 /**
  * @tc.name: AuthMessageProcessor::CreateNegotiateMessage_001
  * @tc.desc: 1 set cryptoAdapter_ to null

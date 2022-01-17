@@ -88,8 +88,8 @@ int32_t DmAuthManager::AuthenticateDevice(const std::string &pkgName, int32_t au
     }
 
     if (authRequestState_ != nullptr || authResponseState_ != nullptr) {
-        LOGE("DmAuthManager::AuthenticateDevice %s is request authentication.",pkgName.c_str());
-         listener_->OnAuthResult(pkgName, deviceId, "", AuthState::AUTH_REQUEST_INIT, DM_AUTH_BUSINESS_BUSY);
+        LOGE("DmAuthManager::AuthenticateDevice %s is request authentication.", pkgName.c_str());
+        listener_->OnAuthResult(pkgName, deviceId, "", AuthState::AUTH_REQUEST_INIT, DM_AUTH_BUSINESS_BUSY);
         return DM_AUTH_BUSINESS_BUSY;
     }
 
@@ -228,8 +228,8 @@ void DmAuthManager::OnSessionOpened(int32_t sessionId, int32_t sessionSide, int3
             softbusConnector_->GetSoftbusSession()->SendData(sessionId, message);
         }
     } else {
-        if (authResponseState_ == nullptr && authRequestState_ != nullptr && 
-            authRequestState_->GetStateType() == AuthState::AUTH_REQUEST_INIT){
+        if (authResponseState_ == nullptr && authRequestState_ != nullptr &&
+            authRequestState_->GetStateType() == AuthState::AUTH_REQUEST_INIT) {
             authRequestContext_->sessionId = sessionId;
             authRequestState_->SetAuthContext(authRequestContext_);
             authMessageProcessor_->SetRequestContext(authRequestContext_);
@@ -729,14 +729,14 @@ int32_t DmAuthManager::OnUserOperation(int32_t action)
     return DM_OK;
 }
 
-void DmAuthManager::UserSwitchEventCallback (void) 
+void DmAuthManager::UserSwitchEventCallback (void)
 {
     LOGI("all groups from this device will be deleted");
     nlohmann::json jsonObj;
     jsonObj[FIELD_GROUP_TYPE] = GROUP_TYPE_PEER_TO_PEER_GROUP;
     std::string queryParams = jsonObj.dump();
     std::vector<GroupInfo> groupList;
-    int32_t ret = hiChainConnector_->GetGroupInfo(queryParams, groupList); 
+    int32_t ret = hiChainConnector_->GetGroupInfo(queryParams, groupList);
     if (ret != DM_OK) {
         LOGE("failed to get device join groups");
         return;

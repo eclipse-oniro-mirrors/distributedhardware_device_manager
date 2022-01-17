@@ -262,7 +262,7 @@ HWTEST_F(DeviceManagerServiceTest, AuthenticateDevice_003, testing::ext::TestSiz
 }
 /**
  * @tc.name: AuthenticateDevice_004
- * @tc.desc: Set intFlag for GAuthenticateDevice to true and pkgName to com.ohos.test; The return value is DM_AUTH_NOT_SUPPORT
+ * @tc.desc: Set intFlag for GAuthenticateDevice to true and pkgName to com.ohos.test
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */

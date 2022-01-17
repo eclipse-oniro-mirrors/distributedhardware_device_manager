@@ -38,7 +38,6 @@ void DmAuthManagerTest::TearDownTestCase()
 }
 
 namespace {
-
 std::string AUTHENTICATE_TIMEOUT_TASK = "authenticateTimeoutTask";
 std::string NEGOTIATE_TIMEOUT_TASK = "negotiateTimeoutTask";
 std::string CONFIRM_TIMEOUT_TASK = "confirmTimeoutTask";
@@ -123,7 +122,7 @@ HWTEST_F(DmAuthManagerTest, EstablishAuthChannel_001, testing::ext::TestSize.Lev
     authManager->authRequestState_ = std::make_shared<AuthRequestFinishState>();
     std::string deviceId1;
     int32_t ret = authManager->EstablishAuthChannel(deviceId1);
-    ASSERT_EQ(ret,DM_OK);
+    ASSERT_EQ(ret, DM_OK);
 }
 
 /**
