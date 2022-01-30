@@ -97,7 +97,7 @@ struct DmNapiVerifyJsCallback {
     int32_t flag_;
 
     DmNapiVerifyJsCallback(std::string bundleName, std::string deviceId, int32_t resultCode, int32_t flag)
-        : bundleName_(bundleName),deviceId_(deviceId), resultCode_(resultCode), flag_(flag) {}
+        : bundleName_(bundleName), deviceId_(deviceId), resultCode_(resultCode), flag_(flag) {}
 };
 
 enum DmNapiDevStateChangeAction { ONLINE = 0, READY = 1, OFFLINE = 2, CHANGE = 3 };
@@ -136,7 +136,7 @@ private:
 class DmNapiDiscoveryCallback : public OHOS::DistributedHardware::DiscoveryCallback {
 public:
     explicit DmNapiDiscoveryCallback(napi_env env, std::string &bundleName)
-         : env_(env), refCount_(0), bundleName_(bundleName)
+        : env_(env), refCount_(0), bundleName_(bundleName)
     {
     }
     virtual ~DmNapiDiscoveryCallback() {};
