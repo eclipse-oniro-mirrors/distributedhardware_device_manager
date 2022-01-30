@@ -56,6 +56,7 @@ struct DeviceInfoAsyncCallbackInfo {
     int32_t status = -1;
     int32_t isList = 0;
 };
+
 struct AuthAsyncCallbackInfo {
     napi_env env = nullptr;
 
@@ -66,11 +67,42 @@ struct AuthAsyncCallbackInfo {
     int32_t authType = -1;
 };
 
+struct DmNapiStateJsCallback {
+    std::string bundleName_;
+    uint16_t subscribeId_;
+    int32_t reason_;
+    OHOS::DistributedHardware::DmDeviceInfo deviceInfo_;
+
+    DmNapiStateJsCallback(std::string bundleName, uint16_t subscribeId, int32_t reason, OHOS::DistributedHardware::DmDeviceInfo deviceInfo)
+    : bundleName_(bundleName), subscribeId_(subscribeId), reason_(reason), deviceInfo_(deviceInfo) {}
+};
+
+struct DmNapiAuthJsCallback {
+    std::string bundleName_;
+    std::string deviceId_;
+    std::string token_;
+    int32_t status_;
+    int32_t reason_;
+
+    DmNapiAuthJsCallback(std::string bundleName, std::string deviceId, std::string token, int32_t status, int32_t reason)
+    : bundleName_(bundleName), deviceId_(deviceId), token_(token), status_(status), reason_(reason) {}
+};
+
+struct DmNapiVerifyJsCallback {
+    std::string bundleName_;
+    std::string deviceId_;
+    int32_t resultCode_;
+    int32_t flag_;
+
+    DmNapiVerifyJsCallback(std::string bundleName, std::string deviceId, int32_t resultCode, int32_t flag)
+    : bundleName_(bundleName), deviceId_(deviceId), resultCode_(resultCode), flag_(flag) {}
+};
+
 enum DmNapiDevStateChangeAction { ONLINE = 0, READY = 1, OFFLINE = 2, CHANGE = 3 };
 
 class DmNapiInitCallback : public OHOS::DistributedHardware::DmInitCallback {
 public:
-    explicit DmNapiInitCallback(std::string &bundleName) : bundleName_(bundleName)
+    explicit DmNapiInitCallback(napi_env env, std::string &bundleName) : env_(env), bundleName_(bundleName)
     {
     }
     virtual ~DmNapiInitCallback()
@@ -79,12 +111,13 @@ public:
     void OnRemoteDied() override;
 
 private:
+    napi_env env_;
     std::string bundleName_;
 };
 
 class DmNapiDeviceStateCallback : public OHOS::DistributedHardware::DeviceStateCallback {
 public:
-    explicit DmNapiDeviceStateCallback(std::string &bundleName) : bundleName_(bundleName)
+    explicit DmNapiDeviceStateCallback(napi_env env, std::string &bundleName) : env_(env), bundleName_(bundleName)
     {
     }
     virtual ~DmNapiDeviceStateCallback() {};
@@ -94,12 +127,13 @@ public:
     void OnDeviceChanged(const OHOS::DistributedHardware::DmDeviceInfo &deviceInfo) override;
 
 private:
+    napi_env env_;
     std::string bundleName_;
 };
 
 class DmNapiDiscoveryCallback : public OHOS::DistributedHardware::DiscoveryCallback {
 public:
-    explicit DmNapiDiscoveryCallback(std::string &bundleName) : refCount_(0), bundleName_(bundleName)
+    explicit DmNapiDiscoveryCallback(napi_env env, std::string &bundleName) : env_(env), refCount_(0), bundleName_(bundleName)
     {
     }
     virtual ~DmNapiDiscoveryCallback() {};
@@ -111,43 +145,47 @@ public:
     int32_t GetRefCount();
 
 private:
+    napi_env env_;
     std::atomic<int32_t> refCount_;
     std::string bundleName_;
 };
 
 class DmNapiDeviceManagerFaCallback : public OHOS::DistributedHardware::DeviceManagerFaCallback {
 public:
-    explicit DmNapiDeviceManagerFaCallback(std::string &bundleName) : bundleName_(bundleName)
+    explicit DmNapiDeviceManagerFaCallback(napi_env env, std::string &bundleName) : env_(env), bundleName_(bundleName)
     {
     }
     virtual ~DmNapiDeviceManagerFaCallback() {};
     void OnCall(const std::string &paramJson) override;
 
 private:
+    napi_env env_;
     std::string bundleName_;
 };
 
 class DmNapiAuthenticateCallback : public OHOS::DistributedHardware::AuthenticateCallback {
 public:
-    explicit DmNapiAuthenticateCallback(std::string &bundleName) : bundleName_(bundleName)
+    explicit DmNapiAuthenticateCallback(napi_env env, std::string &bundleName) : env_(env), bundleName_(bundleName)
     {
     }
     virtual ~DmNapiAuthenticateCallback() {};
     void OnAuthResult(const std::string &deviceId, const std::string &token, int32_t status, int32_t reason) override;
 
 private:
+    napi_env env_;
     std::string bundleName_;
 };
 
 class DmNapiVerifyAuthCallback : public OHOS::DistributedHardware::VerifyAuthCallback {
 public:
-    explicit DmNapiVerifyAuthCallback(std::string &bundleName) : bundleName_(bundleName)
+    explicit DmNapiVerifyAuthCallback(napi_env env, std::string &bundleName) : env_(env), bundleName_(bundleName)
     {
     }
     virtual ~DmNapiVerifyAuthCallback() {};
     void OnVerifyAuthResult(const std::string &deviceId, int32_t resultCode, int32_t flag) override;
 
 private:
+    napi_env env_;
     std::string bundleName_;
 };
 
@@ -174,7 +212,7 @@ public:
     static napi_value GetAuthenticationParamSync(napi_env env, napi_callback_info info);
     static void HandleCreateDmCallBack(const napi_env &env, AsyncCallbackInfo *asCallbackInfo);
     static DeviceManagerNapi *GetDeviceManagerNapi(std::string &buldleName);
-    static void CreateDmCallback(std::string &bundleName, std::string &eventType);
+    static void CreateDmCallback(napi_env env, std::string &bundleName, std::string &eventType);
     static void ReleaseDmCallback(std::string &bundleName, std::string &eventType);
     static void DeviceInfoToJsArray(const napi_env &env,
                                     const std::vector<OHOS::DistributedHardware::DmDeviceInfo> &vecDevInfo,
@@ -235,7 +273,7 @@ private:
 private:
     napi_env env_;
     napi_ref wrapper_;
-    static napi_ref sConstructor_;
+    static thread_local napi_ref sConstructor_;
     std::string bundleName_;
     static AuthAsyncCallbackInfo authAsyncCallbackInfo_;
     static AuthAsyncCallbackInfo verifyAsyncCallbackInfo_;

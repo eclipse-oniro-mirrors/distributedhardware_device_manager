@@ -18,6 +18,8 @@
 #include "dm_ability_manager.h"
 #include "dm_constants.h"
 #include "dm_log.h"
+#include "nlohmann/json.hpp"
+#include "ui_service_mgr_client.h"
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -26,18 +28,52 @@ PinAuthUi::PinAuthUi()
     LOGI("AuthUi constructor");
 }
 
-int32_t PinAuthUi::ShowPinDialog()
+int32_t PinAuthUi::ShowPinDialog(int32_t code, std::shared_ptr<DmAuthManager> authManager)
 {
+    LOGI("ShowPinDialog start");
+    nlohmann::json jsonObj;
+    jsonObj[PIN_CODE_KEY] = code;
+    jsonObj.dump();
+    const std::string params = jsonObj.dump();
+
+    Ace::UIServiceMgrClient::GetInstance()->ShowDialog(
+        "show_pin_service",
+        params,
+        OHOS::Rosen::WindowType::WINDOW_TYPE_SYSTEM_ALARM_WINDOW,
+        ACE_X, ACE_Y, ACE_WIDTH, ACE_HEIGHT,
+        [authManager](int32_t id, const std::string& event, const std::string& params) {
+            if (strcmp(params.c_str(), "0") == 0) {
+                authManager->ClosePage(id);
+            }
+            if (strcmp(params.c_str(), "1") == 0) {
+                LOGI("CancelDialog start id:%d,event:%s,parms:%s", id, event.c_str(), params.c_str());
+                Ace::UIServiceMgrClient::GetInstance()->CancelDialog(id);
+            }
+        });
+    LOGI("ShowConfigDialog end");
     return DM_OK;
 }
 
-int32_t PinAuthUi::InputPinDialog(std::shared_ptr<DmAbilityManager> dmAbilityManager)
+int32_t PinAuthUi::InputPinDialog(int32_t code, std::shared_ptr<DmAuthManager> authManager)
 {
-    if (dmAbilityManager == nullptr) {
-        LOGE("PinAuthUi::dmAbilityManager is null");
-        return DM_FAILED;
-    }
-    return StartFaUiService(dmAbilityManager);
+    LOGI("InputPinDialog start");
+    nlohmann::json jsonObj;
+    jsonObj[PIN_CODE_KEY] = code;
+    jsonObj.dump();
+    const std::string params = jsonObj.dump();
+
+    Ace::UIServiceMgrClient::GetInstance()->ShowDialog(
+        "input_pin_service",
+        params,
+        OHOS::Rosen::WindowType::WINDOW_TYPE_SYSTEM_ALARM_WINDOW,
+        ACE_X, ACE_Y, ACE_WIDTH, ACE_HEIGHT,
+        [authManager](int32_t id, const std::string& event, const std::string& params) {
+            Ace::UIServiceMgrClient::GetInstance()->CancelDialog(id);
+            LOGI("CancelDialog start id:%d,event:%s,parms:%s", id, event.c_str(), params.c_str());
+            authManager->VerifyPinAuthAuthentication(params.c_str());
+        });
+    LOGI("ShowConfigDialog end");
+    return DM_OK;
 }
 
 int32_t PinAuthUi::StartFaUiService(std::shared_ptr<DmAbilityManager> dmAbilityManager)
