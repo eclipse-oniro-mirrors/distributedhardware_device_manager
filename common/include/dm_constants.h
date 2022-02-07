@@ -172,6 +172,12 @@ const std::string BR_MAC = "BR_MAC";
 const std::string BLE_MAC = "BLE_MAC";
 const std::string ETH_IP = "ETH_IP";
 const std::string ETH_PORT = "ETH_PORT";
+
+// ACE
+const int32_t ACE_X = 50;
+const int32_t ACE_Y = 300;
+const int32_t ACE_WIDTH = 600;
+const int32_t ACE_HEIGHT = 400;
 } // namespace DistributedHardware
 } // namespace OHOS
 #endif

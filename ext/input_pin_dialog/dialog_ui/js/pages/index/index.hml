@@ -1,0 +1,20 @@
+<div class="container">
+    <text class="title">
+        PIN码连接
+    </text>
+    <text class="title-list">
+        请输入另一个设备显示的PIN码进行验证
+    </text>
+
+    <input class="title-pin" id="input" type="number" value=""></input>
+
+    <div class="but">
+        <button class="but1" onclick="onCancel">
+            取消
+        </button>
+        <button class="but2" onclick="onConfirm">
+            确定
+        </button>
+    </div>
+    
+</div>

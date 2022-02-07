@@ -24,6 +24,9 @@
 #include "dm_random.h"
 #include "nlohmann/json.hpp"
 #include "parameter.h"
+#include "ui_service_mgr_client.h"
+#include "dialog_callback_stub.h"
+#include "dialog_callback.h"
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -517,7 +520,7 @@ int32_t DmAuthManager::AddMember(const std::string &deviceId)
         return DM_FAILED;
     }
     LOGI("DmAuthManager::authRequestContext CancelDisplay start");
-    CancelDisplay();
+    Ace::UIServiceMgrClient::GetInstance()->CancelDialog(authResponseContext_->aceId);
     return DM_OK;
 }
 
@@ -544,7 +547,7 @@ void DmAuthManager::AuthenticateFinish()
     LOGI("DmAuthManager::AuthenticateFinish start");
     if (authResponseState_ != nullptr) {
         if (authResponseState_->GetStateType() == AuthState::AUTH_RESPONSE_FINISH) {
-            CancelDisplay();
+            Ace::UIServiceMgrClient::GetInstance()->CancelDialog(authResponseContext_->aceId);
         }
         if (!timerMap_.empty()) {
             for (auto &iter : timerMap_) {
@@ -652,31 +655,61 @@ int32_t DmAuthManager::GetPinCode()
 
 void DmAuthManager::ShowConfigDialog()
 {
-    std::shared_ptr<AuthUi> authUi_ = std::make_shared<AuthUi>();
-    dmAbilityMgr_ = std::make_shared<DmAbilityManager>();
-    authUi_->ShowConfirmDialog(dmAbilityMgr_);
+    LOGI("ShowConfigDialog start");
+    nlohmann::json jsonObj;
+    jsonObj[TAG_AUTH_TYPE] = AUTH_TYPE_PIN;
+    jsonObj[TAG_TOKEN] = authResponseContext_->token;
+    jsonObj[TARGET_PKG_NAME_KEY] = authResponseContext_->targetPkgName;
+    jsonObj.dump();
+    const std::string params = jsonObj.dump();
+    std::shared_ptr<DmAuthManager> authMgr_ = shared_from_this();
+
+    Ace::UIServiceMgrClient::GetInstance()->ShowDialog(
+        "config_dialog_service",
+        params,
+        OHOS::Rosen::WindowType::WINDOW_TYPE_SYSTEM_ALARM_WINDOW,
+        ACE_X, ACE_Y, ACE_WIDTH, ACE_HEIGHT,
+        [authMgr_](int32_t id, const std::string& event, const std::string& params) {
+            Ace::UIServiceMgrClient::GetInstance()->CancelDialog(id);
+            LOGI("CancelDialog start id:%d,event:%s,parms:%s", id, event.c_str(), params.c_str());
+            authMgr_->StartAuthProcess(atoi(params.c_str()));
+        });
+    LOGI("ShowConfigDialog end");
 }
 
 void DmAuthManager::ShowAuthInfoDialog()
 {
-    return;
-}
-
-void DmAuthManager::ShowStartAuthDialog()
-{
-    LOGI("DmAuthManager::ShowStartAuthDialog start");
-    dmAbilityMgr_ = std::make_shared<DmAbilityManager>();
+    LOGI("DmAuthManager::ShowAuthInfoDialog start");
+    authResponseContext_->code = GeneratePincode();
     std::shared_ptr<IAuthentication> ptr;
     if (authenticationMap_.find(1) == authenticationMap_.end()) {
         LOGE("DmAuthManager::authenticationMap_ is null");
         return;
     }
     ptr = authenticationMap_[1];
-    ptr->StartAuth(dmAbilityMgr_);
+    LOGI("ShowAuthInfoDialog code:%d", authResponseContext_->code);
+    ptr->ShowAuthInfo(authResponseContext_->code, shared_from_this());
+}
+
+void DmAuthManager::ShowStartAuthDialog()
+{
+    LOGI("DmAuthManager::ShowStartAuthDialog start");
+    std::shared_ptr<IAuthentication> ptr;
+    if (authenticationMap_.find(1) == authenticationMap_.end()) {
+        LOGE("DmAuthManager::authenticationMap_ is null");
+        return;
+    }
+    ptr = authenticationMap_[1];
+    ptr->StartAuth(authResponseContext_->code, shared_from_this());
 }
 
 int32_t DmAuthManager::GetAuthenticationParam(DmAuthParam &authParam)
 {
+    if (dmAbilityMgr_ == nullptr) {
+        LOGI("dmAbilityMgr_ is nullptr");
+        return DM_POINT_NULL;
+    }
+
     dmAbilityMgr_->StartAbilityDone();
     AbilityRole role = dmAbilityMgr_->GetAbilityRole();
     authParam.direction = (int32_t)role;
@@ -736,6 +769,26 @@ void DmAuthManager::UserSwitchEventCallback (void)
             LOGE("fail to delete group");
         }
     }
+}
+
+void DmAuthManager::VerifyPinAuthAuthentication(const std::string &action)
+{
+    LOGI("DmAuthManager::VerifyPinAuthAuthentication");
+    timerMap_[INPUT_TIMEOUT_TASK]->Stop(SESSION_CANCEL_TIMEOUT);
+    if (action == "0") {
+        authRequestState_->TransitionTo(std::make_shared<AuthRequestJoinState>());
+    }
+    if (action == "1") {
+        authRequestContext_->reason = DM_AUTH_INPUT_FAILED;
+        authResponseContext_->state = authRequestState_->GetStateType();
+        authRequestState_->TransitionTo(std::make_shared<AuthRequestFinishState>());
+    }
+    LOGI("DmAuthManager::VerifyAuthentication complete");
+}
+
+void DmAuthManager::ClosePage(const int32_t &id)
+{
+    authResponseContext_->aceId = id;
 }
 } // namespace DistributedHardware
 } // namespace OHOS

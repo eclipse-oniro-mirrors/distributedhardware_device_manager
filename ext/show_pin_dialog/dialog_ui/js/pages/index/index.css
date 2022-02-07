@@ -1,0 +1,31 @@
+.container {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.8;
+    background-color: azure;
+}
+
+.title {
+    font-size: 80px;
+    line-height: 120px;
+    font-weight: 800;
+}
+
+.title-list {
+    font-size: 60px;
+    line-height: 100px;
+    font-weight: 800;
+}
+
+.title-pin {
+    font-size: 60px;
+    line-height: 100px;
+    font-weight: 800;
+}
+
+.but {
+    width: 30%;
+    font-size: 50px;
+    height: 80px;
+}

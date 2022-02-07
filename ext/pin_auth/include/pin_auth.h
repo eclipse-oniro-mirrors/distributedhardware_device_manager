@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "authentication.h"
+#include "dm_auth_manager.h"
 #include "dm_ability_manager.h"
 #include "pin_auth_ui.h"
 
@@ -29,8 +30,8 @@ class PinAuth : public IAuthentication {
 public:
     PinAuth();
     ~PinAuth();
-    int32_t ShowAuthInfo() override;
-    int32_t StartAuth(std::shared_ptr<DmAbilityManager> dmAbilityManager) override;
+    int32_t ShowAuthInfo(int32_t code, std::shared_ptr<DmAuthManager> authManager) override;
+    int32_t StartAuth(int32_t code, std::shared_ptr<DmAuthManager> authManager) override;
     int32_t VerifyAuthentication(std::string pinToken, int32_t code, const std::string &authParam) override;
 
 private:

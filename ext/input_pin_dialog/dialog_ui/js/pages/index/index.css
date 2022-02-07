@@ -1,0 +1,53 @@
+.container {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.8;
+    background-color: azure;
+}
+
+.title {
+    font-size: 80px;
+    line-height: 100px;
+    font-weight: 800;
+}
+
+.title-list {
+    font-size: 60px;
+    line-height: 60px;
+    font-weight: 800;
+}
+
+.title-error {
+    font-size: 30px;
+    line-height: 40px;
+    font-weight: 800;
+    color: #ff0000;
+}
+
+.title-pin {
+    font-size: 60px;
+    line-height: 80px;
+    font-weight: 800;
+}
+
+.but {
+    width: 85%;
+    margin-top: 10%;
+    text-align: center;
+    height: 100px;
+}
+
+.but1 {
+    width: 30%;
+    height: 80px;
+    font-size: 50px;
+    margin-left: 10%;
+}
+
+.but2 {
+    width: 30%;
+    height: 80px;
+    font-size: 50px;
+    margin-left: 55%;
+}

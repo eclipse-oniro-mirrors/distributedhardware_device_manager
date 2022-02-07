@@ -1,0 +1,14 @@
+<div class="container">
+    <text class="title">
+        PIN码连接
+    </text>
+    <text class="title-list">
+        请在设备端输入链接码进行验证
+    </text>
+    <text class="title-pin">
+        {{ pincode }}
+    </text>
+    <button class="but" onclick="onConfirm">
+        取消
+    </button>
+</div>

@@ -16,6 +16,7 @@
 #include "native_devicemanager_js.h"
 
 #include <securec.h>
+#include <uv.h>
 
 #include "device_manager.h"
 #include "dm_constants.h"
@@ -56,81 +57,223 @@ std::map<std::string, std::shared_ptr<DmNapiVerifyAuthCallback>> g_verifyAuthCal
 std::map<std::string, std::shared_ptr<DmNapiDeviceManagerFaCallback>> g_dmfaCallbackMap;
 } // namespace
 
-napi_ref DeviceManagerNapi::sConstructor_ = nullptr;
+thread_local napi_ref DeviceManagerNapi::sConstructor_ = nullptr;
 AuthAsyncCallbackInfo DeviceManagerNapi::authAsyncCallbackInfo_;
 AuthAsyncCallbackInfo DeviceManagerNapi::verifyAsyncCallbackInfo_;
 
 void DmNapiInitCallback::OnRemoteDied()
 {
-    DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(bundleName_);
-    if (deviceManagerNapi == nullptr) {
-        LOGE("OnRemoteDied, deviceManagerNapi not find for bunderName %s", bundleName_.c_str());
+    uv_loop_s *loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (loop == nullptr) {
         return;
     }
-    deviceManagerNapi->OnEvent("serviceDie", 0, nullptr);
+    uv_work_t *work = new (std::nothrow) uv_work_t;
+    if (loop == nullptr) {
+        LOGE("DmNapiInitCallback: OnRemoteDied, No memory");
+        return;
+    }
+
+    static std::string staticBundleName = bundleName_;
+    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
+        DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(staticBundleName);
+        if (deviceManagerNapi == nullptr) {
+            LOGE("OnRemoteDied, deviceManagerNapi not find for bunderName %s", staticBundleName.c_str());
+            return;
+        }
+        deviceManagerNapi->OnEvent("serviceDie", 0, nullptr);
+        delete work;
+    });
+    if (ret != 0) {
+        LOGE("Failed to execute OnRemoteDied work queue");
+        delete work;
+    }
 }
 
 void DmNapiDeviceStateCallback::OnDeviceOnline(const DmDeviceInfo &deviceInfo)
 {
-    DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(bundleName_);
-    if (deviceManagerNapi == nullptr) {
-        LOGE("OnDeviceOnline, deviceManagerNapi not find for bunderName %s", bundleName_.c_str());
+    uv_loop_s *loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (loop == nullptr) {
         return;
     }
-    deviceManagerNapi->OnDeviceStateChange(DmNapiDevStateChangeAction::ONLINE, deviceInfo);
+    uv_work_t *work = new (std::nothrow) uv_work_t;
+    if (loop == nullptr) {
+        LOGE("DmNapiDeviceStateCallback: OnDeviceOnline, No memory");
+        return;
+    }
+
+    static std::string staticBundleName = bundleName_;
+    static DmDeviceInfo staticDeviceInfo = deviceInfo;
+    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
+        DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(staticBundleName);
+        if (deviceManagerNapi == nullptr) {
+            LOGE("OnDeviceOnline, deviceManagerNapi not find for bunderName %s", staticBundleName.c_str());
+            return;
+        }
+        deviceManagerNapi->OnDeviceStateChange(DmNapiDevStateChangeAction::ONLINE, staticDeviceInfo);
+        delete work;
+    });
+    if (ret != 0) {
+        LOGE("Failed to execute OnDeviceOnline work queue");
+        delete work;
+    }
 }
 
 void DmNapiDeviceStateCallback::OnDeviceReady(const DmDeviceInfo &deviceInfo)
 {
-    DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(bundleName_);
-    if (deviceManagerNapi == nullptr) {
-        LOGE("OnDeviceOnline, deviceManagerNapi not find for bunderName %s", bundleName_.c_str());
+    uv_loop_s *loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (loop == nullptr) {
         return;
     }
-    deviceManagerNapi->OnDeviceStateChange(DmNapiDevStateChangeAction::READY, deviceInfo);
+    uv_work_t *work = new (std::nothrow) uv_work_t;
+    if (loop == nullptr) {
+        LOGE("DmNapiDeviceStateCallback: OnDeviceReady, No memory");
+        return;
+    }
+
+    static std::string staticBundleName = bundleName_;
+    static DmDeviceInfo staticDeviceInfo = deviceInfo;
+    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
+        DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(staticBundleName);
+        if (deviceManagerNapi == nullptr) {
+            LOGE("OnDeviceReady, deviceManagerNapi not find for bunderName %s", staticBundleName.c_str());
+            return;
+        }
+        deviceManagerNapi->OnDeviceStateChange(DmNapiDevStateChangeAction::READY, staticDeviceInfo);
+        delete work;
+    });
+    if (ret != 0) {
+        LOGE("Failed to execute OnDeviceReady work queue");
+        delete work;
+    }
 }
 
 void DmNapiDeviceStateCallback::OnDeviceOffline(const DmDeviceInfo &deviceInfo)
 {
-    DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(bundleName_);
-    if (deviceManagerNapi == nullptr) {
-        LOGE("OnDeviceOffline, deviceManagerNapi not find for bunderName %s", bundleName_.c_str());
+    uv_loop_s *loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (loop == nullptr) {
         return;
     }
-    deviceManagerNapi->OnDeviceStateChange(DmNapiDevStateChangeAction::OFFLINE, deviceInfo);
+    uv_work_t *work = new (std::nothrow) uv_work_t;
+    if (loop == nullptr) {
+        LOGE("DmNapiDeviceStateCallback: OnDeviceOffline, No memory");
+        return;
+    }
+
+    static std::string staticBundleName = bundleName_;
+    static DmDeviceInfo staticDeviceInfo = deviceInfo;
+    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
+        DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(staticBundleName);
+        if (deviceManagerNapi == nullptr) {
+            LOGE("OnDeviceOffline, deviceManagerNapi not find for bunderName %s", staticBundleName.c_str());
+            return;
+        }
+        deviceManagerNapi->OnDeviceStateChange(DmNapiDevStateChangeAction::OFFLINE, staticDeviceInfo);
+        delete work;
+    });
+    if (ret != 0) {
+        LOGE("Failed to execute OnDeviceOffline work queue");
+        delete work;
+    }
 }
 
 void DmNapiDeviceStateCallback::OnDeviceChanged(const DmDeviceInfo &deviceInfo)
 {
-    DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(bundleName_);
-    if (deviceManagerNapi == nullptr) {
-        LOGE("OnDeviceChanged, deviceManagerNapi not find for bunderName %s", bundleName_.c_str());
+    uv_loop_s *loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (loop == nullptr) {
         return;
     }
-    deviceManagerNapi->OnDeviceStateChange(DmNapiDevStateChangeAction::CHANGE, deviceInfo);
+    uv_work_t *work = new (std::nothrow) uv_work_t;
+    if (loop == nullptr) {
+        LOGE("DmNapiDeviceStateCallback: OnDeviceChanged, No memory");
+        return;
+    }
+
+    static std::string staticBundleName = bundleName_;
+    static DmDeviceInfo staticDeviceInfo = deviceInfo;
+    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
+        DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(staticBundleName);
+        if (deviceManagerNapi == nullptr) {
+            LOGE("OnDeviceChanged, deviceManagerNapi not find for bunderName %s", staticBundleName.c_str());
+            return;
+        }
+        deviceManagerNapi->OnDeviceStateChange(DmNapiDevStateChangeAction::CHANGE, staticDeviceInfo);
+        delete work;
+    });
+    if (ret != 0) {
+        LOGE("Failed to execute OnDeviceChanged work queue");
+        delete work;
+    }
 }
 
 void DmNapiDiscoveryCallback::OnDeviceFound(uint16_t subscribeId, const DmDeviceInfo &deviceInfo)
 {
-    DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(bundleName_);
-    if (deviceManagerNapi == nullptr) {
-        LOGE("OnDeviceFound, deviceManagerNapi not find for bunderName %s", bundleName_.c_str());
+    LOGI("OnDeviceFound for %s, subscribeId %d", bundleName_.c_str(), (int32_t)subscribeId);
+
+    uv_loop_s *loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (loop == nullptr) {
+        return;
+    }
+    uv_work_t *work = new (std::nothrow) uv_work_t;
+    if (loop == nullptr) {
+        LOGE("DmNapiDiscoveryCallback: OnDeviceFound, No memory");
         return;
     }
 
-    LOGI("OnDeviceFound for %s, subscribeId %d", bundleName_.c_str(), (int32_t)subscribeId);
-    deviceManagerNapi->OnDeviceFound(subscribeId, deviceInfo);
+    static std::string staticBundleName = bundleName_;
+    static uint16_t staticSubscribeId = subscribeId;
+    static DmDeviceInfo staticDeviceInfo = deviceInfo;
+    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
+        DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(staticBundleName);
+        if (deviceManagerNapi == nullptr) {
+            LOGE("OnDeviceFound, deviceManagerNapi not find for bunderName %s", staticBundleName.c_str());
+            return;
+        }
+        deviceManagerNapi->OnDeviceFound(staticSubscribeId, staticDeviceInfo);
+        delete work;
+    });
+    if (ret != 0) {
+        LOGE("Failed to execute OnDeviceFound work queue");
+        delete work;
+    }
 }
 
 void DmNapiDiscoveryCallback::OnDiscoveryFailed(uint16_t subscribeId, int32_t failedReason)
 {
-    DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(bundleName_);
-    if (deviceManagerNapi == nullptr) {
-        LOGE("OnDiscoveryFailed, deviceManagerNapi not find for bunderName %s", bundleName_.c_str());
+    LOGI("OnDiscoveryFailed for %s, subscribeId %d", bundleName_.c_str(), (int32_t)subscribeId);
+
+    uv_loop_s *loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (loop == nullptr) {
+        return;
+    }
+    uv_work_t *work = new (std::nothrow) uv_work_t;
+    if (loop == nullptr) {
+        LOGE("DmNapiDiscoveryCallback: OnDiscoveryFailed, No memory");
         return;
     }
 
-    deviceManagerNapi->OnDiscoveryFailed(subscribeId, failedReason);
+    static std::string staticBundleName = bundleName_;
+    static uint16_t staticSubscribeId = subscribeId;
+    static int32_t staticReason = failedReason;
+    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
+        DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(staticBundleName);
+        if (deviceManagerNapi == nullptr) {
+            LOGE("OnDiscoveryFailed, deviceManagerNapi not find for bunderName %s", staticBundleName.c_str());
+            return;
+        }
+        deviceManagerNapi->OnDiscoveryFailed(staticSubscribeId, staticReason);
+        delete work;
+    });
+    if (ret != 0) {
+        LOGE("Failed to execute OnDiscoveryFailed work queue");
+        delete work;
+    }
 }
 
 void DmNapiDiscoveryCallback::OnDiscoverySuccess(uint16_t subscribeId)
@@ -161,22 +304,67 @@ int32_t DmNapiDiscoveryCallback::GetRefCount()
 void DmNapiAuthenticateCallback::OnAuthResult(const std::string &deviceId, const std::string &token, int32_t status,
                                               int32_t reason)
 {
-    DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(bundleName_);
-    if (deviceManagerNapi == nullptr) {
-        LOGE("OnAuthResult, deviceManagerNapi not find for bunderName %s", bundleName_.c_str());
+    uv_loop_s *loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (loop == nullptr) {
         return;
     }
-    deviceManagerNapi->OnAuthResult(deviceId, token, status, reason);
+    uv_work_t *work = new (std::nothrow) uv_work_t;
+    if (loop == nullptr) {
+        LOGE("DmNapiAuthenticateCallback: OnAuthResult, No memory");
+        return;
+    }
+
+    static std::string staticBundleName = bundleName_;
+    static std::string staticDeviceId = deviceId;
+    static std::string staticToken = token;
+    static int32_t staticStatus = status;
+    static int32_t staticReason = reason;
+    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
+        DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(staticBundleName);
+        if (deviceManagerNapi == nullptr) {
+            LOGE("OnAuthResult, deviceManagerNapi not find for bunderName %s", staticBundleName.c_str());
+            return;
+        }
+        deviceManagerNapi->OnAuthResult(staticDeviceId, staticToken, staticStatus, staticReason);
+        delete work;
+    });
+    if (ret != 0) {
+        LOGE("Failed to execute OnAuthResult work queue");
+        delete work;
+    }
 }
 
 void DmNapiVerifyAuthCallback::OnVerifyAuthResult(const std::string &deviceId, int32_t resultCode, int32_t flag)
 {
-    DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(bundleName_);
-    if (deviceManagerNapi == nullptr) {
-        LOGE("OnCheckAuthResult, deviceManagerNapi not find for bunderName %s", bundleName_.c_str());
+    uv_loop_s *loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (loop == nullptr) {
         return;
     }
-    deviceManagerNapi->OnVerifyResult(deviceId, resultCode, flag);
+    uv_work_t *work = new (std::nothrow) uv_work_t;
+    if (loop == nullptr) {
+        LOGE("DmNapiVerifyAuthCallback: OnVerifyAuthResult, No memory");
+        return;
+    }
+
+    static std::string staticBundleName = bundleName_;
+    static std::string staticDeviceId = deviceId;
+    static int32_t staticCode = resultCode;
+    static int32_t staticFlag = flag;
+    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
+        DeviceManagerNapi *deviceManagerNapi =  DeviceManagerNapi::GetDeviceManagerNapi(staticBundleName);
+        if (deviceManagerNapi == nullptr) {
+            LOGE("OnVerifyAuthResult, deviceManagerNapi not find for bunderName %s", staticBundleName.c_str());
+            return;
+        }
+        deviceManagerNapi->OnVerifyResult(staticDeviceId, staticCode, staticFlag);
+        delete work;
+    });
+    if (ret != 0) {
+        LOGE("Failed to execute OnVerifyAuthResult work queue");
+        delete work;
+    }
 }
 
 DeviceManagerNapi::DeviceManagerNapi(napi_env env, napi_value thisVar) : DmNativeEvent(env, thisVar)
@@ -669,13 +857,13 @@ void DeviceManagerNapi::DmDeviceInfotoJsDeviceInfo(const napi_env &env, const Dm
     SetValueInt32(env, "deviceType", (int)vecDevInfo.deviceTypeId, result);
 }
 
-void DeviceManagerNapi::CreateDmCallback(std::string &bundleName, std::string &eventType)
+void DeviceManagerNapi::CreateDmCallback(napi_env env, std::string &bundleName, std::string &eventType)
 {
     LOGE("CreateDmCallback for bundleName %s eventType %s", bundleName.c_str(), eventType.c_str());
     if (eventType == DM_NAPI_EVENT_DEVICE_STATE_CHANGE) {
         auto iter = g_deviceStateCallbackMap.find(bundleName);
         if (iter == g_deviceStateCallbackMap.end()) {
-            auto callback = std::make_shared<DmNapiDeviceStateCallback>(bundleName);
+            auto callback = std::make_shared<DmNapiDeviceStateCallback>(env, bundleName);
             std::string extra = "";
             int32_t ret = DeviceManager::GetInstance().RegisterDevStateCallback(bundleName, extra, callback);
             if (ret != 0) {
@@ -691,7 +879,7 @@ void DeviceManagerNapi::CreateDmCallback(std::string &bundleName, std::string &e
         std::shared_ptr<DmNapiDiscoveryCallback> DiscoveryCallback = nullptr;
         auto iter = g_DiscoveryCallbackMap.find(bundleName);
         if (iter == g_DiscoveryCallbackMap.end()) {
-            auto callback = std::make_shared<DmNapiDiscoveryCallback>(bundleName);
+            auto callback = std::make_shared<DmNapiDiscoveryCallback>(env, bundleName);
             g_DiscoveryCallbackMap[bundleName] = callback;
             DiscoveryCallback = callback;
         } else {
@@ -705,7 +893,7 @@ void DeviceManagerNapi::CreateDmCallback(std::string &bundleName, std::string &e
     if (eventType == DM_NAPI_EVENT_DMFA_CALLBACK) {
         auto iter = g_dmfaCallbackMap.find(bundleName);
         if (iter == g_dmfaCallbackMap.end()) {
-            auto callback = std::make_shared<DmNapiDeviceManagerFaCallback>(bundleName);
+            auto callback = std::make_shared<DmNapiDeviceManagerFaCallback>(env, bundleName);
             int32_t ret = DeviceManager::GetInstance().RegisterDeviceManagerFaCallback(bundleName, callback);
             if (ret != 0) {
                 LOGE("RegisterDeviceManagerFaCallback failed for bunderName %s", bundleName.c_str());
@@ -844,12 +1032,32 @@ void DeviceManagerNapi::CallGetTrustedDeviceListStatusSync(napi_env env, napi_st
 
 void DmNapiDeviceManagerFaCallback::OnCall(const std::string &paramJson)
 {
-    DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(bundleName_);
-    if (deviceManagerNapi == nullptr) {
-        LOGE("OnCall, deviceManagerNapi not find for bunderName %s", bundleName_.c_str());
+    uv_loop_s *loop = nullptr;
+    napi_get_uv_event_loop(env_, &loop);
+    if (loop == nullptr) {
         return;
     }
-    deviceManagerNapi->OnDmfaCall(paramJson);
+    uv_work_t *work = new (std::nothrow) uv_work_t;
+    if (loop == nullptr) {
+        LOGE("DmNapiDeviceManagerFaCallback: OnCall, No memory");
+        return;
+    }
+
+    static std::string staticBundleName = bundleName_;
+    static std::string staticParamJson = paramJson;
+    int ret = uv_queue_work(loop, work, [] (uv_work_t *work) {}, [] (uv_work_t *work, int status) {
+        DeviceManagerNapi *deviceManagerNapi = DeviceManagerNapi::GetDeviceManagerNapi(staticBundleName);
+        if (deviceManagerNapi == nullptr) {
+            LOGE("OnCall, deviceManagerNapi not find for bunderName %s", staticBundleName.c_str());
+            return;
+        }
+        deviceManagerNapi->OnDmfaCall(staticParamJson);
+        delete work;
+    });
+    if (ret != 0) {
+        LOGE("Failed to execute OnCall work queue");
+        delete work;
+    }
 }
 
 void DeviceManagerNapi::OnDmfaCall(const std::string &paramJson)
@@ -1245,7 +1453,7 @@ napi_value DeviceManagerNapi::StartDeviceDiscoverSync(napi_env env, napi_callbac
     std::shared_ptr<DmNapiDiscoveryCallback> DiscoveryCallback = nullptr;
     auto iter = g_DiscoveryCallbackMap.find(deviceManagerWrapper->bundleName_);
     if (iter == g_DiscoveryCallbackMap.end()) {
-        DiscoveryCallback = std::make_shared<DmNapiDiscoveryCallback>(deviceManagerWrapper->bundleName_);
+        DiscoveryCallback = std::make_shared<DmNapiDiscoveryCallback>(env, deviceManagerWrapper->bundleName_);
         g_DiscoveryCallbackMap[deviceManagerWrapper->bundleName_] = DiscoveryCallback;
     } else {
         DiscoveryCallback = iter->second;
@@ -1319,7 +1527,7 @@ napi_value DeviceManagerNapi::AuthenticateDevice(napi_env env, napi_callback_inf
     std::shared_ptr<DmNapiAuthenticateCallback> authCallback = nullptr;
     auto iter = g_authCallbackMap.find(deviceManagerWrapper->bundleName_);
     if (iter == g_authCallbackMap.end()) {
-        authCallback = std::make_shared<DmNapiAuthenticateCallback>(deviceManagerWrapper->bundleName_);
+        authCallback = std::make_shared<DmNapiAuthenticateCallback>(env, deviceManagerWrapper->bundleName_);
         g_authCallbackMap[deviceManagerWrapper->bundleName_] = authCallback;
     } else {
         authCallback = iter->second;
@@ -1359,7 +1567,7 @@ napi_value DeviceManagerNapi::VerifyAuthInfo(napi_env env, napi_callback_info in
     std::shared_ptr<DmNapiVerifyAuthCallback> verifyCallback = nullptr;
     auto iter = g_verifyAuthCallbackMap.find(deviceManagerWrapper->bundleName_);
     if (iter == g_verifyAuthCallbackMap.end()) {
-        verifyCallback = std::make_shared<DmNapiVerifyAuthCallback>(deviceManagerWrapper->bundleName_);
+        verifyCallback = std::make_shared<DmNapiVerifyAuthCallback>(env, deviceManagerWrapper->bundleName_);
         g_verifyAuthCallbackMap[deviceManagerWrapper->bundleName_] = verifyCallback;
     } else {
         verifyCallback = iter->second;
@@ -1394,7 +1602,7 @@ napi_value DeviceManagerNapi::JsOnFrench(napi_env env, int32_t num, napi_value t
     LOGI("JsOn for bunderName %s, eventType %s ", deviceManagerWrapper->bundleName_.c_str(), eventType.c_str());
     deviceManagerWrapper->On(eventType, argv[num + 1]);
 
-    CreateDmCallback(deviceManagerWrapper->bundleName_, eventType);
+    CreateDmCallback(env, deviceManagerWrapper->bundleName_, eventType);
 
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
@@ -1546,7 +1754,7 @@ void DeviceManagerNapi::HandleCreateDmCallBack(const napi_env &env, AsyncCallbac
             (void)env;
             AsyncCallbackInfo *asCallbackInfo = (AsyncCallbackInfo *)data;
             std::string bundleName = std::string(asCallbackInfo->bundleName);
-            std::shared_ptr<DmNapiInitCallback> initCallback = std::make_shared<DmNapiInitCallback>(bundleName);
+            std::shared_ptr<DmNapiInitCallback> initCallback = std::make_shared<DmNapiInitCallback>(env, bundleName);
             if (DeviceManager::GetInstance().InitDeviceManager(bundleName, initCallback) != 0) {
                 LOGE("InitDeviceManager for bunderName %s failed", bundleName.c_str());
                 return;

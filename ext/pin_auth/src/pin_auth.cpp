@@ -33,15 +33,14 @@ PinAuth::~PinAuth()
 {
 }
 
-int32_t PinAuth::ShowAuthInfo()
+int32_t PinAuth::ShowAuthInfo(int32_t code, std::shared_ptr<DmAuthManager> authManager)
 {
-    return pinAuthUi_->ShowPinDialog();
+    return pinAuthUi_->ShowPinDialog(code, authManager);
 }
 
-int32_t PinAuth::StartAuth(std::shared_ptr<DmAbilityManager> dmAbilityManager)
+int32_t PinAuth::StartAuth(int32_t code, std::shared_ptr<DmAuthManager> authManager)
 {
-    times_ = 0;
-    return pinAuthUi_->InputPinDialog(dmAbilityManager);
+    return pinAuthUi_->InputPinDialog(code, authManager);
 }
 
 int32_t PinAuth::VerifyAuthentication(std::string pinToken, int32_t code, const std::string &authParam)

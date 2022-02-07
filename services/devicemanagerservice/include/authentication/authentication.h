@@ -20,11 +20,12 @@
 
 namespace OHOS {
 namespace DistributedHardware {
+class DmAuthManager;
 class IAuthentication {
 public:
     virtual ~IAuthentication() = default;
-    virtual int32_t ShowAuthInfo() = 0;
-    virtual int32_t StartAuth(std::shared_ptr<DmAbilityManager> dmAbilityManager) = 0;
+    virtual int32_t ShowAuthInfo(int32_t code, std::shared_ptr<DmAuthManager> authManager) = 0;
+    virtual int32_t StartAuth(int32_t code, std::shared_ptr<DmAuthManager> authManager) = 0;
     virtual int32_t VerifyAuthentication(std::string pinToken, int32_t code, const std::string &authParam) = 0;
 };
 
