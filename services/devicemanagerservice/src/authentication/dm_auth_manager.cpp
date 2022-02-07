@@ -325,6 +325,7 @@ void DmAuthManager::OnGroupCreated(int64_t requestId, const std::string &groupId
         softbusConnector_->GetSoftbusSession()->SendData(authResponseContext_->sessionId, message);
         return;
     }
+    authResponseContext_->code = GeneratePincode();
     authResponseContext_->groupId = groupId;
     authMessageProcessor_->SetResponseContext(authResponseContext_);
     std::string message = authMessageProcessor_->CreateSimpleMessage(MSG_TYPE_RESP_AUTH);
@@ -680,7 +681,6 @@ void DmAuthManager::ShowConfigDialog()
 void DmAuthManager::ShowAuthInfoDialog()
 {
     LOGI("DmAuthManager::ShowAuthInfoDialog start");
-    authResponseContext_->code = GeneratePincode();
     std::shared_ptr<IAuthentication> ptr;
     if (authenticationMap_.find(1) == authenticationMap_.end()) {
         LOGE("DmAuthManager::authenticationMap_ is null");
@@ -709,7 +709,7 @@ int32_t DmAuthManager::GetAuthenticationParam(DmAuthParam &authParam)
         LOGI("dmAbilityMgr_ is nullptr");
         return DM_POINT_NULL;
     }
-
+    
     dmAbilityMgr_->StartAbilityDone();
     AbilityRole role = dmAbilityMgr_->GetAbilityRole();
     authParam.direction = (int32_t)role;

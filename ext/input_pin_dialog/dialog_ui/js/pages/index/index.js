@@ -1,29 +1,34 @@
 import router from '@ohos.router';
 
 var numbs = 0;
+var code = 0;
+var inputVal = 0;
 export default {
     data: {
         pincode: router.getParams().pinCode,
     },
     onInit() {
-        console.info('getParams: ' + router.getParams());
+        code = router.getParams().pinCode;
     },
+    onChange(e){ 
+        inputVal = e.value; 
+    }, 
     onConfirm() {
-        console.info('click inpout confirm numbs'+ numbs);
-        console.info('click inpout confirm');
         numbs = numbs + 1;
-        console.info('click inpout confirm numbs'+ numbs);
-        console.info('click confirm start');
-        var input=  this.$element('input').value;
-        console.info('click confirm end');
-        console.info('input: ' + input);
-        console.info('pincode: ' + pincode);
-        if (input == pincode){
-            console.info('pincode: = input');
-            callNativeHandler(input, "0");
-        } else {
-            console.info('pincode: != input');
-        }
+        if(numbs < 3){
+            console.info('click cancel numbs < 3 ');
+            console.info('code: ' + code);
+            console.info('inputVal: ' + inputVal);
+            if(code == inputVal){
+            console.info('click cancel code == inputVal');
+            callNativeHandler("EVENT_INPUT", "0");
+            }else{
+            console.info('click cancel code != inputVal');
+            }
+        }else{
+            console.info('click cancel numbs > 3 ');
+            callNativeHandler("EVENT_CONFIRM", "1");
+        }       
     },
     onCancel() {
         console.info('click cancel');
