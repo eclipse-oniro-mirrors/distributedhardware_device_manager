@@ -5,9 +5,7 @@
     <text class="title-list">
         请输入另一个设备显示的PIN码进行验证
     </text>
-
-    <input class="title-pin" id="input" type="number" value=""></input>
-
+    <input class="title-pin" id="input" type="number" onchange="onChange"></input>
     <div class="but">
         <button class="but1" onclick="onCancel">
             取消
