@@ -26,6 +26,10 @@ const int32_t MILL_SECONDS_PER_SECOND = 1000;
 }
 DmTimer::DmTimer(const std::string &name)
 {
+    if (name.empty()) {
+        LOGI("DmTimer name is null");
+        return;
+    }
     mStatus_ = DmTimerStatus::DM_STATUS_INIT;
     mTimeOutSec_ = 0;
     mHandle_ = nullptr;
@@ -39,12 +43,20 @@ DmTimer::DmTimer(const std::string &name)
 
 DmTimer::~DmTimer()
 {
+    if (mTimerName_.empty()) {
+        LOGI("DmTimer is not init");
+        return;
+    }
     LOGI("DmTimer %s Destroy in", mTimerName_.c_str());
     Release();
 }
 
 DmTimerStatus DmTimer::Start(uint32_t timeOut, TimeoutHandle handle, void *data)
 {
+    if (mTimerName_.empty() || handle == nullptr || data == nullptr) {
+        LOGI("DmTimer is not init or param empty");
+        return DmTimerStatus::DM_STATUS_FINISH;
+    }
     LOGI("DmTimer %s start timeout(%d)", mTimerName_.c_str(), timeOut);
     if (mStatus_ != DmTimerStatus::DM_STATUS_INIT) {
         return DmTimerStatus::DM_STATUS_BUSY;
@@ -67,6 +79,10 @@ DmTimerStatus DmTimer::Start(uint32_t timeOut, TimeoutHandle handle, void *data)
 
 void DmTimer::Stop(int32_t code)
 {
+    if (mTimerName_.empty()) {
+        LOGI("DmTimer is not init");
+        return;
+    }
     LOGI("DmTimer %s Stop code (%d)", mTimerName_.c_str(), code);
     if (mTimeFd_[1]) {
         char event = 'S';
@@ -82,6 +98,10 @@ void DmTimer::Stop(int32_t code)
 
 void DmTimer::WaitForTimeout()
 {
+    if (mTimerName_.empty()) {
+        LOGI("DmTimer is not init");
+        return;
+    }
     LOGI("DmTimer %s start timer at (%d)s", mTimerName_.c_str(), mTimeOutSec_);
 
     int32_t nfds = epoll_wait(mEpFd_, mEvents_, MAX_EVENTS, mTimeOutSec_ * MILL_SECONDS_PER_SECOND);
@@ -112,6 +132,10 @@ void DmTimer::WaitForTimeout()
 
 int32_t DmTimer::CreateTimeFd()
 {
+    if (mTimerName_.empty()) {
+        LOGI("DmTimer is not init");
+        return DM_STATUS_FINISH;
+    }
     LOGI("DmTimer %s creatTimeFd", mTimerName_.c_str());
     int ret = 0;
 
@@ -134,6 +158,10 @@ int32_t DmTimer::CreateTimeFd()
 
 void DmTimer::Release()
 {
+    if (mTimerName_.empty()) {
+        LOGI("DmTimer is not init");
+        return;
+    }
     LOGI("DmTimer %s Release in", mTimerName_.c_str());
     if (mStatus_ == DmTimerStatus::DM_STATUS_INIT) {
         LOGI("DmTimer %s already Release", mTimerName_.c_str());
