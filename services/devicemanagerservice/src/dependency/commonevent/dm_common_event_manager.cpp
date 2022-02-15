@@ -130,7 +130,7 @@ void DmCommonEventManager::EventSubscriber::OnReceiveEvent(const CommonEventData
         return;
     }
 
-    CommomEventCallbackNode node{userId, callback_};
+    CommomEventCallbackNode node {userId, callback_};
     callbackQueue_.push_back(node);
     notEmpty_.notify_one();
 }
