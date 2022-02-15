@@ -448,7 +448,8 @@ int32_t HiChainConnector::DelMemberFromGroup(std::string groupId, std::string de
         LOGE("get current process account user id failed");
         return DM_FAILED;
     }
-    int32_t ret = deviceGroupManager_->deleteMemberFromGroup(userId, requestId, DM_PKG_NAME.c_str(), deleteParams.c_str());
+    int32_t ret = deviceGroupManager_->deleteMemberFromGroup(userId, requestId,
+        DM_PKG_NAME.c_str(), deleteParams.c_str());
     if (ret != 0) {
         LOGE("HiChainConnector::DelMemberFromGroup failed , ret: %d.", ret);
         return ret;
@@ -489,6 +490,5 @@ int32_t HiChainConnector::DeleteGroup(const int32_t userId, std::string &groupId
     }
     return DM_OK;
 }
-
 } // namespace DistributedHardware
 } // namespace OHOS

@@ -25,9 +25,9 @@ public:
     static int32_t GetCurrentAccountUserID(void);
     static void SetSwitchOldUserId(int32_t userId);
     static int32_t GetSwitchOldUserId(void);
-private:   
+private:
     static int32_t oldUserId_;
 };
 } // namespace DistributedHardware
 } // namespace OHOS
-#endif // OHOS_DM_MULTIPLE_USER_CONNECTOR_H    
+#endif // OHOS_DM_MULTIPLE_USER_CONNECTOR_H

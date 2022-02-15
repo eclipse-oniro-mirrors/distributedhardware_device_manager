@@ -44,6 +44,5 @@ int32_t MultipleUserConnector::GetSwitchOldUserId(void)
 {
     return oldUserId_;
 }
-
 } // namespace DistributedHardware
 } // namespace OHOS
