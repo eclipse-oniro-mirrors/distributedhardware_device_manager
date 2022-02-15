@@ -61,9 +61,9 @@ if (defined(ohos_lite)) {
       "src/authentication/auth_ui.cpp",
       "src/authentication/dm_auth_manager.cpp",
       "src/config/dm_config_manager.cpp",
-      "src/dependency/multipleuser/multiple_user_connector.cpp",
       "src/dependency/commonevent/dm_common_event_manager.cpp",
       "src/dependency/hichain/hichain_connector.cpp",
+      "src/dependency/multipleuser/multiple_user_connector.cpp",
       "src/dependency/softbus/softbus_connector.cpp",
       "src/dependency/softbus/softbus_session.cpp",
       "src/dependency/timer/dm_timer.cpp",
@@ -90,13 +90,13 @@ if (defined(ohos_lite)) {
       "${common_path}/include/dialog_ui/js:dialog_js_files_etc",
       "${innerkits_path}/native_cpp:devicemanagersdk",
       "${utils_path}:devicemanagerutils",
+      "//base/account/os_account/frameworks/osaccount/native:os_account_innerkits",
       "//base/security/deviceauth/services:deviceauth_sdk",
       "//foundation/aafwk/standard/interfaces/innerkits/ability_manager:ability_manager",
       "//foundation/aafwk/standard/interfaces/innerkits/want:want",
       "//foundation/aafwk/standard/services/abilitymgr:abilityms",
       "//foundation/ace/ace_engine/interfaces/innerkits/ui_service_manager:ui_service_mgr",
       "//foundation/windowmanager/wm:libwm",
-      "//base/account/os_account/frameworks/osaccount/native:os_account_innerkits",
     ]
 
     external_deps = [
