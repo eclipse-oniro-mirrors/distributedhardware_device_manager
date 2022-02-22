@@ -20,9 +20,21 @@
 #include "dm_log.h"
 namespace OHOS {
 namespace DistributedHardware {
+static void TimeOut(void *data)
+{
+    LOGE("time out ");
+    std::shared_ptr<DmDeviceStateManager> deviceStateMgr = ((HmDevice *)data)->deviceStateMgr;
+    if (deviceStateMgr == nullptr) {
+        LOGE("OnDeviceOfflineTimeOut hmDevice owner = nullptr");
+        return;
+    }
+    deviceStateMgr->DeleteTimeOutGroup((HmDevice *)data);
+}
+
 DmDeviceStateManager::DmDeviceStateManager(std::shared_ptr<SoftbusConnector> softbusConnector,
-                                           std::shared_ptr<DeviceManagerServiceListener> listener)
-    : softbusConnector_(softbusConnector), listener_(listener)
+                                           std::shared_ptr<DeviceManagerServiceListener> listener,
+                                           std::shared_ptr<HiChainConnector> hiChainConnector)
+    : softbusConnector_(softbusConnector), listener_(listener), hiChainConnector_(hiChainConnector)
 {
     LOGI("DmDeviceStateManager constructor");
     profileSoName_ = "libdevicemanagerext_profile.z.so";
@@ -37,6 +49,7 @@ DmDeviceStateManager::~DmDeviceStateManager()
 void DmDeviceStateManager::OnDeviceOnline(const std::string &pkgName, const DmDeviceInfo &info)
 {
     LOGI("DmDeviceStateManager::OnDeviceOnline in");
+    RegisterOffLineTimer(info);
     DmAdapterManager &adapterMgrPtr = DmAdapterManager::GetInstance();
     std::shared_ptr<IProfileAdapter> profileAdapter = adapterMgrPtr.GetProfileAdapter(profileSoName_);
     if (profileAdapter == nullptr) {
@@ -66,6 +79,7 @@ void DmDeviceStateManager::OnDeviceOnline(const std::string &pkgName, const DmDe
 
 void DmDeviceStateManager::OnDeviceOffline(const std::string &pkgName, const DmDeviceInfo &info)
 {
+    StartOffLineTimer(info);
     DmAdapterManager &adapterMgrPtr = DmAdapterManager::GetInstance();
     std::shared_ptr<IProfileAdapter> profileAdapter = adapterMgrPtr.GetProfileAdapter(profileSoName_);
     if (profileAdapter == nullptr) {
@@ -112,6 +126,52 @@ int32_t DmDeviceStateManager::RegisterSoftbusStateCallback()
     softbusConnector_->RegisterSoftbusStateCallback(DM_PKG_NAME,
                                                     std::shared_ptr<DmDeviceStateManager>(shared_from_this()));
     return DM_OK;
+}
+
+void DmDeviceStateManager::RegisterOffLineTimer(const DmDeviceInfo &deviceInfo)
+{
+    std::string deviceId;
+    softbusConnector_->GetUdidByNetworkId(deviceInfo.deviceId, deviceId);
+    LOGI("Device<%s>Online", deviceId.c_str());
+    auto iter = mHmDeviceMap_.find(deviceId);
+    if (iter != mHmDeviceMap_.end()) {
+        iter->second->mOfflineTimerPtr->Stop(0);
+        return;
+    }
+
+    HmDevice *hmDevice = new HmDevice(deviceId, shared_from_this());
+    mHmDeviceMap_[hmDevice->mDeviceId] = hmDevice;
+}
+
+void DmDeviceStateManager::StartOffLineTimer(const DmDeviceInfo &deviceInfo)
+{
+    std::string deviceId;
+    softbusConnector_->GetUdidByNetworkId(deviceInfo.deviceId, deviceId);
+    LOGI("Device<%s>Offline", deviceId.c_str());
+    for (auto &iter : mHmDeviceMap_) {
+        if (iter.second->mDeviceId.compare(deviceId) == 0) {
+            iter.second->mOfflineTimerPtr->Start(OFFLINE_TIMEOUT, TimeOut, iter.second);
+        }
+    }
+}
+
+void DmDeviceStateManager::DeleteTimeOutGroup(HmDevice *hmDevice)
+{
+    LOGI("Remove DmDevice<%s> Hichain Group", hmDevice->mDeviceId.c_str());
+    hiChainConnector_->DeleteTimeOutGroup(hmDevice->mDeviceId.c_str());
+}
+
+HmDevice::HmDevice(std::string deviceId, std::shared_ptr<DmDeviceStateManager> stateMgr)
+{
+    mDeviceId = deviceId;
+    std::string timerName = "HmDeviceTimer";
+    mOfflineTimerPtr = std::make_shared<DmTimer>(timerName);
+    deviceStateMgr = stateMgr;
+}
+
+HmDevice::~HmDevice()
+{
+    mOfflineTimerPtr = nullptr;
 }
 } // namespace DistributedHardware
 } // namespace OHOS

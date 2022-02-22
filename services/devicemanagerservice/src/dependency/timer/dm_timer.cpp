@@ -107,6 +107,10 @@ void DmTimer::WaitForTimeout()
     int32_t nfds = epoll_wait(mEpFd_, mEvents_, MAX_EVENTS, mTimeOutSec_ * MILL_SECONDS_PER_SECOND);
     if (nfds < 0) {
         LOGE("DmTimer %s epoll_wait returned n=%d, error: %d", mTimerName_.c_str(), nfds, errno);
+        if (errno == EINTR) {
+            LOGI("DmTimer is stop");
+            return;
+        }
     }
 
     char event = 0;
