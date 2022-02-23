@@ -15,14 +15,11 @@
 
 #include "permission_token.h"
 
-
 namespace OHOS {
 namespace DistributedHardware {
-
 bool PermissionToken::isSystemAppCalling(void)
 {
     return true;
 }
-
 } // namespace DistributedHardware
 } // namespace OHOS
