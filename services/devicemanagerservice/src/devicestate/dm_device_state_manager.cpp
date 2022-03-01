@@ -87,8 +87,6 @@ void DmDeviceStateManager::OnDeviceOffline(const std::string &pkgName, const DmD
     if (profileAdapter == nullptr) {
         LOGE("OnDeviceOffline profile adapter is null");
     } else {
-        std::string uuid;
-        SoftbusConnector::GetUuidByNetworkId(info.deviceId, uuid);
         auto iter = remoteDeviceInfos_.find(std::string(info.deviceId));
         if (iter == remoteDeviceInfos_.end()) {
         } else {
