@@ -31,12 +31,10 @@ int32_t GetUdidHash(uint8_t *udid, int32_t udidDataLen, uint8_t outudidData[32])
 
     mbedtls_md_init(&ctx);
     info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
-
     if (info == nullptr) {
         LOGE("info is nullptr");
-         return DM_POINT_NULL;
+        return DM_POINT_NULL;
     }
-
     int32_t ret = DM_OK;
     do {
         ret = mbedtls_md_setup(&ctx, info, 0);
