@@ -317,17 +317,6 @@ HWTEST_F(SoftbusConnectorTest, CovertNodeBasicInfoToDmDevice_001, testing::ext::
     int ret = softbusConnector->CovertNodeBasicInfoToDmDevice(nodeBasicInfo, dmDeviceInfo);
     EXPECT_EQ(ret, DM_OK);
 }
-
-/**
- * @tc.name: OnParameterChgCallback_001
- * @tc.desc: set some corrort para  and return DM_OK
- * @tc.type: FUNC
- * @tc.require: AR000GHSJK
- */
-HWTEST_F(SoftbusConnectorTest, OnParameterChgCallback_001, testing::ext::TestSize.Level0)
-{
-    EXPECT_EQ(DM_OK, DM_OK);
-}
 } // namespace
 } // namespace DistributedHardware
 } // namespace OHOS

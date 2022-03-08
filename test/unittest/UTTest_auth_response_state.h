@@ -20,6 +20,8 @@
 
 #include <memory>
 
+#include "device_manager_impl.h"
+#include "mock/mock_ipc_client_proxy.h"
 #include "auth_response_state.h"
 
 namespace OHOS {
