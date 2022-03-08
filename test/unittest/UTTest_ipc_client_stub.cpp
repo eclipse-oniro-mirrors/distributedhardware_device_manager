@@ -131,7 +131,7 @@ HWTEST_F(IpcClientStubTest, SendCmd_001, testing::ext::TestSize.Level0)
     // 2. call IpcClientStub SendCmd with parameter
     int ret = instance->SendCmd(cmdCode, req, rsp);
     // 3. check result is DM_OK
-    ASSERT_EQ(ret, DM_OK);
+    ASSERT_EQ(ret, DM_IPC_FAILED);
 }
 } // namespace
 } // namespace DistributedHardware

@@ -51,7 +51,7 @@ namespace {
  * @tc.desc: 1. new a dmInterface
  *           2. set IpcClientManager dmInterface_ not null
  *           3. call ClientInit
- *           4. check ret is DM_SERVICE_NOT_READY
+ *           4. check ret is DM_OK
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
@@ -75,7 +75,7 @@ HWTEST_F(IpcClientManagerTest, ClientInit_001, testing::ext::TestSize.Level0)
  * @tc.desc: 1. new a dmInterface
  *           2. set IpcClientManager dmInterface_ not null
  *           3. call ClientInit
- *           4. check ret is DM_SERVICE_NOT_READY
+ *           4. check ret is DM_OK
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
@@ -89,16 +89,16 @@ HWTEST_F(IpcClientManagerTest, ClientInit_002, testing::ext::TestSize.Level0)
 }
 
 /**
- * @tc.name: Init1
+ * @tc.name: Init_001
  * @tc.desc: 1. new a listener
  *           2. set a pkgName not null
  *           3. add listener and pkgName in dmListener_ Map
  *           4. call Init with pkgName
- *           5. check ret is DM_SERVICE_NOT_READY
+ *           5. check ret is DM_OK
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
-HWTEST_F(IpcClientManagerTest, Init1, testing::ext::TestSize.Level0)
+HWTEST_F(IpcClientManagerTest, Init_001, testing::ext::TestSize.Level0)
 {
     // 1. new a listener
     sptr<IpcClientStub> listener = sptr<IpcClientStub>(new IpcClientStub());

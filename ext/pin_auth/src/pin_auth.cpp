@@ -26,6 +26,7 @@ namespace DistributedHardware {
 const int32_t MAX_VERIFY_TIMES = 3;
 PinAuth::PinAuth()
 {
+    pinAuthUi_ = std::make_shared<PinAuthUi>();
     LOGI("PinAuth constructor");
 }
 

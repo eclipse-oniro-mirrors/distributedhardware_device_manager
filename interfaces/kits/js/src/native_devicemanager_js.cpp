@@ -751,7 +751,6 @@ void DeviceManagerNapi::JsToDmBuffer(const napi_env &env, const napi_value &obje
 void DeviceManagerNapi::JsToJsonObject(const napi_env &env, const napi_value &object, const std::string &fieldStr,
                                        nlohmann::json &jsonObj)
 {
-    LOGI("JsToJsonObject in.");
     bool hasProperty = false;
     NAPI_CALL_RETURN_VOID(env, napi_has_named_property(env, object, fieldStr.c_str(), &hasProperty));
     if (!hasProperty) {
@@ -766,7 +765,6 @@ void DeviceManagerNapi::JsToJsonObject(const napi_env &env, const napi_value &ob
     uint32_t jsProCount = 0;
     napi_get_property_names(env, jsonField, &jsProNameList);
     napi_get_array_length(env, jsProNameList, &jsProCount);
-    LOGI("Property size=%d.", jsProCount);
 
     napi_value jsProName = nullptr;
     napi_value jsProValue = nullptr;

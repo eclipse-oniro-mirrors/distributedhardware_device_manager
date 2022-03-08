@@ -173,6 +173,10 @@ int32_t DmAuthManager::UnAuthenticateDevice(const std::string &pkgName, const st
 int32_t DmAuthManager::VerifyAuthentication(const std::string &authParam)
 {
     LOGI("DmAuthManager::VerifyAuthentication");
+    if (authResponseContext_ == nullptr) {
+        LOGI("authResponseContext_ is not init");
+        return DM_FAILED;
+    }
     std::shared_ptr<IAuthentication> ptr;
     if (authenticationMap_.find(authResponseContext_->authType) == authenticationMap_.end()
         || timerMap_.find(INPUT_TIMEOUT_TASK) == timerMap_.end()) {
@@ -742,6 +746,11 @@ int32_t DmAuthManager::GetAuthenticationParam(DmAuthParam &authParam)
         LOGI("dmAbilityMgr_ is nullptr");
         return DM_POINT_NULL;
     }
+
+    if (authResponseContext_ == nullptr) {
+        LOGI("authResponseContext_ is not init");
+        return DM_FAILED;
+    }
     
     dmAbilityMgr_->StartAbilityDone();
     AbilityRole role = dmAbilityMgr_->GetAbilityRole();
@@ -762,6 +771,11 @@ int32_t DmAuthManager::GetAuthenticationParam(DmAuthParam &authParam)
 
 int32_t DmAuthManager::OnUserOperation(int32_t action)
 {
+    if (authResponseContext_ == nullptr) {
+        LOGI("authResponseContext_ is not init");
+        return DM_FAILED;
+    }
+
     switch (action) {
         case USER_OPERATION_TYPE_ALLOW_AUTH:
         case USER_OPERATION_TYPE_CANCEL_AUTH:
