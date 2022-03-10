@@ -166,6 +166,7 @@ HWTEST_F(IpcServerStubTest, OnRemoteRequest_002, testing::ext::TestSize.Level0)
     MessageParcel reply;
     MessageOption option;
     int ret = 0;
+    data.WriteInterfaceToken(GetDescriptor());
     // 2. Call IpcServerStub OnRemoteRequest with param
     ret = IpcServerStub::GetInstance().OnRemoteRequest(code, data, reply, option);
     // 3. check ret not DM_OK

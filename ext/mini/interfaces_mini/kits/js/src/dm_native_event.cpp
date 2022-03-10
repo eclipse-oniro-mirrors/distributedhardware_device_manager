@@ -37,15 +37,8 @@ DmNativeEvent::DmNativeEvent(JSIValue thisVar)
 
 DmNativeEvent::~DmNativeEvent()
 {
-    // for (auto iter = eventMap_.begin(); iter != eventMap_.end(); iter++) {
-    //     auto listener = iter->second;
-    //     JSI::ReleaseValue(listener->handlerRef);
-    // }
-    // eventMap_.clear();
-    // JSI::ReleaseValue(thisVarRef_);
     DMLOG(DM_LOG_INFO, "~DmNativeEvent ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"); 
 }
-
 
 void DmNativeEvent::On(std::string &eventType, JSIValue handle, JSIValue thisVal)
 {
