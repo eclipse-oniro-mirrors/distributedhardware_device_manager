@@ -249,9 +249,8 @@ void DmAuthManager::OnSessionClosed(int32_t sessionId)
 
 void DmAuthManager::OnDataReceived(int32_t sessionId, std::string message)
 {
-    LOGI("DmAuthManager::OnDataReceived start");
     if (authResponseContext_ == nullptr || authMessageProcessor_ == nullptr) {
-        LOGI("DmAuthManager::OnDataReceived failed, authResponseContext or authMessageProcessor_ is nullptr.");
+        LOGE("OnDataReceived failed, authResponseContext or authMessageProcessor_ is nullptr.");
         return;
     }
 
@@ -259,7 +258,7 @@ void DmAuthManager::OnDataReceived(int32_t sessionId, std::string message)
     authMessageProcessor_->SetResponseContext(authResponseContext_);
     int32_t ret = authMessageProcessor_->ParseMessage(message);
     if (ret != DM_OK) {
-        LOGE("OnDataReceived, parse message error");
+        LOGE("OnDataReceived failed, parse input message error.");
         return;
     }
 
@@ -267,19 +266,18 @@ void DmAuthManager::OnDataReceived(int32_t sessionId, std::string message)
         // source device auth process
         authRequestContext_ = authMessageProcessor_->GetRequestContext();
         authRequestState_->SetAuthContext(authRequestContext_);
+        LOGI("OnDataReceived for source device, authResponseContext msgType=%d, authRequestState stateType=%d",
+            authResponseContext_->msgType, authRequestState_->GetStateType());
+
         switch (authResponseContext_->msgType) {
             case MSG_TYPE_RESP_AUTH:
                 if (authRequestState_->GetStateType() == AuthState::AUTH_REQUEST_NEGOTIATE_DONE) {
                     authRequestState_->TransitionTo(std::make_shared<AuthRequestReplyState>());
-                } else {
-                    LOGE("Device manager auth state error");
                 }
                 break;
             case MSG_TYPE_RESP_NEGOTIATE:
                 if (authRequestState_->GetStateType() == AuthState::AUTH_REQUEST_NEGOTIATE) {
                     authRequestState_->TransitionTo(std::make_shared<AuthRequestNegotiateDoneState>());
-                } else {
-                    LOGE("Device manager auth state error");
                 }
                 break;
             case MSG_TYPE_REQ_AUTH_TERMINATE:
@@ -295,6 +293,9 @@ void DmAuthManager::OnDataReceived(int32_t sessionId, std::string message)
     } else if ((authResponseState_ != nullptr) && (authRequestState_ == nullptr)) {
         // sink device auth process
         authResponseState_->SetAuthContext(authResponseContext_);
+        LOGI("OnDataReceived for sink device, authResponseContext msgType=%d, authResponseState stateType=%d",
+            authResponseContext_->msgType, authResponseState_->GetStateType());
+
         switch (authResponseContext_->msgType) {
             case MSG_TYPE_NEGOTIATE:
                 if (authResponseState_->GetStateType() == AuthState::AUTH_RESPONSE_INIT
