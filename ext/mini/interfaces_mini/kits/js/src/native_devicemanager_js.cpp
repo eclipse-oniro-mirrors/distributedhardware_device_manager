@@ -544,7 +544,7 @@ void DeviceManagerModule::JsToDmBuffer(const JSIValue &object,
     data = JSI::GetTypedArrayInfo(field, type, length, buffer, offset);
 
     if (type != TypedArrayType::JSI_UINT8_ARRAY || length == 0 || data == nullptr) {
-        DMLOG(DM_LOG_ERROR, "Invaild AppIconInfo");
+        DMLOG(DM_LOG_ERROR, "Invalid AppIconInfo");
         return;
     }
     *bufferPtr = (uint8_t*)calloc(sizeof(uint8_t), length);
