@@ -250,7 +250,7 @@ void DeviceManagerNotify::OnAuthResult(const std::string &pkgName, const std::st
         LOGE("DeviceManager OnAuthResult: no register authCallback for deviceID ");
         return;
     }
-    if(iter->second == nullptr){
+    if (iter->second == nullptr) {
         LOGE("DeviceManager OnAuthResult: no register authCallback for OnAuthResult ");
         return;
     }
