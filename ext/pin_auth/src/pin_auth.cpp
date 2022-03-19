@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -67,7 +67,7 @@ int32_t PinAuth::VerifyAuthentication(std::string &authToken, const std::string 
 {
     times_ += 1;
     if (authParam.length() == 1) {
-        if (authParam == "0") {
+        if (authParam == EVENT_CONFIRM_CODE) {
             return DM_OK;
         }
         LOGE("Peer rejection");
@@ -89,9 +89,9 @@ int32_t PinAuth::VerifyAuthentication(std::string &authToken, const std::string 
         return DM_FAILED;
     }
     int32_t code = authTokenJson[PIN_CODE_KEY];
-    int32_t pinToken = authTokenJson[PIN_TOKEN];
+    std::string pinToken = authTokenJson[PIN_TOKEN];
     int32_t inputPinCode = authParamJson[PIN_CODE_KEY];
-    int32_t inputPinToken = authParamJson[PIN_TOKEN];
+    std::string inputPinToken = authParamJson[PIN_TOKEN];
     if (code == inputPinCode && pinToken == inputPinToken) {
         return DM_OK;
     } else if (code != inputPinCode && times_ < MAX_VERIFY_TIMES) {

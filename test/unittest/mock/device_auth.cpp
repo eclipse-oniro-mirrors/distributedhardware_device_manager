@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,6 +27,10 @@ int32_t (*deleteGroup)(int64_t requestId, const char *appId, const char *disband
 
 int32_t (*getRelatedGroups)(const char *appId, const char *peerDeviceId, char **returnGroupVec, uint32_t *groupNum)
 {
+    (void)appId;
+    (void)peerDeviceId;
+    (void)returnGroupVec;
+    (void)groupNum;
     return 0;
 }
 
@@ -35,6 +39,8 @@ int32_t (*createGroup)(int64_t requestId, const char *appId, const char *createP
     if (requestId == 0) {
         return DM_FAILED;
     }
+    (void)appId;
+    (void)createParams;
     return 0;
 }
 

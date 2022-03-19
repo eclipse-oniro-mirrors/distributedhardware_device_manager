@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -44,6 +44,10 @@ ON_IPC_SET_REQUEST(SERVER_DEVICE_STATE_NOTIFY, std::shared_ptr<IpcReq> pBaseReq,
 
 ON_IPC_READ_RESPONSE(SERVER_DEVICE_STATE_NOTIFY, IpcIo &reply, std::shared_ptr<IpcRsp> pBaseRsp)
 {
+    if (pBaseRsp == nullptr) {
+        LOGE("pBaseRsp is null");
+        return DM_FAILED;
+    }
     pBaseRsp->SetErrCode(IpcIoPopInt32(&reply));
     return DM_OK;
 }
@@ -65,6 +69,10 @@ ON_IPC_SET_REQUEST(SERVER_DEVICE_FOUND, std::shared_ptr<IpcReq> pBaseReq, IpcIo 
 
 ON_IPC_READ_RESPONSE(SERVER_DEVICE_FOUND, IpcIo &reply, std::shared_ptr<IpcRsp> pBaseRsp)
 {
+    if (pBaseRsp == nullptr) {
+        LOGE("pBaseRsp is null");
+        return DM_FAILED;
+    }
     pBaseRsp->SetErrCode(IpcIoPopInt32(&reply));
     return DM_OK;
 }

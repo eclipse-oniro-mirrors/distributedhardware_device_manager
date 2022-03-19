@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -57,6 +57,10 @@ ON_IPC_SET_REQUEST(REGISTER_DEVICE_MANAGER_LISTENER, std::shared_ptr<IpcReq> pBa
 
 ON_IPC_READ_RESPONSE(REGISTER_DEVICE_MANAGER_LISTENER, MessageParcel &reply, std::shared_ptr<IpcRsp> pBaseRsp)
 {
+    if (pBaseRsp == nullptr) {
+        LOGE("pBaseRsp is null");
+        return DM_FAILED;
+    }
     pBaseRsp->SetErrCode(reply.ReadInt32());
     return DM_OK;
 }
@@ -105,6 +109,10 @@ ON_IPC_READ_RESPONSE(GET_TRUST_DEVICE_LIST, MessageParcel &reply, std::shared_pt
             pDmDeviceinfo = (DmDeviceInfo *)reply.ReadRawData(sizeof(DmDeviceInfo));
             if (pDmDeviceinfo == nullptr) {
                 LOGE("GetTrustedDeviceList read node info failed!");
+                if (pRsp == nullptr) {
+                    LOGE("pRsp is null");
+                    return DM_FAILED;
+                }
                 pRsp->SetErrCode(DM_IPC_TRANSACTION_FAILED);
                 return DM_IPC_TRANSACTION_FAILED;
             }
@@ -130,10 +138,9 @@ ON_IPC_READ_RESPONSE(GET_LOCAL_DEVICE_INFO, MessageParcel &reply, std::shared_pt
 {
     std::shared_ptr<IpcGetLocalDeviceInfoRsp> pRsp = std::static_pointer_cast<IpcGetLocalDeviceInfoRsp>(pBaseRsp);
     DmDeviceInfo *localDeviceInfo = (DmDeviceInfo *)reply.ReadRawData(sizeof(DmDeviceInfo));
-    if (localDeviceInfo == nullptr) {
-        LOGE("write subscribe info failed");
+    if (localDeviceInfo != nullptr) {
+        pRsp->SetLocalDeviceInfo(*localDeviceInfo);
     }
-    pRsp->SetLocalDeviceInfo(*localDeviceInfo);
     pRsp->SetErrCode(reply.ReadInt32());
     return DM_OK;
 }
@@ -222,6 +229,10 @@ ON_IPC_SET_REQUEST(STOP_DEVICE_DISCOVER, std::shared_ptr<IpcReq> pBaseReq, Messa
 
 ON_IPC_READ_RESPONSE(STOP_DEVICE_DISCOVER, MessageParcel &reply, std::shared_ptr<IpcRsp> pBaseRsp)
 {
+    if (pBaseRsp == nullptr) {
+        LOGE("pBaseRsp is null");
+        return DM_FAILED;
+    }
     pBaseRsp->SetErrCode(reply.ReadInt32());
     return DM_OK;
 }
@@ -256,6 +267,10 @@ ON_IPC_SET_REQUEST(AUTHENTICATE_DEVICE, std::shared_ptr<IpcReq> pBaseReq, Messag
 
 ON_IPC_READ_RESPONSE(AUTHENTICATE_DEVICE, MessageParcel &reply, std::shared_ptr<IpcRsp> pBaseRsp)
 {
+    if (pBaseRsp == nullptr) {
+        LOGE("pBaseRsp is null");
+        return DM_FAILED;
+    }
     pBaseRsp->SetErrCode(reply.ReadInt32());
     return DM_OK;
 }

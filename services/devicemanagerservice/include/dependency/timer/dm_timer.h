@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,6 +24,7 @@
 #include <unistd.h>
 #endif
 #include <cstdio>
+#include <mutex>
 #include <string>
 
 #include "dm_log.h"
@@ -56,6 +57,7 @@ private:
     void Release();
 
 private:
+    std::mutex mTimerLock_;
     DmTimerStatus mStatus_;
     uint32_t mTimeOutSec_;
     TimeoutHandle mHandle_;

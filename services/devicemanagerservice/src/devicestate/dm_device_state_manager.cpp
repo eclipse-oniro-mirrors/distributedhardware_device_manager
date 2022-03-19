@@ -297,7 +297,11 @@ void DmDeviceStateManager::StartOffLineTimer(const DmDeviceInfo &deviceInfo)
 
 void DmDeviceStateManager::DeleteTimeOutGroup(std::string stateTimer)
 {
+#if defined(__LITEOS_M__)
+    DmMutex mutexLock;
+#else
     std::lock_guard<std::mutex> mutexLock(timerMapMutex_);
+#endif
     if (hiChainConnector_ != nullptr) {
         auto iter = stateTimerInfoMap_.find(stateTimer);
         if (iter != stateTimerInfoMap_.end()) {

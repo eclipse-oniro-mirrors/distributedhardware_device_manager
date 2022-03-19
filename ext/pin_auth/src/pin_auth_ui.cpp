@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -42,10 +42,10 @@ int32_t PinAuthUi::ShowPinDialog(int32_t code, std::shared_ptr<DmAuthManager> au
         OHOS::Rosen::WindowType::WINDOW_TYPE_SYSTEM_ALARM_WINDOW,
         ACE_X, ACE_Y, ACE_WIDTH, ACE_HEIGHT,
         [authManager](int32_t id, const std::string& event, const std::string& params) {
-            if (strcmp(params.c_str(), "0") == 0) {
+            if (params == EVENT_INIT_CODE) {
                 authManager->SetPageId(id);
             }
-            if (strcmp(params.c_str(), "1") == 0) {
+            if (params == EVENT_CANCEL_CODE) {
                 LOGI("CancelDialog start id:%d,event:%s,parms:%s", id, event.c_str(), params.c_str());
                 Ace::UIServiceMgrClient::GetInstance()->CancelDialog(id);
             }
@@ -68,10 +68,10 @@ int32_t PinAuthUi::InputPinDialog(int32_t code, std::shared_ptr<DmAuthManager> a
         OHOS::Rosen::WindowType::WINDOW_TYPE_SYSTEM_ALARM_WINDOW,
         ACE_X, ACE_Y, ACE_WIDTH, ACE_HEIGHT,
         [authManager](int32_t id, const std::string& event, const std::string& params) {
-            if (strcmp(params.c_str(), "2") == 0) {
+            if (params == EVENT_INIT_CODE) {
                 authManager->SetPageId(id);
             }
-            if (strcmp(params.c_str(), "0") == 0 || strcmp(params.c_str(), "1") == 0) {
+            if (params == EVENT_CANCEL_CODE || params == EVENT_CONFIRM_CODE) {
                 Ace::UIServiceMgrClient::GetInstance()->CancelDialog(id);
                 LOGI("CancelDialog start id:%d,event:%s,parms:%s", id, event.c_str(), params.c_str());
                 authManager->VerifyAuthentication(params.c_str());

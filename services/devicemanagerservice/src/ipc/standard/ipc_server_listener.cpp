@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -40,6 +40,10 @@ int32_t IpcServerListener::SendAll(int32_t cmdCode, std::shared_ptr<IpcReq> req,
         auto remote = iter.second;
         req->SetPkgName(pkgName);
         sptr<IpcRemoteBroker> listener = iface_cast<IpcRemoteBroker>(remote);
+        if (listener == nullptr) {
+            LOGI("cannot get listener for package:%s.", pkgName.c_str());
+            return DM_FAILED;
+        }
         listener->SendCmd(cmdCode, req, rsp);
     }
     return DM_OK;

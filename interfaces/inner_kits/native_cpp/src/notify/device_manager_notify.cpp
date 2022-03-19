@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -248,6 +248,10 @@ void DeviceManagerNotify::OnAuthResult(const std::string &pkgName, const std::st
     auto iter = authCallMap.find(deviceId);
     if (iter == authCallMap.end()) {
         LOGE("DeviceManager OnAuthResult: no register authCallback for deviceID ");
+        return;
+    }
+    if (iter->second == nullptr) {
+        LOGE("DeviceManager OnAuthResult: no register authCallback for OnAuthResult ");
         return;
     }
     iter->second->OnAuthResult(deviceId, token, status, (int32_t)reason);

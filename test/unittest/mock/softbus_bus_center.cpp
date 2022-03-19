@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,15 +18,25 @@
 int32_t GetNodeKeyInfo(const char *pkgName, const char *networkId, NodeDeviceInfoKey key, uint8_t *info,
                        int32_t infoLen)
 {
+    (void)pkgName;
+    (void)networkId;
+    (void)key;
+    (void)info;
+    (void)infoLen;
     return 0;
 }
 
 int32_t RegNodeDeviceStateCb(const char *pkgName, INodeStateCb *callback)
 {
+    (void)pkgName;
+    (void)callback;
     return 0;
 };
 
 int32_t GetAllNodeDeviceInfo(const char *pkgName, NodeBasicInfo **info, int32_t *infoNum)
 {
+    (void)pkgName;
+    (void)info;
+    (void)infoNum;
     return 0;
 }

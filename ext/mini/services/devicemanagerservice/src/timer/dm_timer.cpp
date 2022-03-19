@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -34,7 +34,7 @@ DmTimer::DmTimer(std::string &name)
 
 DmTimer::~DmTimer()
 {
-    DMLOG(DM_LOG_INFO, "DmTimer %s Destory in", mTimerName_.c_str());
+    DMLOG(DM_LOG_INFO, "DmTimer %s Destroy in", mTimerName_.c_str());
     Release();
 }
 
@@ -91,7 +91,6 @@ int32_t DmTimer::CreateTimeFd()
 
 void DmTimer::Release()
 {
-    DMLOG(DM_LOG_INFO, "DmTimer %s Release in", mTimerName_.c_str());
     if (mStatus_ == DmTimerStatus::DM_STATUS_INIT) {
         DMLOG(DM_LOG_INFO, "DmTimer %s already Release", mTimerName_.c_str());
         return;

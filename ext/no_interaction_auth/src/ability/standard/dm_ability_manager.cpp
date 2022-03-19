@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -53,11 +53,11 @@ AbilityStatus DmAbilityManager::StartAbility(AbilityRole role)
         mStatus_ = ABILITY_STATUS_FAILED;
         return mStatus_;
     }
-    waitForTimeout(ABILITY_START_TIMEOUT);
+    WaitForTimeout(ABILITY_START_TIMEOUT);
     return mStatus_;
 }
 
-void DmAbilityManager::waitForTimeout(uint32_t timeout_s)
+void DmAbilityManager::WaitForTimeout(uint32_t timeout_s)
 {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);

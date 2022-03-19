@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,20 +17,30 @@
 
 int GetParameter(const char *key, const char *def, char *value, unsigned int len)
 {
+    (void)key;
+    (void)def;
+    (void)value;
+    (void)len;
     return 0;
 }
 
 int SetParameter(const char *key, const char *value)
 {
+    (void)key;
+    (void)value;
     return 0;
 }
 
 int WatchParameter(const char *keyprefix, ParameterChgPtr callback, void *context)
 {
+    (void)keyprefix;
+    (void)context;
     return 0;
 }
 
 int GetDevUdid(char *udid, int size)
 {
+    (void)udid;
+    (void)size;
     return 0;
 }

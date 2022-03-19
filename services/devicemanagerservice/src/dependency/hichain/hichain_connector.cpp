@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -350,7 +350,7 @@ int32_t HiChainConnector::GetRelatedGroups(std::string deviceId, std::vector<Gro
     int32_t ret =
         deviceGroupManager_->getRelatedGroups(userId, DM_PKG_NAME.c_str(), deviceId.c_str(), &returnGroups, &groupNum);
     if (ret != 0) {
-        LOGE("HiChainConnector::GetRelatedGroups faild , ret: %d.", ret);
+        LOGE("HiChainConnector::GetRelatedGroups failed , ret: %d.", ret);
         return DM_FAILED;
     }
     if (returnGroups == nullptr) {

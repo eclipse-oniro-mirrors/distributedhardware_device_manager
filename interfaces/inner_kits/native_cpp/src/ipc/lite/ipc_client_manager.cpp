@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -63,6 +63,10 @@ int32_t IpcClientManager::UnInit(const std::string &pkgName)
     }
     std::shared_ptr<IpcReq> req = std::make_shared<IpcReq>();
     std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
+    if (req == nullptr) {
+        LOGE("req is null");
+        return DM_FAILED;
+    }
     req->SetPkgName(pkgName);
     int32_t ret = serverProxy_.SendCmd(UNREGISTER_DEVICE_MANAGER_LISTENER, req, rsp);
     if (ret != DM_OK) {
