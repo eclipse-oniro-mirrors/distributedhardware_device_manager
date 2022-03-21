@@ -24,6 +24,7 @@
 #include <unistd.h>
 #endif
 #include <cstdio>
+#include <mutex>
 #include <string>
 
 #include "dm_log.h"
@@ -68,6 +69,7 @@ private:
     struct epoll_event mEvents_[MAX_EVENTS];
     int32_t mEpFd_;
     std::thread mThread_;
+    std::mutex mTimerLock_;
 #endif
 
     std::string mTimerName_;

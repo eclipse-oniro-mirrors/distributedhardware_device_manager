@@ -32,6 +32,13 @@
 namespace OHOS {
 namespace DistributedHardware {
 #define OFFLINE_TIMEOUT 300
+struct StateTimerInfo {
+    std::string timerName;
+    std::string netWorkId;
+    std::string deviceId;
+    std::shared_ptr<DmTimer> timer;
+};
+
 class DmDeviceStateManager final : public ISoftbusStateCallback,
                                    public std::enable_shared_from_this<DmDeviceStateManager> {
 public:
@@ -51,11 +58,12 @@ public:
     int32_t RegisterSoftbusStateCallback();
     void RegisterOffLineTimer(const DmDeviceInfo &deviceInfo);
     void StartOffLineTimer(const DmDeviceInfo &deviceInfo);
-    void DeleteTimeOutGroup(std::string deviceId);
+    void DeleteTimeOutGroup(std::string stateTimer);
     void RegisterDevStateCallback(const std::string &pkgName, const std::string &extra);
     void UnRegisterDevStateCallback(const std::string &pkgName, const std::string &extra);
 
 private:
+    int32_t mCumulativeQuantity_ = 0;
     std::string profileSoName_;
 #if !defined(__LITEOS_M__)
     std::mutex timerMapMutex_;
@@ -65,8 +73,7 @@ private:
     std::shared_ptr<DeviceManagerServiceListener> listener_;
     std::map<std::string, DmDeviceInfo> remoteDeviceInfos_;
     std::map<std::string, std::string> decisionInfos_;
-    std::map<std::string, std::shared_ptr<DmTimer>> timerMap_;
-    std::map<std::string, std::string> deviceinfoMap_;
+    std::map<std::string, StateTimerInfo> stateTimerInfoMap_;
     std::shared_ptr<HiChainConnector> hiChainConnector_;
     std::string decisionSoName_;
 };
