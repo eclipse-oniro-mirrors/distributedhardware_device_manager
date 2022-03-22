@@ -109,7 +109,6 @@ int32_t SoftbusConnector::Init()
             usleep(SOFTBUS_CHECK_INTERVAL);
         }
     } while (ret != DM_OK);
-    LOGI("RegNodeDeviceStateCb success.");
 
     PublishInfo dmPublishInfo;
     dmPublishInfo.publishId = DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID;
@@ -124,7 +123,6 @@ int32_t SoftbusConnector::Init()
     if (ret == DM_OK) {
         publishStatus = ALLOW_BE_DISCOVERY;
     }
-    LOGI("service publish result is : %d", ret);
 #else
     char discoverStatus[DISCOVER_STATUS_LEN + 1] = {0};
     ret = GetParameter(DISCOVER_STATUS_KEY.c_str(), "not exist", discoverStatus, DISCOVER_STATUS_LEN);
@@ -152,7 +150,6 @@ int32_t SoftbusConnector::Init()
     }
 
     ret = WatchParameter(DISCOVER_STATUS_KEY.c_str(), &SoftbusConnector::OnParameterChgCallback, nullptr);
-    LOGI("register Watch Parameter result is : %d", ret);
 #endif
     return ret;
 }
