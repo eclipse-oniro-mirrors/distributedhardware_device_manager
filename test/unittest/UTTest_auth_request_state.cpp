@@ -260,24 +260,6 @@ HWTEST_F(AuthRequestStateTest, GetStateType_003, testing::ext::TestSize.Level0)
 }
 
 /**
- * @tc.name: AuthRequestNegotiateDoneState::Enter_005
- * @tc.desc: 1 set authManager to null
- *           2 call AuthRequestNegotiateDoneState::Enter with authManager = null
- *           3 check ret is DM_FAILED
- * @tc.type: FUNC
- * @tc.require: AR000GHSJK
- */
-HWTEST_F(AuthRequestStateTest, Enter_005, testing::ext::TestSize.Level0)
-{
-    std::shared_ptr<DmAuthManager> authManager =
-        std::make_shared<DmAuthManager>(softbusConnector, listener, hiChainConnector);
-    std::shared_ptr<AuthRequestState> authRequestState = std::make_shared<AuthRequestNegotiateDoneState>();
-    authRequestState->SetAuthManager(nullptr);
-    int32_t ret = authRequestState->Enter();
-    ASSERT_EQ(ret, DM_FAILED);
-}
-
-/**
  * @tc.name: AuthRequestNegotiateDoneState::Enter_006
  * @tc.desc: 1 set authManager not null
  *           2 call AuthRequestNegotiateDoneState::Enter with authManager != null
