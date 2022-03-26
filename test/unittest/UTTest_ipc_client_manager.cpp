@@ -105,7 +105,7 @@ HWTEST_F(IpcClientManagerTest, ClientInit_001, testing::ext::TestSize.Level0)
  * @tc.desc: 1. new a dmInterface
  *           2. set IpcClientManager dmInterface_ not null
  *           3. call ClientInit
- *           4. check ret is DM_OK
+ *           4. check ret is not DM_FAILED
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
@@ -124,7 +124,7 @@ HWTEST_F(IpcClientManagerTest, ClientInit_002, testing::ext::TestSize.Level0)
  *           2. set a pkgName not null
  *           3. add listener and pkgName in dmListener_ Map
  *           4. call Init with pkgName
- *           5. check ret is DM_OK
+ *           5. check ret is not DM_FAILED
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */

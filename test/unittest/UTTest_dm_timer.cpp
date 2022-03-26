@@ -150,7 +150,7 @@ HWTEST_F(DmTimerTest, Stop_002, testing::ext::TestSize.Level0)
  */
 HWTEST_F(DmTimerTest, Stop_003, testing::ext::TestSize.Level0)
 {
-    const std::string DM_TIMER_TASK = "111";
+    const std::string DM_TIMER_TASK = TIMER_PREFIX + "111";
     std::shared_ptr<DmTimer> Timer_ = std::make_shared<DmTimer>(DM_TIMER_TASK);
     int32_t code = 1;
     Timer_->mTimeFd_[1] = 1;
