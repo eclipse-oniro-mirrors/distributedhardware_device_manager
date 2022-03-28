@@ -27,7 +27,7 @@ namespace OHOS {
 namespace DistributedHardware {
 class DmDeviceInfoManager {
 public:
-    explicit DmDeviceInfoManager(std::shared_ptr<SoftbusConnector> &softbusConnectorPtr);
+    DmDeviceInfoManager(std::shared_ptr<SoftbusConnector> &softbusConnectorPtr);
     int32_t GetTrustedDeviceList(const std::string &pkgName, const std::string &extra,
                                 std::vector<DmDeviceInfo> &deviceList);
     int32_t GetLocalDeviceInfo(DmDeviceInfo &info);
