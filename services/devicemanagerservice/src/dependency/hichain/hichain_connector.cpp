@@ -436,7 +436,7 @@ int32_t HiChainConnector::SyncGroups(std::string deviceId, std::vector<std::stri
 int32_t HiChainConnector::DelMemberFromGroup(const std::string &groupId, const std::string &deviceId)
 {
     int64_t requestId = GenRequestId();
-    LOGI("Start to delete member from group, requestId %lld, deviceId %s, groupId %s", requestId,member
+    LOGI("Start to delete member from group, requestId %lld, deviceId %s, groupId %s", requestId,
          GetAnonyString(deviceId).c_str(), GetAnonyString(groupId).c_str());
     nlohmann::json jsonObj;
     jsonObj[FIELD_GROUP_ID] = groupId;
