@@ -80,7 +80,7 @@ HWTEST_F(SoftbusConnectorTest, DeviceOnLine_001, testing::ext::TestSize.Level0)
 
 /**
  * @tc.name: DeviceOnLine_002
- * @tc.desc: go tothe corrort case and return DM_OK
+ * @tc.desc: go to the corrort case and return DM_OK
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
@@ -123,7 +123,7 @@ HWTEST_F(SoftbusConnectorTest, DeviceOffLine_001, testing::ext::TestSize.Level0)
 
 /**
  * @tc.name: DeviceOffLine_002
- * @tc.desc: go tothe corrort case and return DM_OK
+ * @tc.desc: go to the corrort case and return DM_OK
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
