@@ -676,7 +676,7 @@ int32_t DmAuthManager::GeneratePincode()
 
 std::string DmAuthManager::GenerateGroupName()
 {
-    char sLocalDeviceId[DEVICE_UUID_LENGTH] = {0};
+    char localDeviceId[DEVICE_UUID_LENGTH] = {0};
     GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
     std::string sLocalDeviceId = localDeviceId;
     std::string groupName = authResponseContext_->targetPkgName + authResponseContext_->hostPkgName +

@@ -104,10 +104,10 @@ int32_t HiChainConnector::CreateGroup(int64_t requestId, const std::string &grou
     LOGI("HiChainConnector::CreateGroup requestId %lld", requestId);
     char localDeviceId[DEVICE_UUID_LENGTH] = {0};
     GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
-    std::string sLocalDeviceID = localDeviceId;
+    std::string sLocalDeviceId = localDeviceId;
     nlohmann::json jsonObj;
     jsonObj[FIELD_GROUP_TYPE] = GROUP_TYPE_PEER_TO_PEER_GROUP;
-    jsonObj[FIELD_DEVICE_ID] = sLocalDeviceID;
+    jsonObj[FIELD_DEVICE_ID] = sLocalDeviceId;
     jsonObj[FIELD_GROUP_NAME] = groupName;
     jsonObj[FIELD_USER_TYPE] = 0;
     jsonObj[FIELD_GROUP_VISIBILITY] = GROUP_VISIBILITY_PUBLIC;
