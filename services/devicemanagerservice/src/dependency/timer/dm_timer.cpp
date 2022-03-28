@@ -26,7 +26,7 @@ namespace {
 const int32_t MILL_SECONDS_PER_SECOND = 1000;
 }
 
-DmTimer::DmTimer(const std::string &name)
+explicit DmTimer::DmTimer(const std::string &name)
 {
     if (name.empty() || name.find(TIMER_PREFIX) != TIMER_DEFAULT) {
         LOGE("DmTimer name is null");

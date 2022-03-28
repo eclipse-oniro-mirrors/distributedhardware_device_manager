@@ -154,7 +154,7 @@ void AuthMessageProcessor::CreateResponseFinishMessage(nlohmann::json &json)
 
 int32_t AuthMessageProcessor::ParseMessage(const std::string &message)
 {
-    LOGE(" AuthMessageProcessor ParseMessage");
+    LOGI(" AuthMessageProcessor ParseMessage");
     nlohmann::json jsonObject = nlohmann::json::parse(message, nullptr, false);
     if (jsonObject.is_discarded()) {
         LOGE("DecodeRequestAuth jsonStr error");
