@@ -16,9 +16,9 @@ group("test") {
 
   deps = []
   if (support_jsapi) {
-    deps += [ 
+    deps += [
+      "fuzztest:fuzztest",
       "unittest:unittest",
-      "fuzztest:fuzztest"
     ]
   }
 }
