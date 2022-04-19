@@ -14,8 +14,7 @@
 #####################hydra-fuzz###################
 import("//build/config/features.gni")
 import("//build/test.gni")
-import(
-    "//foundation/distributedhardware/devicemanager/devicemanager.gni")
+import("//foundation/distributedhardware/devicemanager/devicemanager.gni")
 
 ##############################fuzztest##########################################
 ohos_fuzztest("DeviceManagerNotifyFuzzTest") {

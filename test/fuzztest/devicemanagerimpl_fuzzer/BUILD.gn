@@ -14,8 +14,7 @@
 #####################hydra-fuzz###################
 import("//build/config/features.gni")
 import("//build/test.gni")
-import(
-    "//foundation/distributedhardware/devicemanager/devicemanager.gni")
+import("//foundation/distributedhardware/devicemanager/devicemanager.gni")
 
 ##############################fuzztest##########################################
 ohos_fuzztest("DeviceManagerImplFuzzTest") {
@@ -97,11 +96,11 @@ ohos_fuzztest("DeviceManagerImplFuzzTest") {
   sources = [ "device_manager_impl_fuzzer.cpp" ]
 
   deps = [
-    "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
-    "//foundation/distributedhardware/devicemanager/interfaces/kits/js:devicemanager",
     "${utils_path}:devicemanagerutils",
     "//foundation/ace/napi:ace_napi",
     "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
+    "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
+    "//foundation/distributedhardware/devicemanager/interfaces/kits/js:devicemanager",
     "//utils/native/base:utils",
   ]
 
@@ -112,15 +111,15 @@ ohos_fuzztest("DeviceManagerImplFuzzTest") {
   ]
 
   external_deps = [
-    "ipc:ipc_core",
-    "samgr_standard:samgr_proxy",
-    "startup_l2:syspara",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
+    "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr_standard:samgr_proxy",
+    "samgr_standard:samgr_proxy",
+    "startup_l2:syspara",
   ]
 }
 

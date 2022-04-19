@@ -14,8 +14,7 @@
 #####################hydra-fuzz###################
 import("//build/config/features.gni")
 import("//build/test.gni")
-import(
-    "//foundation/distributedhardware/devicemanager/devicemanager.gni")
+import("//foundation/distributedhardware/devicemanager/devicemanager.gni")
 
 ##############################fuzztest##########################################
 ohos_fuzztest("IpcCmdRegisterFuzzTest") {
@@ -94,8 +93,6 @@ ohos_fuzztest("IpcCmdRegisterFuzzTest") {
   sources = [ "ipc_cmd_register_fuzzer.cpp" ]
 
   deps = [
-    "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
-    "//foundation/distributedhardware/devicemanager/services/devicemanagerservice:devicemanagerservice",
     "${innerkits_path}/native_cpp:devicemanagersdk",
     "${utils_path}:devicemanagerutils",
     "//base/account/os_account/frameworks/osaccount/native:os_account_innerkits",
@@ -103,6 +100,8 @@ ohos_fuzztest("IpcCmdRegisterFuzzTest") {
     "//foundation/aafwk/standard/interfaces/innerkits/ability_manager:ability_manager",
     "//foundation/aafwk/standard/interfaces/innerkits/want:want",
     "//foundation/aafwk/standard/services/abilitymgr:abilityms",
+    "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
+    "//foundation/distributedhardware/devicemanager/services/devicemanagerservice:devicemanagerservice",
   ]
 
   defines = [
@@ -112,9 +111,6 @@ ohos_fuzztest("IpcCmdRegisterFuzzTest") {
   ]
 
   external_deps = [
-    "ipc:ipc_core",
-    "samgr_standard:samgr_proxy",
-    "startup_l2:syspara",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "ces_standard:cesfwk_core",
@@ -123,11 +119,14 @@ ohos_fuzztest("IpcCmdRegisterFuzzTest") {
     "eventhandler:libeventhandler",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
+    "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr_standard:samgr_proxy",
+    "samgr_standard:samgr_proxy",
+    "startup_l2:syspara",
   ]
 
-   public_deps = [
+  public_deps = [
     "${innerkits_path}/native_cpp:devicemanagersdk",
     "${utils_path}:devicemanagerutils",
     "//foundation/communication/ipc/interfaces/innerkits/ipc_core:ipc_core",
