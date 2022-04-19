@@ -185,7 +185,8 @@ ON_IPC_SET_REQUEST(SERVER_VERIFY_AUTH_RESULT, std::shared_ptr<IpcReq> pBaseReq, 
     if (pBaseReq == nullptr) {
         return DM_FAILED;
     }
-    std::shared_ptr<IpcNotifyVerifyAuthResultReq> pReq = std::static_pointer_cast<IpcNotifyVerifyAuthResultReq>(pBaseReq);
+    std::shared_ptr<IpcNotifyVerifyAuthResultReq> pReq =
+        std::static_pointer_cast<IpcNotifyVerifyAuthResultReq>(pBaseReq);
 
     std::string pkgName = pReq->GetPkgName();
     std::string deviceId = pReq->GetDeviceId();
