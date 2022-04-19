@@ -140,9 +140,9 @@ ON_IPC_SET_REQUEST(SERVER_AUTH_RESULT, std::shared_ptr<IpcReq> pBaseReq, Message
     if (pBaseReq == nullptr) {
         return DM_FAILED;
     }
-    std::shared_ptr<IpcNotifyAuthResultReq> pReq = std::make_shared<IpcNotifyAuthResultReq>();
+    std::shared_ptr<IpcNotifyAuthResultReq> pReq = std::static_pointer_cast<IpcNotifyAuthResultReq>(pBaseReq);
 
-    std::string pkgName = pBaseReq->GetPkgName();
+    std::string pkgName = pReq->GetPkgName();
     std::string deviceId = pReq->GetDeviceId();
     std::string token = pReq->GetPinToken();
     int32_t status = pReq->GetStatus();
@@ -185,9 +185,10 @@ ON_IPC_SET_REQUEST(SERVER_VERIFY_AUTH_RESULT, std::shared_ptr<IpcReq> pBaseReq, 
     if (pBaseReq == nullptr) {
         return DM_FAILED;
     }
-    std::shared_ptr<IpcNotifyVerifyAuthResultReq> pReq = std::make_shared<IpcNotifyVerifyAuthResultReq>();
+    std::shared_ptr<IpcNotifyVerifyAuthResultReq> pReq =
+        std::static_pointer_cast<IpcNotifyVerifyAuthResultReq>(pBaseReq);
 
-    std::string pkgName = pBaseReq->GetPkgName();
+    std::string pkgName = pReq->GetPkgName();
     std::string deviceId = pReq->GetDeviceId();
     int32_t result = pReq->GetResult();
     int32_t flag = pReq->GetFlag();
@@ -226,9 +227,9 @@ ON_IPC_SET_REQUEST(SERVER_DEVICE_FA_NOTIFY, std::shared_ptr<IpcReq> pBaseReq, Me
         return DM_FAILED;
     }
 
-    std::shared_ptr<IpcNotifyDMFAResultReq> pReq = std::make_shared<IpcNotifyDMFAResultReq>();
+    std::shared_ptr<IpcNotifyDMFAResultReq> pReq = std::static_pointer_cast<IpcNotifyDMFAResultReq>(pBaseReq);
 
-    std::string packagname = pBaseReq->GetPkgName();
+    std::string packagname = pReq->GetPkgName();
     std::string paramJson = pReq->GetJsonParam();
     if (!data.WriteString(packagname)) {
         LOGE("write pkgName failed");
