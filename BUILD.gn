@@ -10,10 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import("//build/lite/config/component/lite_component.gni")
-
 if (defined(ohos_lite)) {
+  import("//build/lite/config/component/lite_component.gni")
   if (ohos_kernel_type == "liteos_m") {
     lite_component("devicemanager_mini") {
       features = [
@@ -23,9 +21,13 @@ if (defined(ohos_lite)) {
         "interfaces/kits/js_mini:devicemanager_native_js",
       ]
     }
+    group("device_manager_test") {
+      testonly = true
+      deps = [
+      ]
+    }
   } else {
-    import("//build/lite/config/component/lite_component.gni")
-    lite_component("devicemanager_lite") {
+    lite_component("device_manager_base") {
       features = [
         "utils:devicemanagerutils",
         "services/devicemanagerservice:devicemanagerservice",
@@ -33,5 +35,27 @@ if (defined(ohos_lite)) {
         "ext/pin_auth:devicemanagerext_pin_auth",
       ]
     }
+    group("device_manager_test") {
+      testonly = true
+      deps = [
+      ]
+    }
   }
+} else {
+    group("device_manager_base") {
+      deps = [
+        "utils:devicemanagerutils",
+        "interfaces/inner_kits/native_cpp:devicemanagersdk",
+        "interfaces/kits:devicemanager_native_js",
+        "services/devicemanagerservice:devicemanagerservice",
+        "sa_profile:dm_sa_profile",
+        "ext:ext_modules",
+      ]
+    }
+    group("device_manager_test") {
+      testonly = true
+      deps = [
+        "test:test",
+      ]
+    }
 }
