@@ -42,12 +42,7 @@
         },
         "build": {
             "sub_component": [
-                "//foundation/distributedhardware/devicemanager/utils:devicemanagerutils",
-                "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
-                "//foundation/distributedhardware/devicemanager/interfaces/kits:devicemanager_native_js",
-                "//foundation/distributedhardware/devicemanager/services/devicemanagerservice:devicemanagerservice",
-                "//foundation/distributedhardware/devicemanager/sa_profile:dm_sa_profile",
-                "//foundation/distributedhardware/devicemanager/ext:ext_modules"
+                "//foundation/distributedhardware/devicemanager:device_manager_base"
             ],
             "inner_kits": [
                 {
@@ -64,7 +59,9 @@
                 }
                 }
             ],
-            "test": [ "//foundation/distributedhardware/devicemanager/test:test" ]
+            "test": [
+                "//foundation/distributedhardware/devicemanager:device_manager_test"
+            ]
         }
     }
 }

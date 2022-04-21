@@ -299,7 +299,8 @@ ON_IPC_CMD(SERVER_AUTH_RESULT, IpcIo &reply)
         LOGE("OnAuthResult, get para failed");
         return;
     }
-    DeviceManagerNotify::GetInstance().OnAuthResult(pkgName, deviceId, nullptr, status, reason);
+    std::string token = "";
+    DeviceManagerNotify::GetInstance().OnAuthResult(pkgName, deviceId, token, status, reason);
 }
 
 ON_IPC_CMD(SERVER_VERIFY_AUTH_RESULT, IpcIo &reply)
