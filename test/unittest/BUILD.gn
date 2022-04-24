@@ -279,6 +279,11 @@ ohos_unittest("UTTest_profile_connector") {
   sources = [ "UTTest_profile_connector.cpp" ]
 
   deps = [ ":device_manager_test_common" ]
+  external_deps = [
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "eventhandler:libeventhandler",
+  ]
 }
 
 ## UnitTest UTTest_profile_connector }}}
@@ -290,6 +295,12 @@ ohos_unittest("UTTest_device_profile_adapter") {
   sources = [ "UTTest_device_profile_adapter.cpp" ]
 
   deps = [ ":device_manager_test_common" ]
+
+  external_deps = [
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "eventhandler:libeventhandler",
+  ]
 }
 
 ## UnitTest UTTest_device_profile_adapter }}}
@@ -477,12 +488,9 @@ config("device_manager_test_common_public_config") {
     "//foundation/communication/dsoftbus/interfaces/inner_kits/transport",
     "//foundation/distributedhardware/devicemanager/test/unittest/mock",
     "//foundation/distributedschedule/safwk/interfaces/innerkits/safwk",
-    "//foundation/appexecfwk/standard/interfaces/innerkits/appexecfwk_base/include",
     "//foundation/distributedhardware/devicemanager/ext/mini/services/devicemanagerservice/include/dispatch",
-    "//foundation/appexecfwk/standard/interfaces/innerkits/appexecfwk_core/include/bundlemgr",
     "//foundation/distributedhardware/devicemanager/ext/profile/include",
     "//foundation/deviceprofile/device_profile_core/interfaces/innerkits/core/include",
-    "//foundation/appexecfwk/standard/interfaces/innerkits/libeventhandler/include",
     "//foundation/distributedhardware/devicemanager/ext/mini/common/include",
     "//base/security/deviceauth/interfaces/innerkits",
     "${services_path}/include/ability",
