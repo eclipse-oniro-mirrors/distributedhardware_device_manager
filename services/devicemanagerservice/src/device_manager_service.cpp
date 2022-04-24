@@ -286,6 +286,10 @@ int32_t DeviceManagerService::VerifyAuthentication(const std::string &authParam)
 
 int32_t DeviceManagerService::GetFaParam(std::string &pkgName, DmAuthParam &authParam)
 {
+    if (pkgName.empty()) {
+        LOGE("GetFaParam failed, pkgName is empty");
+        return DM_INPUT_PARA_EMPTY;
+    }
     if (authMgr_ != nullptr) {
         authMgr_->GetAuthenticationParam(authParam);
     }
@@ -294,6 +298,10 @@ int32_t DeviceManagerService::GetFaParam(std::string &pkgName, DmAuthParam &auth
 
 int32_t DeviceManagerService::SetUserOperation(std::string &pkgName, int32_t action)
 {
+    if (pkgName.empty()) {
+        LOGE("SetUserOperation failed, pkgName is empty");
+        return DM_INPUT_PARA_EMPTY;
+    }
     if (authMgr_ != nullptr) {
         authMgr_->OnUserOperation(action);
     }

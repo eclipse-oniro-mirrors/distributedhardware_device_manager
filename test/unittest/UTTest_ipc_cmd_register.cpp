@@ -75,8 +75,8 @@ HWTEST_F(IpcCmdRegisterTest, SetRequest_001, testing::ext::TestSize.Level0)
     // 2. call IpcCmdRegister OnRemoteRequest with parameter
     int ret = 0;
     ret = IpcCmdRegister::GetInstance().SetRequest(cmdCode, req, data);
-    // 3. check ret is DM_IPC_NOT_REGISTER_FUNC
-    ASSERT_EQ(ret, DM_IPC_NOT_REGISTER_FUNC);
+    // 3. check ret is DM_INVALID_VALUE
+    ASSERT_EQ(ret, DM_INVALID_VALUE);
 }
 
 /**
