@@ -67,7 +67,7 @@ bool IsNumberString(const std::string &inputString)
     }
     const int32_t MIN_ASCLL_NUM = 48;
     const int32_t MAX_ASCLL_NUM = 57;
-    for (int i = 0; i < inputString.length(); i++) {
+    for (size_t i = 0; i < inputString.length(); i++) {
         int num = (int)inputString[i];
         if (num >= MIN_ASCLL_NUM && num <= MAX_ASCLL_NUM) {
             continue;
