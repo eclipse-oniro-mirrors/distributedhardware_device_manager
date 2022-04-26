@@ -57,12 +57,10 @@ static void DeathCb(void *arg)
     if (IpcServerListenermgr::GetInstance().GetListenerByPkgName(pkgName, &svcId) != DM_OK) {
         LOGE("not found client by package name.");
         free(arg);
-        arg = nullptr;
         return;
     }
     IpcServerListenermgr::GetInstance().UnregisterListener(pkgName);
     free(arg);
-    arg = nullptr;
     SvcIdentity sid = {0};
     sid.handle = svcId.handle;
     sid.token = svcId.token;

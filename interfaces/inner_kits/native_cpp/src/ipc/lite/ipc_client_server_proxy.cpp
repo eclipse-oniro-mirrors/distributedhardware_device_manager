@@ -34,16 +34,15 @@ void __attribute__((weak)) HOS_SystemInit(void)
     return;
 }
 
-int32_t DmDeathCallback(void *arg)
+void DmDeathCallback(void *arg)
 {
     (void)arg;
-    LOGI("ATTENTION  SERVICE (%s) DEAD !!!\n", DEVICE_MANAGER_SERVICE_NAME);
+    LOGI("ATTENTION SERVICE (%s) DEAD !!!\n", DEVICE_MANAGER_SERVICE_NAME);
     g_deathCbId = INVALID_CB_ID;
     g_svcIdentity.handle = 0;
     g_svcIdentity.token = 0;
     g_svcIdentity.cookie = 0;
     DeviceManagerNotify::GetInstance().OnRemoteDied();
-    return DM_OK;
 }
 
 static int32_t SendCmdResultCb(IOwner owner, int32_t code, IpcIo *reply)
