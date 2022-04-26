@@ -30,7 +30,6 @@ typedef struct CommonSvcId {
     uint32_t handle;
     uint32_t token;
     uint32_t cookie;
-    IpcContext *ipcCtx;
     uint32_t cbId;
 } CommonSvcId;
 
