@@ -210,8 +210,8 @@ ON_IPC_SERVER_CMD(GET_LOCAL_DEVICE_INFO, IpcIo &req, IpcIo &reply)
     LOGI("enter GetLocalDeviceInfo.");
     DmDeviceInfo dmDeviceInfo;
     int32_t ret = DeviceManagerService::GetInstance().GetLocalDeviceInfo(dmDeviceInfo);
-    bool ret = WriteRawData(&reply, &dmDeviceInfo, sizeof(DmDeviceInfo));
-    if (!ret) {
+    bool value = WriteRawData(&reply, &dmDeviceInfo, sizeof(DmDeviceInfo));
+    if (!value) {
         return;
     }
     WriteInt32(&reply, ret);

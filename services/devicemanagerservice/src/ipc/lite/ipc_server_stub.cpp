@@ -165,7 +165,7 @@ static TaskConfig GetTaskConfig(Service *service)
     return config;
 }
 
-static int32_t OnRemoteRequest(IServerProxy *iProxy, int32_t funcId, void *origin, IpcIo *req, IpcIo *reply)
+static int32_t OnRemoteRequestLite(IServerProxy *iProxy, int32_t funcId, void *origin, IpcIo *req, IpcIo *reply)
 {
     LOGI("Receive funcId:%d", funcId);
     (void)origin;
@@ -193,7 +193,7 @@ static void DevMgrSvcInit(void)
         .MessageHandle = MessageHandle,
         .GetTaskConfig = GetTaskConfig,
         SERVER_IPROXY_IMPL_BEGIN,
-        .Invoke = OnRemoteRequest,
+        .Invoke = OnRemoteRequestLite,
         IPROXY_END,
     };
 
