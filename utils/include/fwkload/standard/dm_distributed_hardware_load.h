@@ -13,20 +13,30 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DM_LOAD_FWK_H
-#define OHOS_DM_LOAD_FWK_H
-#include "distributed_hardware_load_callback.h"
+#ifndef OHOS_DM_DISTRIBUTEED_HARDWARE_LOAD_FWK_H
+#define OHOS_DM_DISTRIBUTEED_HARDWARE_LOAD_FWK_H
+#include "if_system_ability_manager.h"
+#include "iservice_registry.h"
 #include "single_instance.h"
+#include "system_ability_definition.h"
+#include "system_ability_load_callback_stub.h"
 
 namespace OHOS {
 namespace DistributedHardware {
-class DmLoadFwk {
-    DECLARE_SINGLE_INSTANCE(DmLoadFwk);
+class DistributedHardwareLoadCallback : public SystemAbilityLoadCallbackStub {
 public:
-    int32_t LoadFwk(void);
-    void ResetLoadCallback(void);
+    void OnLoadSystemAbilitySuccess(int32_t systemAbilityId, const sptr<IRemoteObject>& remoteObject) override;
+    void OnLoadSystemAbilityFail(int32_t systemAbilityId) override;
+};
+
+class DmDistributedHhardwareLoad {
+    DECLARE_SINGLE_INSTANCE(DmDistributedHhardwareLoad);
+public:
+    void LoadDistributedHardwareFwk(void);
+    void InitDistributedHardwareLoadCount(void);
+    uint32_t getDistributedHardwareLoadCount(void);
 private:
-    sptr<DistributedHardwareLoadCallback> loadCallback_;
+    uint32_t nLoadCount_;
 };
 } // namespace DistributedHardware
 } // namespace OHOS

@@ -13,20 +13,21 @@
  * limitations under the License.
  */
 
-#include "dm_loadfwk.h"
-#include "dm_constants.h"
-
+#ifndef OHOS_DM_DISTRIBUTEED_HARDWARE_LOAD_FWK_H
+#define OHOS_DM_DISTRIBUTEED_HARDWARE_LOAD_FWK_H
+#include <cstdint>
+#include "single_instance.h"
 namespace OHOS {
 namespace DistributedHardware {
-IMPLEMENT_SINGLE_INSTANCE(DmLoadFwk);
-
-int32_t DmLoadFwk::LoadFwk(void)
-{
-    return DM_OK;
-}
-void DmLoadFwk::ResetLoadCallback(void)
-{
-    return;
-}
+class DmDistributedHhardwareLoad {
+    DECLARE_SINGLE_INSTANCE(DmDistributedHhardwareLoad);
+public:
+    void LoadDistributedHardwareFwk(void);
+    void InitDistributedHardwareLoadCount(void);
+    uint32_t getDistributedHardwareLoadCount(void);
+private:
+    uint32_t nLoadCount_;
+};
 } // namespace DistributedHardware
 } // namespace OHOS
+#endif // OHOS_DM_PERMISSION_MANAGER_H

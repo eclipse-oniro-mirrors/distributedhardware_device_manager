@@ -18,8 +18,8 @@
 #include "dm_adapter_manager.h"
 #include "dm_anonymous.h"
 #include "dm_constants.h"
+#include "dm_distributed_hardware_load.h"
 #include "dm_log.h"
-#include "dm_loadfwk.h"
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -129,10 +129,8 @@ void DmDeviceStateManager::PostDeviceOffline(const std::string &pkgName, const D
 
 void DmDeviceStateManager::OnDeviceOnline(const std::string &pkgName, const DmDeviceInfo &info)
 {
-    if (DmLoadFwk::GetInstance().LoadFwk() != DM_OK) {
-        LOGE("load fwk sa failed");
-        return;
-    }
+    DmDistributedHhardwareLoad::GetInstance().InitDistributedHardwareLoadCount();
+    DmDistributedHhardwareLoad::GetInstance().LoadDistributedHardwareFwk();
     LOGI("OnDeviceOnline function is called back with pkgName: %s", pkgName.c_str());
     RegisterOffLineTimer(info);
     RegisterProfileListener(pkgName, info);
@@ -164,7 +162,6 @@ void DmDeviceStateManager::OnDeviceOnline(const std::string &pkgName, const DmDe
 
 void DmDeviceStateManager::OnDeviceOffline(const std::string &pkgName, const DmDeviceInfo &info)
 {
-    DmLoadFwk::GetInstance().ResetLoadCallback();
     LOGI("OnDeviceOnline function is called with pkgName: %s", pkgName.c_str());
     StartOffLineTimer(info);
     UnRegisterProfileListener(pkgName, info);
