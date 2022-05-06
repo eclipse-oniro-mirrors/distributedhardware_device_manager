@@ -144,7 +144,6 @@ if (defined(ohos_lite)) {
       "//foundation/aafwk/standard/services/abilitymgr:abilityms",
       "//foundation/arkui/ace_engine/interfaces/inner_api/ui_service_manager:ui_service_mgr",
       "//foundation/distributedhardware/devicemanager/services/devicemanagerservice:devicemanagerservice",
-      "//foundation/windowmanager/wm:libwm",
       "//utils/native/base:utils",
     ]
 
