@@ -76,7 +76,7 @@ HWTEST_F(TimeHeapTest, StartTimer_001, testing::ext::TestSize.Level0)
 HWTEST_F(TimeHeapTest, StartTimer_002, testing::ext::TestSize.Level0)
 {
     std::string name = AUTHENTICATE_TIMEOUT_TASK;
-    std::string name2 = "test2"
+    std::string name2 = "test2";
     int32_t timeOut = 10;
     int32_t timeOut2 = 40;
     std::shared_ptr<DmTimer> timer = std::make_shared<DmTimer>();
@@ -95,6 +95,7 @@ HWTEST_F(TimeHeapTest, StartTimer_002, testing::ext::TestSize.Level0)
  */
 HWTEST_F(TimeHeapTest, DeleteTimer_001, testing::ext::TestSize.Level0)
 {
+    std::string name = AUTHENTICATE_TIMEOUT_TASK;
     std::shared_ptr<DmTimer> timer = std::make_shared<DmTimer>();
     int32_t ret = timer->DeleteTimer("");
     EXPECT_EQ(ERR_DM_INPUT_PARA_INVALID, ret);
@@ -115,7 +116,7 @@ HWTEST_F(TimeHeapTest, DeleteTimer_002, testing::ext::TestSize.Level0)
     int32_t timeOut = 10;
     std::shared_ptr<DmTimer> timer = std::make_shared<DmTimer>();
     timer->StartTimer(name, timeOut, TimeOut);
-    ret = timer->DeleteTimer(name);
+    int32_t ret = timer->DeleteTimer(name);
     EXPECT_EQ(DM_OK, ret);
 }
 
@@ -130,11 +131,11 @@ HWTEST_F(TimeHeapTest, DeleteAll_001, testing::ext::TestSize.Level0)
     std::string name = AUTHENTICATE_TIMEOUT_TASK;
     int32_t timeOut = 10;
     std::shared_ptr<DmTimer> timer = std::make_shared<DmTimer>();
-    timer->DeleteAll();
+    int32_t ret = timer->DeleteAll();
     EXPECT_EQ(DM_OK, ret);
 
     timer->StartTimer(name, timeOut, TimeOut);
-    timer->DeleteAll();
+    int32_t ret = timer->DeleteAll();
     EXPECT_EQ(DM_OK, ret);
 }
 
@@ -147,9 +148,9 @@ HWTEST_F(TimeHeapTest, DeleteAll_001, testing::ext::TestSize.Level0)
 HWTEST_F(TimeHeapTest, TimerRunning_001, testing::ext::TestSize.Level0)
 {
     std::string name = AUTHENTICATE_TIMEOUT_TASK;
-    int32_t timeOut = 10;
+    int32_t timeOut = 1;
     std::shared_ptr<DmTimer> timer = std::make_shared<DmTimer>();
-    timer->TimerRunning();
+    int32_t ret = timer->TimerRunning();
     EXPECT_EQ(DM_OK, ret);
 }
 }

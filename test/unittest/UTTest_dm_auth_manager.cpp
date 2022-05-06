@@ -77,8 +77,8 @@ HWTEST_F(DmAuthManagerTest, HandleAuthenticateTimeout_001, testing::ext::TestSiz
     authManager->authRequestState_ = std::make_shared<AuthRequestNetworkState>();
     authManager->authResponseContext_ = nullptr;
     authManager->SetAuthRequestState(authRequestState);
-    int32_t ret = authManager->HandleAuthenticateTimeout(name);
-    ASSERT_EQ(ret, DM_OK);
+    authManager->HandleAuthenticateTimeout(name);
+    ASSERT_EQ(authManager->authRequestState_, nullptr);
 }
 
 /**
@@ -97,8 +97,8 @@ HWTEST_F(DmAuthManagerTest, HandleAuthenticateTimeout_002, testing::ext::TestSiz
     authManager->authRequestContext_ = std::make_shared<DmAuthRequestContext>();
     authManager->authRequestState_ = std::make_shared<AuthRequestFinishState>();
     authManager->SetAuthRequestState(authRequestState);
-    int32_t ret = authManager->HandleAuthenticateTimeout(name);
-    ASSERT_EQ(ret, DM_OK);
+    authManager->HandleAuthenticateTimeout(name);
+    ASSERT_EQ(authManager->authRequestState_, nullptr);
 }
 
 /**
@@ -227,7 +227,7 @@ HWTEST_F(DmAuthManagerTest, JoinNetwork_001, testing::ext::TestSize.Level0)
     std::shared_ptr<DmAuthManager> authManager =
         std::make_shared<DmAuthManager>(softbusConnector, listener, hiChainConnector_);
     std::shared_ptr<AuthRequestState> authRequestState = std::make_shared<AuthRequestFinishState>();
-    authManager->timer = std::make_shared<DmTimer>();
+    authManager->timer_ = std::make_shared<DmTimer>();
     authManager->authMessageProcessor_ = std::make_shared<AuthMessageProcessor>(authManager);
     authManager->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
     authManager->authRequestContext_ = std::make_shared<DmAuthRequestContext>();
