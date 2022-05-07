@@ -316,7 +316,6 @@ if (defined(ohos_lite)) {
       deps += [
         "${common_path}/include/show_confirm_dialog/dialog_ui/js:dialog_js_files_etc",
         "//foundation/arkui/ace_engine/interfaces/inner_api/ui_service_manager:ui_service_mgr",
-        "//foundation/windowmanager/wm:libwm",
       ]
       defines += [ "SUPPORT_GRAPHICS" ]
     }

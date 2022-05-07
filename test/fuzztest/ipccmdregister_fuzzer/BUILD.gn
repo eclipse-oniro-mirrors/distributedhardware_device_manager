@@ -74,10 +74,8 @@ ohos_fuzztest("IpcCmdRegisterFuzzTest") {
     "//foundation/arkui/napi/interfaces/inner_api/napi",
     "//foundation/arkui/napi/interfaces/inner_api",
     "//third_party/jsframework/runtime/main/extend",
-    "//foundation/windowmanager/interfaces/kits",
     "//third_party/jsframework/runtime/main/extend/systemplugin",
     "//third_party/node/benchmark",
-    "//foundation/windowmanager/interfaces/kits/napi/screen_runtime",
     "//third_party/libuv/include",
     "//foundation/distributedhardware/devicemanager/services/devicemanagerservice/include/ipc/lite",
   ]
