@@ -20,7 +20,9 @@
 #include <chrono>
 #include <condition_variable>
 #include <functional>
+#include <map>
 #include <mutex>
+#include <queue>
 #include <vector>
 
 namespace OHOS {
@@ -34,20 +36,30 @@ const int32_t MILLISECOND_TO_SECOND = 1000;
 const int32_t MIN_TIME_OUT = 0;
 const int32_t MAX_TIME_OUT = 300;
 
-struct Timer {
-    std::string timerName;
-    timerPoint expire;
-    bool state;
-    int32_t timeOut;
-    TimerCallback callback;
+class Timer {
+public:
+    Timer(std::string name, int32_t time, TimerCallback callback);
+    ~Timer() {};
+public:
+    std::string timerName_;
+    timerPoint expire_;
+    bool state_;
+    int32_t timeOut_;
+    TimerCallback callback_;
+};
 
-    bool operator==(const Timer& obj) const
+struct TimerCmpare {
+public:
+    bool operator () (std::shared_ptr<Timer> frontTimer, std::shared_ptr<Timer> timer)
     {
-        return obj.timerName == timerName;
+        int32_t frontTimerOut = frontTimer->timeOut_ - (std::chrono::duration_cast<timerDuration>(steadyClock::now()
+            - frontTimer->expire_).count() / MILLISECOND_TO_SECOND);
+        int32_t timerOut = timer->timeOut_ - (std::chrono::duration_cast<timerDuration>(steadyClock::now()
+            - timer->expire_).count() / MILLISECOND_TO_SECOND);
+        return frontTimerOut > timerOut;
     }
 };
 
-bool Compare(const Timer &frontTimer, const Timer &timer);
 class DmTimer {
 public:
     DmTimer();
@@ -65,7 +77,7 @@ public:
      * @tc.desc: delete timer
      * @tc.type: FUNC
      */
-    int32_t DeleteTimer(std::string name);
+    int32_t DeleteTimer(std::string timerName);
 
     /**
      * @tc.name: DmTimer::DeleteAll
@@ -83,7 +95,8 @@ public:
 private:
     mutable std::mutex timerMutex_;
     mutable std::mutex timerStateMutex_;
-    std::vector<Timer> timerHeap_;
+    std::priority_queue<std::shared_ptr<Timer>, std::vector<std::shared_ptr<Timer>>, TimerCmpare> timerQueue_;
+    std::map<std::string, std::shared_ptr<Timer>> timerMap_;
     std::atomic<bool> timerState_ {false};
     std::condition_variable runTimerCondition_;
     std::condition_variable stopTimerCondition_;

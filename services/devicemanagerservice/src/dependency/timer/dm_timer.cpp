@@ -22,10 +22,8 @@
 
 namespace OHOS {
 namespace DistributedHardware {
-bool Compare(const Timer &frontTimer, const Timer &timer)
-{
-    return frontTimer.timeOut < timer.timeOut;
-}
+Timer::Timer(std::string name, int32_t time, TimerCallback callback)
+    : timerName_(name), expire_(steadyClock::now()), state_(true), timeOut_(time), callback_(callback) {};
 
 DmTimer::DmTimer()
 {
@@ -46,25 +44,15 @@ int32_t DmTimer::StartTimer(std::string name, int32_t timeOut, TimerCallback cal
 {
     LOGI("DmTimer StartTimer %s", name.c_str());
     if (name.empty() || timeOut <= MIN_TIME_OUT || timeOut > MAX_TIME_OUT || callback == nullptr) {
+        LOGI("DmTimer StartTimer input value invalid");
         return ERR_DM_INPUT_PARA_INVALID;
     }
 
-    Timer timer = {
-        .timerName = name,
-        .expire = steadyClock::now(),
-        .state = true,
-        .timeOut = timeOut,
-        .callback = callback
-    };
+    std::shared_ptr<Timer> timer = std::make_shared<Timer>(name, timeOut, callback);
     {
         std::lock_guard<std::mutex> locker(timerMutex_);
-        for (auto iter : timerHeap_) {
-            iter.timeOut = std::chrono::duration_cast<timerDuration>(steadyClock::now()
-                - timerHeap_.front().expire).count() / MILLISECOND_TO_SECOND;
-            iter.expire = steadyClock::now();
-        }
-        timerHeap_.push_back(timer);
-        sort(timerHeap_.begin(), timerHeap_.end(), Compare);
+        timerQueue_.push(timer);
+        timerMap_[name] = timer;
     }
 
     if (timerState_) {
@@ -80,33 +68,31 @@ int32_t DmTimer::StartTimer(std::string name, int32_t timeOut, TimerCallback cal
     return DM_OK;
 }
 
-int32_t DmTimer::DeleteTimer(std::string name)
+int32_t DmTimer::DeleteTimer(std::string timerName)
 {
-    LOGI("DmTimer DeleteTimer size %d", timerHeap_.size());
-    if (name.empty()) {
-        LOGE("DmTimer DeleteTimer timer name is null");
+    if (timerName.empty()) {
+        LOGE("DmTimer DeleteTimer timer is null");
         return ERR_DM_INPUT_PARA_INVALID;
     }
 
-    auto iter = std::find(timerHeap_.begin(), timerHeap_.end(), Timer {name, });
-    if (iter == timerHeap_.end()) {
-        LOGE("DmTimer DeleteTimer is not this %s timer,", name.c_str());
-        return ERR_DM_INPUT_PARA_INVALID;
-    }
-
+    LOGI("DmTimer DeleteTimer name %s", timerName.c_str());
     std::lock_guard<std::mutex> locker(timerMutex_);
-    iter->state = false;
-    return DM_OK;
+    for (auto iter : timerMap_) {
+        if (iter.second->timerName_ == timerName) {
+            iter.second->state_ = false;
+            return DM_OK;
+        }
+    }
+    LOGE("DmTimer DeleteTimer no have this timer");
+    return ERR_DM_INPUT_PARA_INVALID;
 }
 
 int32_t DmTimer::DeleteAll()
 {
-    LOGI("DmTimer DeleteAll");
-    if (timerHeap_.size() > 0) {
-        std::lock_guard<std::mutex> locker(timerMutex_);
-        for (auto iter : timerHeap_) {
-            iter.state = false;
-        }
+    LOGI("DmTimer DeleteAll start");
+    std::lock_guard<std::mutex> locker(timerMutex_);
+    for (auto iter : timerMap_) {
+        iter.second->state_ = false;
     }
     return DM_OK;
 }
@@ -119,24 +105,20 @@ int32_t DmTimer::TimerRunning()
             std::unique_lock<std::mutex> locker(timerStateMutex_);
             runTimerCondition_.notify_one();
         }
-        while (timerHeap_.size() != 0) {
+        while (!timerQueue_.empty() && timerState_) {
             std::this_thread::sleep_for(std::chrono::milliseconds(DELAY_TICK_MILLSECONDS));
             while (std::chrono::duration_cast<timerDuration>(steadyClock::now()
-                   - timerHeap_.front().expire).count() / MILLISECOND_TO_SECOND >= timerHeap_.front().timeOut
-                   || !timerHeap_.front().state) {
-                std::string name = timerHeap_.front().timerName;
-                if (timerHeap_.front().state) {
-                    timerHeap_.front().callback(name);
+                   - timerQueue_.top()->expire_).count() / MILLISECOND_TO_SECOND >= timerQueue_.top()->timeOut_
+                   || !timerQueue_.top()->state_) {
+                std::string name = timerQueue_.top()->timerName_;
+                if (timerQueue_.top()->state_) {
+                    timerQueue_.top()->callback_(name);
                 }
 
-                auto iter = std::find(timerHeap_.begin(), timerHeap_.end(), Timer {name, });
-                if (iter != timerHeap_.end()) {
-                    std::lock_guard<std::mutex> locker(timerMutex_);
-                    timerHeap_.erase(timerHeap_.begin(), timerHeap_.begin()+1);
-                    sort(timerHeap_.begin(), timerHeap_.end(), Compare);
-                }
-
-                if (timerHeap_.size() == 0) {
+                std::lock_guard<std::mutex> locker(timerMutex_);
+                timerQueue_.pop();
+                timerMap_.erase(name);
+                if (timerQueue_.empty()) {
                     break;
                 }
             }
