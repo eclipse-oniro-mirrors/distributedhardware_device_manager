@@ -13,85 +13,93 @@
  * limitations under the License.
  */
 
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef DM_TIMER_H
+#define DM_TIMER_H
 
-#include <assert.h>
-#include <errno.h>
-#include <thread>
-#include <time.h>
-#include <stdio.h>
-#include <sys/epoll.h>
-#include <sys/socket.h>
+#include <atomic>
+#include <chrono>
+#include <condition_variable>
+#include <functional>
+#include <map>
+#include <mutex>
+#include <queue>
 #include <vector>
-#include <unistd.h>
+
 namespace OHOS {
 namespace DistributedHardware {
-typedef void (*TimeoutHandle)(void *data, std::string timerName);
-class DmTimer {
+constexpr int32_t DELAY_TICK_MILLSECONDS = 1000;
+typedef std::chrono::steady_clock::time_point   timerPoint;
+typedef std::chrono::steady_clock               steadyClock;
+typedef std::chrono::duration<int64_t, std::ratio<1, 1000>> timerDuration;
+using TimerCallback = std::function<void (std::string name)>;
+const int32_t MILLISECOND_TO_SECOND = 1000;
+const int32_t MIN_TIME_OUT = 0;
+const int32_t MAX_TIME_OUT = 300;
+
+class Timer {
 public:
-    DmTimer(std::string name, time_t expire, void *user, TimeoutHandle mHandle)
-        :userData_(user), timerName_(name), expire_(expire), mHandle_(mHandle) {};
+    Timer(std::string name, int32_t time, TimerCallback callback);
+    ~Timer() {};
 public:
-    void *userData_;
-    bool isTrigger = false;
     std::string timerName_;
-    time_t expire_;
-    TimeoutHandle mHandle_;
+    timerPoint expire_;
+    bool state_;
+    int32_t timeOut_;
+    TimerCallback callback_;
 };
 
-class TimeHeap {
+struct TimerCmpare {
 public:
-    TimeHeap();
-    ~TimeHeap();
-    /**
-     * @tc.name: TimeHeap::AddTimer
-     * @tc.desc: Add timer to time heap
-     * @tc.type: FUNC
-     */
-    int32_t AddTimer(std::string name, int timeout, TimeoutHandle mHandle, void *user);
+    bool operator () (std::shared_ptr<Timer> frontTimer, std::shared_ptr<Timer> timer)
+    {
+        int32_t frontTimerOut = frontTimer->timeOut_ - (std::chrono::duration_cast<timerDuration>(steadyClock::now()
+            - frontTimer->expire_).count() / MILLISECOND_TO_SECOND);
+        int32_t timerOut = timer->timeOut_ - (std::chrono::duration_cast<timerDuration>(steadyClock::now()
+            - timer->expire_).count() / MILLISECOND_TO_SECOND);
+        return frontTimerOut > timerOut;
+    }
+};
+
+class DmTimer {
+public:
+    DmTimer();
+    ~DmTimer();
 
     /**
-     * @tc.name: TimeHeap::DelTimer
-     * @tc.desc: Delete timer of the time heap
+     * @tc.name: DmTimer::StartTimer
+     * @tc.desc: start timer running
      * @tc.type: FUNC
      */
-    int32_t DelTimer(std::string name);
+    int32_t StartTimer(std::string name, int32_t time, TimerCallback callback);
 
     /**
-     * @tc.name: TimeHeap::DelAll
-     * @tc.desc: Delete all timer of the time heap
+     * @tc.name: DmTimer::DeleteTimer
+     * @tc.desc: delete timer
      * @tc.type: FUNC
      */
-    int32_t DelAll();
+    int32_t DeleteTimer(std::string timerName);
 
+    /**
+     * @tc.name: DmTimer::DeleteAll
+     * @tc.desc: delete all timer
+     * @tc.type: FUNC
+     */
+    int32_t DeleteAll();
+
+    /**
+     * @tc.name: DmTimer::TimerRunning
+     * @tc.desc: timer running
+     * @tc.type: FUNC
+     */
+    int32_t TimerRunning();
 private:
-    /**
-     * @tc.name: TimeHeap::Run
-     * @tc.desc: timer wait for timeout
-     * @tc.type: FUNC
-     */
-    void Run();
-
-    /**
-     * @tc.name: TimeHeap::Run
-     * @tc.desc: timerout event triggering
-     * @tc.type: FUNC
-     */
-    int32_t Tick();
-
-    /**
-     * @tc.name: TimeHeap::Run
-     * @tc.desc: sort the time heap
-     * @tc.type: FUNC
-     */
-    int32_t MoveUp(std::shared_ptr<DmTimer> timer);
-private:
-    int32_t hsize_ = 0;
-    int32_t epollFd_;
-    int32_t pipefd[2];
-    std::thread mThread_;
-    std::vector<std::shared_ptr<DmTimer>> minHeap_;
+    mutable std::mutex timerMutex_;
+    mutable std::mutex timerStateMutex_;
+    std::priority_queue<std::shared_ptr<Timer>, std::vector<std::shared_ptr<Timer>>, TimerCmpare> timerQueue_;
+    std::map<std::string, std::shared_ptr<Timer>> timerMap_;
+    std::atomic<bool> timerState_ {false};
+    std::condition_variable runTimerCondition_;
+    std::condition_variable stopTimerCondition_;
 };
 }
 }
