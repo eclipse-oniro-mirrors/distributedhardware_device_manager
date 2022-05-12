@@ -194,7 +194,7 @@ HWTEST_F(DeviceManagerServiceTest, GetTrustedDeviceList_001, testing::ext::TestS
 
 /**
  * @tc.name: GetTrustedDeviceList_002
- * @tc.desc:Set the intFlag of GetTrustedDeviceList to true and pkgName = null; The return value is ERR_DM_INPUT_PARAMETER_EMPTY
+ * @tc.desc:Set the intFlag of GetTrustedDeviceList to true and pkgName = null; Return ERR_DM_INPUT_PARAMETER_EMPTY
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
@@ -227,7 +227,7 @@ HWTEST_F(DeviceManagerServiceTest, AuthenticateDevice_001, testing::ext::TestSiz
 
 /**
  * @tc.name: AuthenticateDevice_002
- * @tc.desc: Set intFlag for GAuthenticateDevice to True and pkgName to null; The return value is ERR_DM_INPUT_PARAMETER_EMPTY
+ * @tc.desc: Set intFlag for GAuthenticateDevice to True and pkgName to null; Return ERR_DM_INPUT_PARAMETER_EMPTY
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
@@ -244,7 +244,7 @@ HWTEST_F(DeviceManagerServiceTest, AuthenticateDevice_002, testing::ext::TestSiz
 
 /**
  * @tc.name: AuthenticateDevice_003
- * @tc.desc: Set intFlag for GAuthenticateDevice to True and deviceId to null; The return value is ERR_DM_INPUT_PARAMETER_EMPTY
+ * @tc.desc: Set intFlag for GAuthenticateDevice to True and deviceId to null; Return ERR_DM_INPUT_PARAMETER_EMPTY
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
@@ -292,7 +292,7 @@ HWTEST_F(DeviceManagerServiceTest, UnAuthenticateDevice_001, testing::ext::TestS
 
 /**
  * @tc.name: UnAuthenticateDevice_002
- * @tc.desc:  Set intFlag for UnAuthenticateDevice to True and pkgName to null; The return value is ERR_DM_INPUT_PARAMETER_EMPTY
+ * @tc.desc:  Set intFlag for UnAuthenticateDevice to True and pkgName to null; Return ERR_DM_INPUT_PARAMETER_EMPTY
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */

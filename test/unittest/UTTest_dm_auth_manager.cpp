@@ -62,7 +62,7 @@ HWTEST_F(DmAuthManagerTest, UnAuthenticateDevice_001, testing::ext::TestSize.Lev
 
 /**
  * @tc.name: DmAuthManager::HandleAuthenticateTimeout_001
- * @tc.desc: authResponseContext_= nullptr; Call handleauthenticatemeout to check whether the return value is ERR_DM_FAILED
+ * @tc.desc: authResponseContext_= nullptr; Call handleauthenticatemeout to check whether return value is ERR_DM_FAILED
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
