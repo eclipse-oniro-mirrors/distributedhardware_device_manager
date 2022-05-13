@@ -287,7 +287,7 @@ void HiChainConnector::onError(int64_t requestId, int operationCode, int errorCo
     if (operationCode == GroupOperationCode::MEMBER_JOIN) {
         LOGE("Add Member To Group failed");
         if (hiChainConnectorCallback_ != nullptr) {
-            hiChainConnectorCallback_->OnMemberJoin(requestId, DM_FAILED);
+            hiChainConnectorCallback_->OnMemberJoin(requestId, ERR_DM_FAILED);
         }
     }
     if (operationCode == GroupOperationCode::GROUP_CREATE) {
