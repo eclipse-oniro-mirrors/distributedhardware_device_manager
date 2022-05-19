@@ -11,12 +11,10 @@
   "module": {
     "package": "com.ohos.devicemanagerui",
     "name": ".MyApplication",
-    "mainAbility": "com.ohos.devicemanagerui.MainAbility",
+    "mainAbility": ".MainAbility",
+    "srcPath": "",
     "deviceType": [
-      "phone",
-      "tablet",
-      "tv",
-      "wearable"
+      "phone"
     ],
     "distro": {
       "deliveryWithInstall": true,
@@ -36,10 +34,14 @@
             ]
           }
         ],
+        "orientation": "unspecified",
         "visible": true,
-        "name": "com.ohos.devicemanagerui.MainAbility",
+        "srcPath": "MainAbility",
+        "name": ".MainAbility",
+        "srcLanguage": "js",
         "icon": "$media:icon",
-        "description": "$string:mainability_description",
+        "description": "$string:description_mainability",
+        "formsEnabled": false,
         "label": "$string:entry_MainAbility",
         "type": "page",
         "launchType": "standard"
@@ -48,12 +50,13 @@
     "js": [
       {
         "pages": [
-          "pages/index/index"
+          "pages/index/index",
+          "pages/second/second"
         ],
-        "name": "default",
+        "name": ".MainAbility",
         "window": {
           "designWidth": 720,
-          "autoDesignWidth": true
+          "autoDesignWidth": false
         }
       }
     ]
