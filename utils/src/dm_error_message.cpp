@@ -58,7 +58,7 @@ std::string GetErrorString(int failedReason)
 {
     std::string g_errorMessage = "dm process execution failed.";
     for (int32_t i = 0; i < sizeof(g_errorMessages); i++) {
-        if(failedReason == g_errorMessages[i].errCode){
+        if (failedReason == g_errorMessages[i].errCode) {
             g_errorMessage = g_errorMessages[i].errMsg;
         }
     }
