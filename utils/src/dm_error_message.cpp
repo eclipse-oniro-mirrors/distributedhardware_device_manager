@@ -17,14 +17,12 @@
 
 namespace OHOS {
 namespace DistributedHardware {
-typedef struct ERROR_INFO
-{
+typedef struct ERROR_INFO {
     int errCode;
     std::string errMsg;
-}ERROR_INFO;
+} ERROR_INFO;
 
-static ERROR_INFO g_errorMessages[] =
-{
+static ERROR_INFO g_errorMessages[] = {
     {ERR_DM_FAILED, DM_FAILED_INFO},
     {ERR_DM_TIME_OUT, DM_TIME_OUT_INFO},
     {ERR_DM_NOT_INIT, DM_NOT_INIT_INFO},
@@ -59,9 +57,8 @@ static ERROR_INFO g_errorMessages[] =
 std::string GetErrorString(int failedReason)
 {
     std::string g_errorMessage = "dm process execution failed.";
-    for (int i =0; i<sizeof(g_errorMessages);i++)
-    {
-        if(failedReason == g_errorMessages[i].errCode) {
+    for (int32_t i = 0; i < sizeof(g_errorMessages); i++) {
+        if(failedReason == g_errorMessages[i].errCode){
             g_errorMessage = g_errorMessages[i].errMsg;
         }
     }
