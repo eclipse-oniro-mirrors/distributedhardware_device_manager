@@ -90,7 +90,6 @@ if (defined(ohos_lite)) {
         "//foundation/communication/dsoftbus/interfaces/kits/transport",
         "//foundation/communication/dsoftbus/interfaces/inner_kits/transport",
         "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
-        "//utils/include/dm_error_message",
       ]
       sources = [
         "src/dm_anonymous.cpp",

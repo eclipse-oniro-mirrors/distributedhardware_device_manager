@@ -23,46 +23,47 @@ typedef struct ERROR_INFO {
 } ERROR_INFO;
 
 static ERROR_INFO g_errorMessages[] = {
-    {ERR_DM_FAILED, DM_FAILED_INFO},
-    {ERR_DM_TIME_OUT, DM_TIME_OUT_INFO},
-    {ERR_DM_NOT_INIT, DM_NOT_INIT_INFO},
-    {ERR_DM_INIT_REPEATED, DM_INIT_REPEATED_INFO},
-    {ERR_DM_INIT_FAILED, DM_INIT_FAILED_INFO},
-    {ERR_DM_UNINIT_FAILED, DM_UNINIT_FAILED_INFO},
-    {ERR_DM_POINT_NULL, DM_POINT_NULL_INFO},
-    {ERR_DM_INPUT_PARAMETER_EMPTY, DM_INPUT_PARAMETER_EMPTY_INFO},
-    {ERR_DM_NO_PERMISSION, DM_NO_PERMISSION_INFO},
-    {ERR_DM_MALLOC_FAILED, DM_MALLOC_FAILED_INFO},
-    {ERR_DM_DISCOVERY_FAILED, DM_DISCOVERY_FAILED_INFO},
-    {ERR_DM_MAP_KEY_ALREADY_EXISTS, DM_MAP_KEY_ALREADY_EXISTS_INFO},
-    {DM_PROFILE_EVENTS_FAILED, DM_PROFILE_EVENTS_FAILED_INFO},
-    {ERR_DM_IPC_WRITE_FAILED, DM_IPC_WRITE_FAILED_INFO},
-    {ERR_DM_IPC_COPY_FAILED, DM_IPC_COPY_FAILED_INFO},
-    {ERR_DM_IPC_SEND_REQUEST_FAILED, DM_IPC_SEND_REQUEST_FAILED_INFO},
-    {ERR_DM_UNSUPPORTED_IPC_COMMAND, DM_UNSUPPORTED_IPC_COMMAND_INFO},
-    {ERR_DM_IPC_RESPOND_FAILED, DM_IPC_RESPOND_FAILED_INFO},
-    {ERR_DM_IPC_WRITE_TOKEN_FAILED, DM_IPC_WRITE_TOKEN_INFO},
-    {ERR_DM_DISCOVERY_REPEATED, DM_DISCOVERY_REPEATED_INFO},
-    {ERR_DM_UNSUPPORTED_AUTH_TYPE, DM_UNSUPPORTED_AUTH_TYPE_INFO},
-    {ERR_DM_AUTH_BUSINESS_BUSY, DM_AUTH_BUSINESS_BUSY_INFO},
-    {ERR_DM_AUTH_OPEN_SESSION_FAILED, DM_AUTH_OPEN_SESSION_FAILED_INFO},
-    {ERR_DM_AUTH_PEER_REJECT, DM_AUTH_PEER_REJECT_INFO},
-    {ERR_DM_AUTH_REJECT, DM_AUTH_REJECT_INFO},
-    {ERR_DM_AUTH_FAILED, DM_AUTH_FAILED_INFO},
-    {ERR_DM_AUTH_NOT_START, DM_AUTH_NOT_START_INFO},
-    {ERR_DM_AUTH_MESSAGE_INCOMPLETE, DM_AUTH_MESSAGE_INCOMPLETE_INFO},
-    {ERR_DM_CREATE_GROUP_FAILED, DM_CREATE_GROUP_FAILED_INFO},
+    {ERR_DM_FAILED, "dm process execution failed."},
+    {ERR_DM_TIME_OUT, "dm process execution timeout."},
+    {ERR_DM_NOT_INIT, "dm service is not initialized, please try again later."},
+    {ERR_DM_INIT_REPEATED, "dm service repeated initialization."},
+    {ERR_DM_INIT_FAILED, "dm service initialize failed."},
+    {ERR_DM_UNINIT_FAILED, "dm Service uninitialization failed."},
+    {ERR_DM_POINT_NULL, "dm service null pointer exception occurred."},
+    {ERR_DM_INPUT_PARAMETER_EMPTY, "the function call input parameter is empty."},
+    {ERR_DM_NO_PERMISSION, "no permission for function call."},
+    {ERR_DM_MALLOC_FAILED, "memory allocation failed."},
+    {ERR_DM_DISCOVERY_FAILED, "device discovery failed."},
+    {ERR_DM_MAP_KEY_ALREADY_EXISTS, "map key already exists."},
+    {DM_PROFILE_EVENTS_FAILED, "process profile events failed."},
+    {ERR_DM_IPC_WRITE_FAILED, "ipc write object failed."},
+    {ERR_DM_IPC_COPY_FAILED, "ipc copy data failed."},
+    {ERR_DM_IPC_SEND_REQUEST_FAILED, "ipc send request failed."},
+    {ERR_DM_UNSUPPORTED_IPC_COMMAND, "ipc command not supported."},
+    {ERR_DM_IPC_RESPOND_FAILED, "ipc process failed to receive response."},
+    {ERR_DM_IPC_WRITE_TOKEN_FAILED, "ipc write token failed."},
+    {ERR_DM_DISCOVERY_REPEATED, "repeat device discovery warning."},
+    {ERR_DM_UNSUPPORTED_AUTH_TYPE, "auth type not supported."},
+    {ERR_DM_AUTH_BUSINESS_BUSY, "authentication service is busy."},
+    {ERR_DM_AUTH_OPEN_SESSION_FAILED, "open auth session failed."},
+    {ERR_DM_AUTH_PEER_REJECT, "remote device refused to authorization."},
+    {ERR_DM_AUTH_REJECT, "local device refused to authorization."},
+    {ERR_DM_AUTH_FAILED, "authentication failed."},
+    {ERR_DM_AUTH_NOT_START, "auth process not started."},
+    {ERR_DM_AUTH_MESSAGE_INCOMPLETE, "authentication message is incomplete."},
+    {ERR_DM_CREATE_GROUP_FAILED, "create group failed."},
 };
 
 std::string GetErrorString(int failedReason)
 {
-    std::string g_errorMessage = "dm process execution failed.";
+    std::string errorMessage = "dm process execution failed.";
     for (int32_t i = 0; i < sizeof(g_errorMessages); i++) {
         if (failedReason == g_errorMessages[i].errCode) {
-            g_errorMessage = g_errorMessages[i].errMsg;
+            errorMessage = g_errorMessages[i].errMsg;
+            break;
         }
     }
-    return g_errorMessage;
+    return errorMessage;
 }
 } // namespace DistributedHardware
 } // namespace OHOS
