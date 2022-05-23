@@ -11,7 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import("//build/test.gni")
 import("//foundation/distributedhardware/devicemanager/devicemanager.gni")
 
@@ -21,26 +20,24 @@ ohos_benchmarktest("DeviceManagerTest") {
   module_out_path = module_output_path
   sources = [ "device_manager_test.cpp" ]
 
-  include_dirs = [ 
-    "${common_path}/include",
-  ]
+  include_dirs = [ "${common_path}/include" ]
 
   cflags = []
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
-    }
+  }
 
-    deps = [
+  deps = [
     "${utils_path}:devicemanagerutils",
-    "//third_party/bounds_checking_function:libsec_shared",
-     "${utils_path}:devicemanagerutils",
+    "${utils_path}:devicemanagerutils",
     "//foundation/arkui/napi:ace_napi",
     "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
-    "//utils/native/base:utils",
     "//third_party/benchmark:benchmark",
+    "//third_party/bounds_checking_function:libsec_shared",
     "//third_party/googletest:gtest_main",
+    "//utils/native/base:utils",
   ]
-  
+
   external_deps = [
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
@@ -62,5 +59,3 @@ group("benchmarktest") {
     ":DeviceManagerTest",
   ]
 }
-
-

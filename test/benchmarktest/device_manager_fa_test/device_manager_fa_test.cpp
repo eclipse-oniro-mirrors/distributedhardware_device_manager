@@ -130,7 +130,7 @@ public:
     {
         DmDeviceInfo deviceInfo;
         std::shared_ptr<AuthenticateCallback> callback = nullptr;
-        DeviceManager::GetInstance().AuthenticateDevice(pkgName,
+        DeviceManager::GetInstance().AuthenticateDevice(pkgName, 
         authType, deviceInfo, extraString, callback);
         usleep(usleepTime);
     }
@@ -168,7 +168,7 @@ public:
 BENCHMARK_F(GetTrustedDeviceListTest, GetTrustedDeviceListTestCase)(
     benchmark::State &state)
 {
-    while (state.KeepRunning()) {   
+    while (state.KeepRunning()) { 
         std::vector<DmDeviceInfo> devList {};
         int32_t ret = DeviceManager::GetInstance().GetTrustedDeviceList(bundleName, extra, devList);
         if (ret != DM_OK) {
@@ -200,7 +200,7 @@ BENCHMARK_F(DeviceDiscoveryTest, StoptDeviceDiscoveryTestCase)(
         state.PauseTiming();
         DmSubscribeInfo subInfo;
         std::shared_ptr<DiscoveryCallback> callback = std::make_shared<DeviceDiscoveryCallbackTest>();
-        int32_t ret = DeviceManager::GetInstance().StartDeviceDiscovery(bundleName,
+        int32_t ret = DeviceManager::GetInstance().StartDeviceDiscovery(bundleName, 
         subInfo, extra, callback);	
         if (ret != DM_OK) {
             state.SkipWithError("StopDeviceDiscoveryTestCase faild.");
@@ -291,7 +291,7 @@ BENCHMARK_F(RegisterDevStateTest, RegisterDevStateCallbackTestCase)(
         if (ret != DM_OK) {
             state.SkipWithError("RegisterDevStateCallbackTestCase faild.");
         }
-    }  
+    }
 }
 }
 
