@@ -12,25 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
-apply plugin: 'com.huawei.ohos.hap'
-//For instructions on signature configuration, see https://developer.harmonyos.com/cn/docs/documentation/doc-guides/ide_debug_device-0000001053822404#section1112183053510
-ohos {
-    compileSdkVersion 8
-    defaultConfig {
-        compatibleSdkVersion 7
+export default {
+    onCreate() {
+        console.info("Application onCreate");
+    },
+    onDestroy() {
+        console.info("Application onDestroy");
     }
-    buildTypes {
-        release {
-            proguardOpt {
-                proguardEnabled false
-                rulesFiles 'proguard-rules.pro'
-            }
-        }
-    }
-}
-
-dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar', '*.har'])
-    testImplementation 'junit:junit:4.13.1'
-}
+};

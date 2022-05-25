@@ -2,10 +2,10 @@
   "string": [
     {
       "name": "entry_MainAbility",
-      "value": "entry_MainAbility"
+      "value": "DeviceManagerUI"
     },
     {
-      "name": "mainability_description",
+      "name": "description_mainability",
       "value": "JS_Empty Ability"
     }
   ]
