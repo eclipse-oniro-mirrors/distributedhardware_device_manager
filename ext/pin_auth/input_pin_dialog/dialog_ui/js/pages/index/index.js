@@ -21,7 +21,6 @@ var isTimes = 3;
 var EVENT_CONFIRM = "EVENT_CONFIRM";
 var EVENT_CANCEL = "EVENT_CANCEL";
 var EVENT_INIT = "EVENT_INIT";
-var EVENT_CONFIRM_CODE = "0";
 var EVENT_CANCEL_CODE = "1";
 var EVENT_INIT_CODE = "2";
 export default {
@@ -36,6 +35,9 @@ export default {
         inputValue = e.value;
     }, 
     onConfirm() {
+        if ((inputValue == null) || (inputValue == "")) {
+            return;
+        }
         isTimes--;
         callNativeHandler(EVENT_CONFIRM, inputValue);
         inputValue = "";

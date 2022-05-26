@@ -105,7 +105,18 @@ void DmDiscoveryManager::OnDiscoverySuccess(const std::string &pkgName, int32_t 
 void DmDiscoveryManager::HandleDiscoveryTimeout(std::string name)
 {
     LOGI("DmDiscoveryManager::HandleDiscoveryTimeout");
-    StopDeviceDiscovery(discoveryQueue_.front(), discoveryContextMap_[discoveryQueue_.front()].subscribeId);
+    if (discoveryQueue_.empty()) {
+        LOGE("HandleDiscoveryTimeout: discovery queue is empty.");
+        return;
+    }
+
+    std::string pkgName = discoveryQueue_.front();
+    auto iter = discoveryContextMap_.find(pkgName);
+    if (iter == discoveryContextMap_.end()) {
+        LOGE("HandleDiscoveryTimeout: subscribeId not found by pkgName %s", GetAnonyString(pkgName).c_str());
+        return;
+    }
+    StopDeviceDiscovery(pkgName, discoveryContextMap_[pkgName].subscribeId);
 }
 } // namespace DistributedHardware
 } // namespace OHOS
