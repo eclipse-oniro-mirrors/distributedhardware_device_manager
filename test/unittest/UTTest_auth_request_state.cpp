@@ -487,6 +487,7 @@ HWTEST_F(AuthRequestStateTest, Enter_012, testing::ext::TestSize.Level0)
     authManager->authRequestContext_ = std::make_shared<DmAuthRequestContext>();
     authManager->authMessageProcessor_ = std::make_shared<AuthMessageProcessor>(authManager);
     authManager->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
+    authManager->authPtr_ = authManager->authenticationMap_[1];
     authManager->authResponseContext_->groupId = "111";
     authManager->authResponseContext_->groupName = "222";
     authManager->authResponseContext_->code = 123;
@@ -609,6 +610,7 @@ HWTEST_F(AuthRequestStateTest, Enter_016, testing::ext::TestSize.Level0)
         std::make_shared<DmAuthManager>(softbusConnector, listener, hiChainConnector);
     std::shared_ptr<AuthRequestState> authRequestState = std::make_shared<AuthRequestFinishState>();
     authManager->timer_ = std::make_shared<DmTimer>();
+    authManager->authPtr_ = authManager->authenticationMap_[1];
     authManager->authMessageProcessor_ = std::make_shared<AuthMessageProcessor>(authManager);
     authManager->authResponseContext_ = std::make_shared<DmAuthResponseContext>();
     authManager->authRequestContext_ = std::make_shared<DmAuthRequestContext>();

@@ -143,6 +143,7 @@ const int32_t AUTH_TYPE_SCAN = 2;
 const int32_t AUTH_TYPE_TOUCH = 3;
 const int32_t DEFAULT_PIN_CODE = 0;
 const int32_t DEFAULT_PIN_TOKEN = 0;
+const int32_t DEFAULT_PIN_CODE_LENGTH = 6;
 
 // Softbus
 const int32_t SOFTBUS_CHECK_INTERVAL = 100000; // 100ms

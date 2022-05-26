@@ -31,16 +31,15 @@ export default {
     onInit() {
         callNativeHandler(EVENT_INIT, EVENT_INIT_CODE);
     },
-    onChange(e){ 
+    onChange(e){
         inputValue = e.value;
-    }, 
+    },
     onConfirm() {
         if ((inputValue == null) || (inputValue == "")) {
             return;
         }
         this.isTimes--;
         callNativeHandler(EVENT_CONFIRM, inputValue);
-        inputValue = "";
     },
     onCancel() {
         console.info('click cancel');
