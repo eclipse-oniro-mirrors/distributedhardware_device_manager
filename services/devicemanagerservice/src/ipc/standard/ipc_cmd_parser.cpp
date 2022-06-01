@@ -442,7 +442,7 @@ ON_IPC_CMD(SERVER_GET_DMFA_INFO, MessageParcel &data, MessageParcel &reply)
     DmAuthParam authParam;
     if (DeviceManagerService::GetInstance().GetFaParam(packName, authParam) != DM_OK) {
         LOGE("ipc read fa parm failed");
-        return ERR_DM_IPC_READ_FA_FAILED;
+        return ERR_DM_IPC_READ_FAILED;
     }
     int32_t appIconLen = authParam.imageinfo.GetAppIconLen();
     int32_t appThumbnailLen = authParam.imageinfo.GetAppThumbnailLen();
