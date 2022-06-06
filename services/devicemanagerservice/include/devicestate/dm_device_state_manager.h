@@ -58,7 +58,7 @@ public:
     int32_t RegisterSoftbusStateCallback();
     void RegisterOffLineTimer(const DmDeviceInfo &deviceInfo);
     void StartOffLineTimer(const DmDeviceInfo &deviceInfo);
-    void DeleteTimeOutGroup(std::string stateTimer);
+    void DeleteTimeOutGroup(std::string name);
     void RegisterDevStateCallback(const std::string &pkgName, const std::string &extra);
     void UnRegisterDevStateCallback(const std::string &pkgName, const std::string &extra);
 
@@ -74,6 +74,7 @@ private:
     std::map<std::string, DmDeviceInfo> remoteDeviceInfos_;
     std::map<std::string, std::string> decisionInfos_;
     std::map<std::string, StateTimerInfo> stateTimerInfoMap_;
+    std::shared_ptr<DmTimer> timer_;
     std::shared_ptr<HiChainConnector> hiChainConnector_;
     std::string decisionSoName_;
 };
