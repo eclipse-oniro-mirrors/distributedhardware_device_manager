@@ -182,8 +182,8 @@ BENCHMARK_F(GetTrustedDeviceListTest, GetTrustedDeviceListTestCase)(
         deviceInfo.deviceTypeId = 0;
         string deviceNetworkId = "com.OHOS.app";
         strncpy_s(deviceInfo.deviceId, DM_MAX_DEVICE_ID_LEN, deviceInfoId.c_str(), deviceInfoId.length());
-        strncpy_s(deviceInfo.deviceName, DM_MAX_DEVICE_NAME_LEN,deviceInfoName.c_str(), deviceInfoName.length());
-        strncpy_s(deviceInfo.networkId, DM_MAX_DEVICE_ID_LEN,deviceNetworkId.c_str(), deviceNetworkId.length());
+        strncpy_s(deviceInfo.deviceName, DM_MAX_DEVICE_NAME_LEN, deviceInfoName.c_str(), deviceInfoName.length());
+        strncpy_s(deviceInfo.networkId, DM_MAX_DEVICE_ID_LEN, deviceNetworkId.c_str(), deviceNetworkId.length());
         int32_t ret = DeviceManager::GetInstance().GetTrustedDeviceList(pkgName, extra, devList);
         if (ret != DM_OK) {
             state.SkipWithError("GetTrustedDeviceListTestCase failed.");
