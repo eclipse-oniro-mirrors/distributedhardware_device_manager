@@ -11,7 +11,7 @@ The figure below shows the architecture and dependencies of DeviceManager:
 ## Directory Structure
 
 ```
-foundation/distributedhardware/devicemanager
+foundation/distributedhardware/device_manager
 ├── common                        # Header files of common capabilities
 │   └── include
 │       └── ipc

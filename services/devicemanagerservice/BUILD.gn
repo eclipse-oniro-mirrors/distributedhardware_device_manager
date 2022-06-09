@@ -17,7 +17,7 @@ if (defined(ohos_lite)) {
   import("//build/ohos.gni")
 }
 
-import("//foundation/distributedhardware/devicemanager/devicemanager.gni")
+import("//foundation/distributedhardware/device_manager/devicemanager.gni")
 
 if (defined(ohos_lite)) {
   if (ohos_kernel_type == "liteos_m") {
@@ -68,7 +68,7 @@ if (defined(ohos_lite)) {
         "//foundation/communication/dsoftbus/interfaces/kits/discovery",
         "//foundation/communication/dsoftbus/interfaces/kits/transport",
         "//foundation/communication/dsoftbus/interfaces/inner_kits/transport",
-        "//foundation/distributedhardware/devicemanager/services/devicemanagerservice/include/dependency/multipleuser",
+        "//foundation/distributedhardware/device_manager/services/devicemanagerservice/include/dependency/multipleuser",
         "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
         "//foundation/distributedschedule/samgr/interfaces/innerkits/samgr_proxy/include",
       ]

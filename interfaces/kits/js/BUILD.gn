@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("//foundation/distributedhardware/devicemanager/devicemanager.gni")
+import("//foundation/distributedhardware/device_manager/devicemanager.gni")
 
 ohos_shared_library("devicemanager") {
   include_dirs = [
@@ -38,7 +38,7 @@ ohos_shared_library("devicemanager") {
   deps = [
     "${utils_path}:devicemanagerutils",
     "//foundation/arkui/napi:ace_napi",
-    "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
+    "//foundation/distributedhardware/device_manager/interfaces/inner_kits/native_cpp:devicemanagersdk",
     "//utils/native/base:utils",
   ]
 

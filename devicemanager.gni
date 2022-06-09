@@ -12,7 +12,7 @@
 # limitations under the License.
 
 #------------------------device manager------------------------------#
-devicemanager_path = "//foundation/distributedhardware/devicemanager"
+devicemanager_path = "//foundation/distributedhardware/device_manager"
 
 common_path = "${devicemanager_path}/common"
 utils_path = "${devicemanager_path}/utils"
