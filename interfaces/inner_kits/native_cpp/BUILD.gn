@@ -80,7 +80,6 @@ if (defined(ohos_lite)) {
         "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
         "//foundation/distributedschedule/samgr_lite/interfaces/kits/registry",
         "//third_party/json/include",
-        "//foundation/appexecfwk/appexecfwk_lite/interfaces/kits/bundle_lite/",
       ]
       sources = [
         "src/device_manager.cpp",
