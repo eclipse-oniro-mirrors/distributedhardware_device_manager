@@ -20,7 +20,9 @@
 #include <unistd.h>
 
 #include "single_instance.h"
+#if !(defined(__LITEOS_M__) || defined(LITE_DEVICE))
 #include "hisysevent.h"
+#endif
 #include "dm_log.h"
 #include "dm_constants.h"
 #include "dm_anonymous.h"
