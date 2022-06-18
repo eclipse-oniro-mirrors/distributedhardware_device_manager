@@ -50,7 +50,6 @@ class HisyseventUtil {
 
 public:
     void SysEventWrite(std::string status, OHOS::HiviewDFX::HiSysEvent::EventType eventType, std::string msg);
-
 };
 } // namespace DistributedHardware
 } // namespace OHOS

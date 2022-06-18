@@ -17,9 +17,6 @@
 #define OHOS_DISTRIBUTED_DM_HISYSEVENT_H
 
 #include "single_instance.h"
-#include "dm_log.h"
-#include "dm_constants.h"
-#include "dm_anonymous.h"
 
 #include <cstring>
 #include <unistd.h>
