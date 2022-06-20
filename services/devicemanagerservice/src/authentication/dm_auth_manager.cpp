@@ -569,7 +569,7 @@ void DmAuthManager::AuthenticateFinish()
 {
     LOGI("DmAuthManager::AuthenticateFinish start");
     if (authResponseState_ != nullptr) {
-        if (authResponseState_->GetStateType() == AuthState::AUTH_RESPONSE_FINISH) {
+        if (authResponseState_->GetStateType() == AuthState::AUTH_RESPONSE_FINISH || authPtr_ != nullptr) {
             authPtr_->CloseAuthInfo(authResponseContext_->pageId, shared_from_this());
         }
         if (isFinishOfLocal_) {
@@ -592,7 +592,7 @@ void DmAuthManager::AuthenticateFinish()
             authRequestContext_->reason = authResponseContext_->reply;
         }
         if (authResponseContext_->state == AuthState::AUTH_REQUEST_JOIN ||
-            authResponseContext_->state == AuthState::AUTH_REQUEST_FINISH) {
+            authResponseContext_->state == AuthState::AUTH_REQUEST_FINISH || authPtr_ != nullptr) {
             authPtr_->CloseAuthInfo(authResponseContext_->pageId, shared_from_this());
         }
         listener_->OnAuthResult(authRequestContext_->hostPkgName, authRequestContext_->deviceId,
