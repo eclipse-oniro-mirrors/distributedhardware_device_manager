@@ -24,7 +24,7 @@ if (defined(ohos_lite)) {
     static_library("devicemanagerutils_mini") {
       include_dirs = [
         "${utils_path}/include",
-        "${utils_path}/include/hisysevent/lite",
+        "${utils_path}/include/dfx/lite",
         "${utils_path}/include/permission/lite",
         "${common_path}/include",
       ]
@@ -41,11 +41,11 @@ if (defined(ohos_lite)) {
       ]
 
       sources = [
+        "${utils_path}/src/dfx/lite/dm_hisysevent.cpp",
         "${utils_path}/src/dm_anonymous.cpp",
         "${utils_path}/src/dm_error_message.cpp",
         "${utils_path}/src/dm_log.cpp",
         "${utils_path}/src/dm_random.cpp",
-        "${utils_path}/src/hisysevent/lite/dm_hisysevent.cpp",
         "${utils_path}/src/permission/lite/permission_manager.cpp",
       ]
 
@@ -73,7 +73,7 @@ if (defined(ohos_lite)) {
         "${common_path}/include/ipc",
         "${common_path}/include/ipc/model",
         "include",
-        "include/hisysevent/lite",
+        "include/dfx/lite",
         "include/fwkload/lite",
         "include/ipc/lite",
         "include/permission/lite",
@@ -95,12 +95,12 @@ if (defined(ohos_lite)) {
         "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
       ]
       sources = [
+        "src/dfx/lite/dm_hisysevent.cpp",
         "src/dm_anonymous.cpp",
         "src/dm_error_message.cpp",
         "src/dm_log.cpp",
         "src/dm_random.cpp",
         "src/fwkload/lite/dm_distributed_hardware_load.cpp",
-        "src/hisysevent/lite/dm_hisysevent.cpp",
         "src/ipc/lite/ipc_cmd_register.cpp",
         "src/permission/lite/permission_manager.cpp",
       ]
@@ -127,7 +127,7 @@ if (defined(ohos_lite)) {
     include_dirs = [
       "include",
       "include/fwkload/standard",
-      "include/hisysevent/standard",
+      "include/dfx/standard",
       "include/ipc/standard",
       "${common_path}/include",
       "${common_path}/include/ipc",
@@ -139,12 +139,12 @@ if (defined(ohos_lite)) {
 
   ohos_shared_library("devicemanagerutils") {
     sources = [
+      "src/dfx/standard/dm_hisysevent.cpp",
       "src/dm_anonymous.cpp",
       "src/dm_error_message.cpp",
       "src/dm_hash.cpp",
       "src/dm_log.cpp",
       "src/dm_random.cpp",
-      "src/hisysevent/standard/dm_hisysevent.cpp",
       "src/ipc/standard/ipc_cmd_register.cpp",
     ]
     if (support_jsapi) {

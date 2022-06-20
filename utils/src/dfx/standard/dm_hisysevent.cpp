@@ -19,18 +19,17 @@ namespace OHOS {
 namespace DistributedHardware {
 IMPLEMENT_SINGLE_INSTANCE(HisyseventUtil);
 
-void HisyseventUtil::SysEventWrite(std::string status, OHOS::HiviewDFX::HiSysEvent::EventType eventType,
-    std::string msg)
+void HisyseventUtil::SysEventWrite(std::string status, DM_HISYEVENT_EventType eventType, std::string msg)
 {
     int32_t res = OHOS::HiviewDFX::HiSysEvent::Write(
         OHOS::HiviewDFX::HiSysEvent::Domain::DISTRIBUTED_DEVICE_MANAGER,
         status,
-        eventType,
+        (OHOS::HiviewDFX::HiSysEvent::EventType)eventType,
         "PID", getpid(),
         "UID", getuid(),
         "MSG", msg);
     if (res != DM_OK) {
-        LOGE("Write HiSysEvent error, res:%d", res);
+        LOGE("%s  Write HiSysEvent error, res:%d", status.c_str(), res);
     }
 }
 } // namespace DistributedHardware

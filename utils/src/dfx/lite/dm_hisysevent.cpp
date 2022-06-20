@@ -13,22 +13,14 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DISTRIBUTED_DM_HISYSEVENT_H
-#define OHOS_DISTRIBUTED_DM_HISYSEVENT_H
-
-#include "single_instance.h"
-
-#include <cstring>
-#include <unistd.h>
+#include "dm_hisysevent.h"
 
 namespace OHOS {
 namespace DistributedHardware {
-class HisyseventUtil {
-    DECLARE_SINGLE_INSTANCE(HisyseventUtil);
-
-public:
-    void SysEventWrite(void);
-};
+IMPLEMENT_SINGLE_INSTANCE(HisyseventUtil);
+void HisyseventUtil::SysEventWrite(std::string status, DM_HISYEVENT_EventType dmeventType, std::string msg)
+{
+    return;
+}
 } // namespace DistributedHardware
 } // namespace OHOS
-#endif // OHOS_DISTRIBUTED_DM_HISYSEVENT_H
