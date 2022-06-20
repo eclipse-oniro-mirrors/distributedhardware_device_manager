@@ -29,6 +29,7 @@ class HisyseventUtil {
 
 public:
     void SysEventWrite(void);
+};
 } // namespace DistributedHardware
 } // namespace OHOS
 #endif // OHOS_DISTRIBUTED_DM_HISYSEVENT_H
