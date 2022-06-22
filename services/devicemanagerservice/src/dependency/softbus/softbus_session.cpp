@@ -61,7 +61,7 @@ int32_t SoftbusSession::UnRegisterSessionCallback()
 int32_t SoftbusSession::OpenAuthSession(const std::string &deviceId)
 {
     LOGI("SoftbusSession::OpenAuthSession");
-    DMTraceStart(DM_HITRACE_AUTH_TO_OPPEN_SESSION);
+    DmTraceStart(DM_HITRACE_AUTH_TO_OPPEN_SESSION);
     int32_t sessionId = -1;
     std::string connectAddr;
     ConnectionAddr *addrInfo = SoftbusConnector::GetConnectAddr(deviceId, connectAddr);
@@ -74,7 +74,7 @@ int32_t SoftbusSession::OpenAuthSession(const std::string &deviceId)
         LOGE("open session error, ret:%d", sessionId);
         return sessionId;
     }
-    DMTraceEnd();
+    DmTraceEnd();
     LOGI("SoftbusSession::OpenAuthSession success. sessionId is:%d", sessionId);
     return sessionId;
 }

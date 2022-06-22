@@ -17,12 +17,12 @@
 
 namespace OHOS {
 namespace DistributedHardware {
-void DMTraceStart(const std::string &msg)
+void DmTraceStart(const std::string &msg)
 {
     StartTrace(HITRACE_TAG_DEVICE_MANAGER, msg);
 }
 
-void DMTraceEnd()
+void DmTraceEnd()
 {
     FinishTrace(HITRACE_TAG_DEVICE_MANAGER);
 }

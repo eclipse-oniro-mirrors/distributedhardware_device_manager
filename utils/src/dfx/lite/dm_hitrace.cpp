@@ -16,12 +16,12 @@
 
 namespace OHOS {
 namespace DistributedHardware {
-void DMTraceStart(const std::string &msg)
+void DmTraceStart(const std::string &msg)
 {
     return;
 }
 
-void DMTraceEnd()
+void DmTraceEnd()
 {
     return;
 }

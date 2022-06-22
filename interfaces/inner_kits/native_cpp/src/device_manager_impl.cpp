@@ -50,7 +50,7 @@ DeviceManagerImpl &DeviceManagerImpl::GetInstance()
 int32_t DeviceManagerImpl::InitDeviceManager(const std::string &pkgName, std::shared_ptr<DmInitCallback> dmInitCallback)
 {
     LOGI("DeviceManager::InitDeviceManager start, pkgName: %s", pkgName.c_str());
-    DMTraceStart(DM_HITRACE_INIT);
+    DmTraceStart(DM_HITRACE_INIT);
     if (pkgName.empty() || dmInitCallback == nullptr) {
         LOGE("InitDeviceManager error: Invalid parameter");
         return ERR_DM_INPUT_PARAMETER_EMPTY;
@@ -77,7 +77,7 @@ int32_t DeviceManagerImpl::InitDeviceManager(const std::string &pkgName, std::sh
     }
 
     DeviceManagerNotify::GetInstance().RegisterDeathRecipientCallback(pkgName, dmInitCallback);
-    DMTraceEnd();
+    DmTraceEnd();
     LOGI("InitDeviceManager success");
     SysEventWrite(DM_INIT_DEVICE_MANAGER_SUCCESS, DM_HISYEVENT_BEHAVIOR, DM_INIT_DEVICE_MANAGER_SUCCESS_MSG);
     return DM_OK;
@@ -135,7 +135,7 @@ int32_t DeviceManagerImpl::GetTrustedDeviceList(const std::string &pkgName, cons
 int32_t DeviceManagerImpl::GetLocalDeviceInfo(const std::string &pkgName, DmDeviceInfo &info)
 {
     LOGI("DeviceManager::GetLocalDeviceInfo start, pkgName: %s", pkgName.c_str());
-    DMTraceStart(DM_HITRACE_GET_LOCAL_DEVICE_INFO);
+    DmTraceStart(DM_HITRACE_GET_LOCAL_DEVICE_INFO);
     std::shared_ptr<IpcReq> req = std::make_shared<IpcReq>();
     std::shared_ptr<IpcGetLocalDeviceInfoRsp> rsp = std::make_shared<IpcGetLocalDeviceInfoRsp>();
     req->SetPkgName(pkgName);
@@ -153,7 +153,7 @@ int32_t DeviceManagerImpl::GetLocalDeviceInfo(const std::string &pkgName, DmDevi
     }
 
     info = rsp->GetLocalDeviceInfo();
-    DMTraceEnd();
+    DmTraceEnd();
     LOGI("GetLocalDeviceInfo completed,pkgname%s", req->GetPkgName().c_str());
     SysEventWrite(GET_LOCAL_DEVICE_INFO_SUCCESS, DM_HISYEVENT_BEHAVIOR, GET_LOCAL_DEVICE_INFO_SUCCESS_MSG);
     return DM_OK;
@@ -195,7 +195,7 @@ int32_t DeviceManagerImpl::StartDeviceDiscovery(const std::string &pkgName, cons
                                                 const std::string &extra, std::shared_ptr<DiscoveryCallback> callback)
 {
     LOGI("DeviceManager::StartDeviceDiscovery start, pkgName: %s", pkgName.c_str());
-    DMTraceStart(DM_HITRACE_START_DEVICE);
+    DmTraceStart(DM_HITRACE_START_DEVICE);
     if (pkgName.empty() || callback == nullptr) {
         LOGE("StartDeviceDiscovery error: Invalid para");
         return ERR_DM_INPUT_PARAMETER_EMPTY;
@@ -222,7 +222,7 @@ int32_t DeviceManagerImpl::StartDeviceDiscovery(const std::string &pkgName, cons
         return ret;
     }
 
-    DMTraceEnd();
+    DmTraceEnd();
     LOGI("StartDeviceDiscovery completed, pkgName: %s", pkgName.c_str());
     SysEventWrite(START_DEVICE_DISCOVERY_SUCCESS, DM_HISYEVENT_BEHAVIOR, START_DEVICE_DISCOVERY_SUCCESS_MSG);
     return DM_OK;
@@ -263,7 +263,7 @@ int32_t DeviceManagerImpl::AuthenticateDevice(const std::string &pkgName, int32_
                                               std::shared_ptr<AuthenticateCallback> callback)
 {
     LOGI("DeviceManager::AuthenticateDevice start , pkgName: %s", pkgName.c_str());
-    DMTraceStart(DM_HITRACE_AUTH_TO_CONSULT);
+    DmTraceStart(DM_HITRACE_AUTH_TO_CONSULT);
     if (pkgName.empty()) {
         LOGE("AuthenticateDevice error: Invalid para");
         return ERR_DM_INPUT_PARAMETER_EMPTY;
@@ -290,7 +290,7 @@ int32_t DeviceManagerImpl::AuthenticateDevice(const std::string &pkgName, int32_
         LOGE("AuthenticateDevice error: Failed with ret %d", ret);
         return ERR_DM_IPC_RESPOND_FAILED;
     }
-    DMTraceEnd();
+    DmTraceEnd();
     LOGI("DeviceManager::AuthenticateDevice completed, pkgName: %s", pkgName.c_str());
     return DM_OK;
 }
