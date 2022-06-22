@@ -13,17 +13,18 @@
  * limitations under the License.
  */
 #include "dm_hitrace.h"
+#include "hitrace_meter.h"
 
 namespace OHOS {
 namespace DistributedHardware {
 void DMTraceStart(const std::string &msg)
 {
-    StartTrace(DM_HITRACE_LABEL, msg);
+    StartTrace(HITRACE_TAG_DEVICE_MANAGER, msg);
 }
 
 void DMTraceEnd()
 {
-    FinishTrace(DM_HITRACE_LABEL);
+    FinishTrace(HITRACE_TAG_DEVICE_MANAGER);
 }
 } // namespace DistributedHardware
 } // namespace OHOS
