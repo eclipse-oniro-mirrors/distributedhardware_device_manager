@@ -31,7 +31,6 @@ if (defined(ohos_lite)) {
       features = [
         "utils:devicemanagerutils",
         "services/service:devicemanagerservice",
-        "services/implementation:devicemanagerserviceimpl",
         "interfaces/inner_kits/native_cpp:devicemanagersdk",
         "ext/pin_auth:devicemanagerext_pin_auth",
       ]
