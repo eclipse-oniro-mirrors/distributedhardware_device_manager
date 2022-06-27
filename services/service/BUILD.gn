@@ -171,6 +171,7 @@ if (defined(ohos_lite)) {
       ]
 
       sources = [
+        "src/ipc/lite/ipc_server_main.cpp",
       ]
       ldflags = dm_ldflags
 
