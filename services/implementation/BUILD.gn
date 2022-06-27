@@ -195,11 +195,6 @@ if (defined(ohos_lite)) {
         "src/device_manager_service_impl.cpp",
         "src/devicestate/dm_device_state_manager.cpp",
         "src/discovery/dm_discovery_manager.cpp",
-        "src/ipc/lite/ipc_cmd_parser.cpp",
-        "src/ipc/lite/ipc_server_listener.cpp",
-        "src/ipc/lite/ipc_server_listenermgr.cpp",
-        "src/ipc/lite/ipc_server_main.cpp",
-        "src/ipc/lite/ipc_server_stub.cpp",
       ]
       ldflags = dm_ldflags
 
