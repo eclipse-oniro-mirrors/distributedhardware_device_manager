@@ -179,22 +179,6 @@ if (defined(ohos_lite)) {
       ]
 
       sources = [
-        "src/ability/lite/dm_ability_manager.cpp",
-        "src/adapter/lite/dm_adapter_manager.cpp",
-        "src/authentication/auth_message_processor.cpp",
-        "src/authentication/auth_request_state.cpp",
-        "src/authentication/auth_response_state.cpp",
-        "src/authentication/dm_auth_manager.cpp",
-        "src/authentication/showconfirm/lite/show_confirm.cpp",
-        "src/config/dm_config_manager.cpp",
-        "src/dependency/hichain/hichain_connector.cpp",
-        "src/dependency/multipleuser/multiple_user_connector.cpp",
-        "src/dependency/softbus/softbus_connector.cpp",
-        "src/dependency/softbus/softbus_session.cpp",
-        "src/dependency/timer/dm_timer.cpp",
-        "src/device_manager_service_impl.cpp",
-        "src/devicestate/dm_device_state_manager.cpp",
-        "src/discovery/dm_discovery_manager.cpp",
       ]
       ldflags = dm_ldflags
 
