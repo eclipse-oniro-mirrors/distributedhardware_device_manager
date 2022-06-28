@@ -269,5 +269,23 @@ bool DeviceManagerService::IsDMServiceImplReady()
     isImplsoLoaded_ = true;
     return true;
 }
+
+int32_t DeviceManagerService::DmHiDumper(const std::vector<std::string>& args, std::string &result)
+{
+    std::vector<HidumperFlag> dumpflag;
+    HidumpHelper::GetInstance().GetArgsType(args, dumpflag);
+    for (unsigned int i = 0; i < dumpflag.size(); i++) {
+        if (dumpflag[i] == HidumperFlag::HIDUMPER_GET_TRUSTED_LIST) {
+            std::vector<DmDeviceInfo> deviceList;
+            std::string extra;
+            GetTrustedDeviceList(DM_PKG_NAME, extra, deviceList);
+            for (unsigned int  j = 0; j < deviceList.size(); j++) {
+                HidumpHelper::GetInstance().SetNodeInfo(deviceList[j]);
+            }
+        }
+    }
+    HidumpHelper::GetInstance().HiDump(args, result);
+    return DM_OK;
+}
 } // namespace DistributedHardware
 } // namespace OHOS

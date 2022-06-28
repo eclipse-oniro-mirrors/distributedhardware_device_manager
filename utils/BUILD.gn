@@ -42,6 +42,7 @@ if (defined(ohos_lite)) {
       ]
 
       sources = [
+        "${utils_path}/src/dfx/lite/dm_hidumper.cpp",
         "${utils_path}/src/dfx/lite/dm_hisysevent.cpp",
         "${utils_path}/src/dfx/lite/dm_hitrace.cpp",
         "${utils_path}/src/dm_anonymous.cpp",
@@ -98,6 +99,7 @@ if (defined(ohos_lite)) {
         "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
       ]
       sources = [
+        "src/dfx/lite/dm_hidumper.cpp",
         "src/dfx/lite/dm_hisysevent.cpp",
         "src/dfx/lite/dm_hitrace.cpp",
         "src/dm_anonymous.cpp",
@@ -144,6 +146,7 @@ if (defined(ohos_lite)) {
 
   ohos_shared_library("devicemanagerutils") {
     sources = [
+      "src/dfx/standard/dm_hidumper.cpp",
       "src/dfx/standard/dm_hisysevent.cpp",
       "src/dfx/standard/dm_hitrace.cpp",
       "src/dm_anonymous.cpp",

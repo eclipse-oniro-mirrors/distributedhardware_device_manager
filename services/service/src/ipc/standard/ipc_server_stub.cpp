@@ -22,6 +22,7 @@
 #include "device_manager_service.h"
 #include "dm_constants.h"
 #include "dm_log.h"
+#include "dm_hidumper.h"
 #include "if_system_ability_manager.h"
 #include "ipc_cmd_register.h"
 #include "ipc_skeleton.h"
@@ -184,6 +185,26 @@ const sptr<IpcRemoteBroker> IpcServerStub::GetDmListener(std::string pkgName) co
     auto remote = iter->second;
     sptr<IpcRemoteBroker> dmListener = iface_cast<IpcRemoteBroker>(remote);
     return dmListener;
+}
+
+int32_t IpcServerStub::Dump(int32_t fd, const std::vector<std::u16string>& args)
+{
+    LOGI("DistributedHardwareService Dump.");
+    std::vector<std::string> argsStr {};
+    for (auto item : args) {
+        argsStr.emplace_back(Str16ToStr8(item));
+    }
+    std::string result("");
+    int ret = DeviceManagerService::GetInstance().DmHiDumper(argsStr, result);
+    if (ret != DM_OK) {
+        LOGE("Dump error, ret = %d", ret);
+    }
+    ret = dprintf(fd, "%s\n", result.c_str());
+    if (ret < 0) {
+        LOGE("HiDumper dprintf error");
+        ret = ERR_DM_FAILED;
+    }
+    return ret;
 }
 
 void AppDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &remote)

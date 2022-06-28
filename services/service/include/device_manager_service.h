@@ -28,6 +28,8 @@
 #include "idevice_manager_service_impl.h"
 #include "single_instance.h"
 #include "softbus_listener.h"
+#include "dm_dfx_constants.h"
+#include "dm_hidumper.h"
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -81,6 +83,7 @@ public:
 
     bool IsDMServiceImplReady();
 
+    int32_t DmHiDumper(const std::vector<std::string>& args, std::string &result);
 private:
     bool isImplsoLoaded_ = false;
     std::shared_ptr<SoftbusListener> softbusListener_;
