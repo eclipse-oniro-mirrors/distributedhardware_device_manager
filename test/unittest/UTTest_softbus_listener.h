@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef OHOS_UTTEST_DM_DEVICEINFO_MANAGER_H
-#define OHOS_UTTEST_DM_DEVICEINFO_MANAGER_H
+#ifndef OHOS_UTTEST_DM_SOFTBUS_LISTENER_H
+#define OHOS_UTTEST_DM_SOFTBUS_LISTENER_H
 
 #include <gtest/gtest.h>
 #include <refbase.h>
@@ -24,13 +24,12 @@
 #include "device_manager_service_listener.h"
 #include "dm_adapter_manager.h"
 #include "dm_device_info.h"
-#include "dm_device_info_manager.h"
 #include "softbus_connector.h"
 #include "softbus_session_callback.h"
 
 namespace OHOS {
 namespace DistributedHardware {
-class DeviceManagerImplTest : public testing::Test {
+class SoftbusListenerTest : public testing::Test {
 public:
     static void SetUpTestCase();
     static void TearDownTestCase();

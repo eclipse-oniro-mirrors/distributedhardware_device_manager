@@ -51,6 +51,6 @@ if (defined(ohos_lite)) {
   }
   group("device_manager_test") {
     testonly = true
-    deps = []
+    deps = [ "test:test" ]
   }
 }

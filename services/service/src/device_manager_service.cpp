@@ -91,7 +91,7 @@ int32_t DeviceManagerService::GetUdidByNetworkId(const std::string &pkgName, con
                                                  std::string &udid)
 {
     if (pkgName.empty()) {
-        LOGE("StartDeviceDiscovery failed, pkgName is empty");
+        LOGE("GetUdidByNetworkId failed, pkgName is empty");
         return ERR_DM_INPUT_PARAMETER_EMPTY;
     }
     SoftbusListener::GetUdidByNetworkId(netWorkId.c_str(), udid);
@@ -102,7 +102,7 @@ int32_t DeviceManagerService::GetUuidByNetworkId(const std::string &pkgName, con
                                                  std::string &uuid)
 {
     if (pkgName.empty()) {
-        LOGE("StartDeviceDiscovery failed, pkgName is empty");
+        LOGE("GetUuidByNetworkId failed, pkgName is empty");
         return ERR_DM_INPUT_PARAMETER_EMPTY;
     }
     SoftbusListener::GetUuidByNetworkId(netWorkId.c_str(), uuid);
@@ -112,10 +112,6 @@ int32_t DeviceManagerService::GetUuidByNetworkId(const std::string &pkgName, con
 int32_t DeviceManagerService::StartDeviceDiscovery(const std::string &pkgName, const DmSubscribeInfo &subscribeInfo,
                                                    const std::string &extra)
 {
-    if (!PermissionManager::GetInstance().CheckPermission()) {
-        LOGI("The caller does not have permission to call.");
-        return ERR_DM_NO_PERMISSION;
-    }
     if (!IsDMServiceImplReady()) {
         LOGE("StartDeviceDiscovery failed, instance not init or init failed.");
         return ERR_DM_NOT_INIT;
@@ -125,10 +121,6 @@ int32_t DeviceManagerService::StartDeviceDiscovery(const std::string &pkgName, c
 
 int32_t DeviceManagerService::StopDeviceDiscovery(const std::string &pkgName, uint16_t subscribeId)
 {
-    if (!PermissionManager::GetInstance().CheckPermission()) {
-        LOGI("The caller does not have permission to call");
-        return ERR_DM_NO_PERMISSION;
-    }
     if (!IsDMServiceImplReady()) {
         LOGE("StopDeviceDiscovery failed, instance not init or init failed.");
         return ERR_DM_NOT_INIT;
@@ -139,10 +131,6 @@ int32_t DeviceManagerService::StopDeviceDiscovery(const std::string &pkgName, ui
 int32_t DeviceManagerService::AuthenticateDevice(const std::string &pkgName, int32_t authType,
                                                  const std::string &deviceId, const std::string &extra)
 {
-    if (!PermissionManager::GetInstance().CheckPermission()) {
-        LOGI("The caller does not have permission to call");
-        return ERR_DM_NO_PERMISSION;
-    }
     if (!IsDMServiceImplReady()) {
         LOGE("AuthenticateDevice failed, instance not init or init failed.");
         return ERR_DM_NOT_INIT;
@@ -152,10 +140,6 @@ int32_t DeviceManagerService::AuthenticateDevice(const std::string &pkgName, int
 
 int32_t DeviceManagerService::UnAuthenticateDevice(const std::string &pkgName, const std::string &deviceId)
 {
-    if (!PermissionManager::GetInstance().CheckPermission()) {
-        LOGI("The caller does not have permission to call");
-        return ERR_DM_NO_PERMISSION;
-    }
     if (!IsDMServiceImplReady()) {
         LOGE("UnAuthenticateDevice failed, instance not init or init failed.");
         return ERR_DM_NOT_INIT;
@@ -165,10 +149,6 @@ int32_t DeviceManagerService::UnAuthenticateDevice(const std::string &pkgName, c
 
 int32_t DeviceManagerService::VerifyAuthentication(const std::string &authParam)
 {
-    if (!PermissionManager::GetInstance().CheckPermission()) {
-        LOGI("The caller does not have permission to call");
-        return ERR_DM_NO_PERMISSION;
-    }
     if (!IsDMServiceImplReady()) {
         LOGE("VerifyAuthentication failed, instance not init or init failed.");
         return ERR_DM_NOT_INIT;
