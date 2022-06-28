@@ -170,9 +170,7 @@ if (defined(ohos_lite)) {
         "//foundation/distributedschedule/samgr/interfaces/innerkits/samgr_proxy/include",
       ]
 
-      sources = [
-        "src/ipc/lite/ipc_server_main.cpp",
-      ]
+      sources = [ "src/ipc/lite/ipc_server_main.cpp" ]
       ldflags = dm_ldflags
 
       defines = [
