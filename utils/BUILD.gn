@@ -28,6 +28,7 @@ if (defined(ohos_lite)) {
         "${utils_path}/include/dfx/lite",
         "${utils_path}/include/permission/lite",
         "${common_path}/include",
+        "${innerkits_path}/native_cpp/include",
       ]
 
       include_dirs += [
@@ -75,6 +76,7 @@ if (defined(ohos_lite)) {
         "${common_path}/include",
         "${common_path}/include/ipc",
         "${common_path}/include/ipc/model",
+        "${innerkits_path}/native_cpp/include",
         "include",
         "include/dfx",
         "include/dfx/lite",
@@ -139,6 +141,7 @@ if (defined(ohos_lite)) {
       "${common_path}/include",
       "${common_path}/include/ipc",
       "${common_path}/include/ipc/model",
+      "${innerkits_path}/native_cpp/include",
       "include/permission/standard",
       "//third_party/mbedtls/include/mbedtls",
     ]

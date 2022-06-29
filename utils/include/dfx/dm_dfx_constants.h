@@ -71,15 +71,18 @@ enum class HidumperFlag {
     HIDUMPER_UNKNOWN = 0,
     HIDUMPER_GET_HELP,
     HIDUMPER_GET_TRUSTED_LIST,
+    HIDUMPER_GET_DEVICE_STATE,
 };
 
 // HiDumper info
-const std::string ARGS_HELP = "-help";
-const std::string HIDUMPER_GET_TRUSTED_LIST = "-getTrustlist";
+const std::string ARGS_HELP_INFO = "-help";
+const std::string HIDUMPER_GET_TRUSTED_LIST_INFO = "-getTrustlist";
+const std::string HIDUMPER_GET_DEVICE_STATE_INFO = "-getDeviceState";
 
 const std::unordered_map<std::string, HidumperFlag> MAP_ARGS = {
-    { ARGS_HELP, HidumperFlag::HIDUMPER_GET_HELP },
-    { HIDUMPER_GET_TRUSTED_LIST, HidumperFlag::HIDUMPER_GET_TRUSTED_LIST },
+    { ARGS_HELP_INFO, HidumperFlag::HIDUMPER_GET_HELP },
+    { HIDUMPER_GET_TRUSTED_LIST_INFO, HidumperFlag::HIDUMPER_GET_TRUSTED_LIST },
+    { HIDUMPER_GET_DEVICE_STATE_INFO, HidumperFlag::HIDUMPER_GET_DEVICE_STATE },
 };
 } // namespace DistributedHardware
 } // namespace OHOS

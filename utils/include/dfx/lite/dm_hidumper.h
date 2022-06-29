@@ -20,24 +20,22 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <unordered_map>
 
+#include "single_instance.h"
 #include "dm_constants.h"
 #include "dm_dfx_constants.h"
-#include "single_instance.h"
+#include "dm_log.h"
+#include "dm_device_info.h"
 
 namespace OHOS {
 namespace DistributedHardware {
 class HidumpHelper {
-IMPLEMENT_SINGLE_INSTANCE(HidumpHelper);
+    DECLARE_SINGLE_INSTANCE(HidumpHelper);
+
 public:
     int32_t HiDump(const std::vector<std::string>& args, std::string &result);
-
-private:
-    int32_t ProcessDump(const HidumperFlag &flag, std::string &result);
-    int32_t ShowAllLoadTrustedList(std::string &result);
-    int32_t ShowHelp(std::string &result);
-    int32_t ShowIllealInfomation(std::string &result);
+    int32_t GetArgsType(const std::vector<std::string>& args, std::vector<HidumperFlag> &Flag);
+    void SetNodeInfo(const DmDeviceInfo& deviceInfo, const bool deviceStates);
 };
 } // namespace DistributedHardware
 } // namespace OHOS

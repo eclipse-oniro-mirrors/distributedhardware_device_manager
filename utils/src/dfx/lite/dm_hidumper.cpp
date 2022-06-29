@@ -23,24 +23,15 @@ int32_t HidumpHelper::HiDump(const std::vector<std::string>& args, std::string &
     return DM_OK;
 }
 
-int32_t HidumpHelper::ProcessDump(const HidumperFlag &flag, std::string &result)
+int32_t HidumpHelper::GetArgsType(const std::vector<std::string>& args, std::vector<HidumperFlag> &Flag)
 {
     return DM_OK;
 }
 
-int32_t HidumpHelper::ShowAllLoadTrustedList(std::string &result)
+void HidumpHelper::SetNodeInfo(const DmDeviceInfo& deviceInfo, const bool deviceStates)
 {
-    return DM_OK;
+    return;
 }
 
-int32_t HidumpHelper::ShowHelp(std::string &result)
-{
-    return DM_OK;
-}
-
-int32_t HidumpHelper::ShowIllealInfomation(std::string &result)
-{
-    return ERR_DM_FAILED;
-}
 } // namespace DistributedHardware
 } // namespace OHOS

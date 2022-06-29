@@ -194,11 +194,13 @@ int32_t IpcServerStub::Dump(int32_t fd, const std::vector<std::u16string>& args)
     for (auto item : args) {
         argsStr.emplace_back(Str16ToStr8(item));
     }
+
     std::string result("");
     int ret = DeviceManagerService::GetInstance().DmHiDumper(argsStr, result);
     if (ret != DM_OK) {
         LOGE("Dump error, ret = %d", ret);
     }
+
     ret = dprintf(fd, "%s\n", result.c_str());
     if (ret < 0) {
         LOGE("HiDumper dprintf error");

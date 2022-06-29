@@ -28,6 +28,7 @@ int32_t HidumpHelper::HiDump(const std::vector<std::string>& args, std::string &
     LOGI("HidumpHelper hidumper start.");
     result.clear();
     int32_t errCode = ERR_DM_FAILED;
+
     if (args.empty()) {
         return ProcessDump(HidumperFlag::HIDUMPER_GET_HELP, result);
     }
@@ -40,9 +41,15 @@ int32_t HidumpHelper::HiDump(const std::vector<std::string>& args, std::string &
     return errCode;
 }
 
-void HidumpHelper::SetNodeInfo(const DmDeviceInfo& deviceInfo)
+void HidumpHelper::SetNodeInfo(const DmDeviceInfo& deviceInfo, const bool deviceStates)
 {
+    LOGI("HidumpHelper::SetNodeInfo");
     nodeInfos_.push_back(deviceInfo);
+    std::string deviceState = "offline";
+    if (deviceStates) {
+        deviceState = "online";
+    }
+    deviceState_.push_back(deviceState);
 }
 
 int32_t HidumpHelper::ProcessDump(const HidumperFlag &flag, std::string &result)
@@ -68,20 +75,21 @@ int32_t HidumpHelper::ProcessDump(const HidumperFlag &flag, std::string &result)
 
 int32_t HidumpHelper::ShowAllLoadTrustedList(std::string &result)
 {
-    LOGI("Dump Show All Load Trust List.");
+    LOGI("Dump Show All Load Trust List");
     int32_t ret = DM_OK;
 
     if (nodeInfos_.size() == 0) {
-        LOGE("Hidumper get trusted list is 0");
+        LOGE("Hidumper get trusted list is empty");
+        result.append("Hidumper get trusted list is empty");
     }
     for (unsigned int i = 0; i < nodeInfos_.size(); ++i) {
         result.append("\n{\n    deviceId          : ").append(GetAnonyString(nodeInfos_[i].deviceId).c_str());
         result.append("\n{\n    deviceName        : ").append(nodeInfos_[i].deviceName);
         result.append("\n{\n    networkId         : ").append(GetAnonyString(nodeInfos_[i].networkId).c_str());
+        result.append("\n{\n    deviceState         : ").append(deviceState_[i]);
     }
-    nodeInfos_.clear();
-    result.replace(result.size() - 1, 1, "\n");
 
+    nodeInfos_.clear();
     LOGI("HidumpHelper ShowAllLoadTrustedList %s", result.c_str());
     return ret;
 }
@@ -90,14 +98,10 @@ int32_t HidumpHelper::ShowHelp(std::string &result)
 {
     LOGI("Show hidumper help.");
     result.append("DistributedHardwareDeviceManager hidumper options:\n");
-    result.append(" -help    ");
+    result.append(" -help                    ");
     result.append(": Show help\n");
-    result.append(" -getTrustlist    ");
-    result.append(": Show all get trusted list:\n");
-    result.append(" -getOnlineDeviceInfo    ");
-    result.append(": Show all get online device list\n");
-    result.append(" -getOfflineDeviceInfo    ");
-    result.append(": Show all get offline device list\n\n");
+    result.append(" -getTrustlist            ");
+    result.append(": Show all get trusted list:\n\n");
     LOGI("result is %s", result.c_str());
     return DM_OK;
 }
@@ -107,20 +111,23 @@ int32_t HidumpHelper::ShowIllealInfomation(std::string &result)
     LOGI("ShowIllealInfomation Dump.");
     result.clear();
     result.append("Unrecognized option, -h for help.");
-    return ERR_DM_FAILED;
+    return DM_OK;
 }
 
-void HidumpHelper::GetArgsType(const std::vector<std::string>& args, std::vector<HidumperFlag> &Flag)
+int32_t HidumpHelper::GetArgsType(const std::vector<std::string>& args, std::vector<HidumperFlag> &Flag)
 {
-    LOGI("HidumpHelper::GetArgsType.");
+    LOGI("HidumpHelper::GetArgsType");
+    int32_t ret = ERR_DM_FAILED;
     if (args.empty()) {
         Flag.push_back(HidumperFlag::HIDUMPER_GET_HELP);
+        return ret;
     }
 
     auto flag = MAP_ARGS.find(args[0]);
-    if ((args.size() > 1) || (flag == MAP_ARGS.end())) {
+    if (flag != MAP_ARGS.end()) {
         Flag.push_back(flag->second);
     }
+    return ret;
 }
 } // namespace DistributedHardware
 } // namespace OHOS
