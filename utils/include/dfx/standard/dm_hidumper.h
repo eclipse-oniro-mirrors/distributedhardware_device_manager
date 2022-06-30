@@ -34,7 +34,7 @@ DECLARE_SINGLE_INSTANCE(HiDumpHelper);
 public:
     int32_t HiDump(const std::vector<std::string>& args, std::string &result);
     int32_t GetArgsType(const std::vector<std::string>& args, std::vector<HidumperFlag> &Flag);
-    void SetNodeInfo(const DmDeviceInfo& deviceInfo, const bool deviceStates);
+    void SetNodeInfo(const DmDeviceInfo& deviceInfo);
 
 private:
     int32_t ProcessDump(const HidumperFlag &flag, std::string &result);
@@ -44,7 +44,6 @@ private:
 
 private:
     std::vector<DmDeviceInfo> nodeInfos_;
-    std::vector<std::string> deviceState_;
 };
 } // namespace DistributedHardware
 } // namespace OHOS

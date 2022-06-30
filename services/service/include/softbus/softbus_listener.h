@@ -101,7 +101,6 @@ public:
     ~SoftbusListener();
     int32_t GetTrustedDeviceList(std::vector<DmDeviceInfo> &deviceInfoList);
     int32_t GetLocalDeviceInfo(DmDeviceInfo &deviceInfo);
-    bool IsDeviceOnline(const std::string &deviceId);
 
 private:
     int32_t Init();

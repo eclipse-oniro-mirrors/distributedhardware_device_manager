@@ -286,10 +286,9 @@ int32_t DeviceManagerService::DmHiDumper(const std::vector<std::string>& args, s
                 LOGE("HiDumpHelper GetTrustedDeviceList failed");
                 return ERR_DM_FAILED;
             }
-            bool deviceState = false;
+
             for (unsigned int  j = 0; j < deviceList.size(); j++) {
-                deviceState = softbusListener_->IsDeviceOnline(deviceList[j].deviceId);
-                HiDumpHelper::GetInstance().SetNodeInfo(deviceList[j], deviceState);
+                HiDumpHelper::GetInstance().SetNodeInfo(deviceList[j]);
                 LOGI("DeviceManagerService::DmHiDumper  SetNodeInfo.");
             }
         }

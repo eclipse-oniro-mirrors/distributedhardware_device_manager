@@ -28,7 +28,7 @@ int32_t HiDumpHelper::GetArgsType(const std::vector<std::string>& args, std::vec
     return DM_OK;
 }
 
-void HiDumpHelper::SetNodeInfo(const DmDeviceInfo& deviceInfo, const bool deviceStates)
+void HiDumpHelper::SetNodeInfo(const DmDeviceInfo& deviceInfo)
 {
     return;
 }

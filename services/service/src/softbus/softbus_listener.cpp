@@ -175,44 +175,6 @@ int32_t SoftbusListener::GetTrustedDeviceList(std::vector<DmDeviceInfo> &deviceI
     return DM_OK;
 }
 
-bool SoftbusListener::IsDeviceOnline(const std::string &deviceId)
-{
-    NodeBasicInfo *info = nullptr;
-    int32_t infoNum = 0;
-    if (GetAllNodeDeviceInfo(DM_PKG_NAME.c_str(), &info, &infoNum) != DM_OK) {
-        LOGE("GetAllNodeDeviceInfo failed");
-        return false;
-    }
-    bool bDeviceOnline = false;
-    for (int32_t i = 0; i < infoNum; ++i) {
-        NodeBasicInfo *nodeBasicInfo = info + i;
-        if (nodeBasicInfo == nullptr) {
-            LOGE("nodeBasicInfo is empty for index %d, infoNum %d.", i, infoNum);
-            continue;
-        }
-        std::string networkId = nodeBasicInfo->networkId;
-        if (networkId == deviceId) {
-            LOGI("DM_IsDeviceOnLine device %s online", GetAnonyString(deviceId).c_str());
-            bDeviceOnline = true;
-            break;
-        }
-        uint8_t udid[UDID_BUF_LEN] = {0};
-        int32_t ret = GetNodeKeyInfo(DM_PKG_NAME.c_str(), networkId.c_str(), NodeDeviceInfoKey::NODE_KEY_UDID, udid,
-                                     sizeof(udid));
-        if (ret != DM_OK) {
-            LOGE("DM_IsDeviceOnLine GetNodeKeyInfo failed");
-            break;
-        }
-        if (strcmp((char *)udid, deviceId.c_str()) == 0) {
-            LOGI("DM_IsDeviceOnLine device %s online", GetAnonyString(deviceId).c_str());
-            bDeviceOnline = true;
-            break;
-        }
-    }
-    FreeNodeInfo(info);
-    return bDeviceOnline;
-}
-
 int32_t SoftbusListener::GetLocalDeviceInfo(DmDeviceInfo &deviceInfo)
 {
     LOGI("SoftbusListener::GetLocalDeviceInfo start");

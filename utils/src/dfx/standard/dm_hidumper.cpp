@@ -41,15 +41,10 @@ int32_t HiDumpHelper::HiDump(const std::vector<std::string>& args, std::string &
     return errCode;
 }
 
-void HiDumpHelper::SetNodeInfo(const DmDeviceInfo& deviceInfo, const bool deviceStates)
+void HiDumpHelper::SetNodeInfo(const DmDeviceInfo& deviceInfo)
 {
     LOGI("HiDumpHelper::SetNodeInfo");
     nodeInfos_.push_back(deviceInfo);
-    std::string deviceState = "offline";
-    if (deviceStates) {
-        deviceState = "online";
-    }
-    deviceState_.push_back(deviceState);
 }
 
 int32_t HiDumpHelper::ProcessDump(const HidumperFlag &flag, std::string &result)
@@ -75,18 +70,18 @@ int32_t HiDumpHelper::ProcessDump(const HidumperFlag &flag, std::string &result)
 
 int32_t HiDumpHelper::ShowAllLoadTrustedList(std::string &result)
 {
-    LOGI("Dump Show All Load Trust List");
+    LOGI("dump all trusted device List");
     int32_t ret = DM_OK;
 
     if (nodeInfos_.size() == 0) {
-        LOGE("Hidumper get trusted list is empty");
-        result.append("Hidumper get trusted list is empty");
+        LOGE("dump trusted device list is empty");
+        result.append("dump trusted device list is empty");
     }
     for (unsigned int i = 0; i < nodeInfos_.size(); ++i) {
         result.append("\n{\n    deviceId          : ").append(GetAnonyString(nodeInfos_[i].deviceId).c_str());
         result.append("\n{\n    deviceName        : ").append(nodeInfos_[i].deviceName);
         result.append("\n{\n    networkId         : ").append(GetAnonyString(nodeInfos_[i].networkId).c_str());
-        result.append("\n{\n    deviceState         : ").append(deviceState_[i]);
+        result.append("\n{\n    deviceTypeId      : ").append(std::to_string(nodeInfos_[i].deviceTypeId));
     }
 
     nodeInfos_.clear();
@@ -99,9 +94,9 @@ int32_t HiDumpHelper::ShowHelp(std::string &result)
     LOGI("Show hidumper help");
     result.append("DistributedHardwareDeviceManager hidumper options:\n");
     result.append(" -help                    ");
-    result.append(": Show help\n");
+    result.append(": show help\n");
     result.append(" -getTrustlist            ");
-    result.append(": Show all get trusted list:\n\n");
+    result.append(": show all get trusted list:\n\n");
     LOGI("result is %s", result.c_str());
     return DM_OK;
 }
@@ -110,7 +105,7 @@ int32_t HiDumpHelper::ShowIllealInfomation(std::string &result)
 {
     LOGI("ShowIllealInfomation Dump");
     result.clear();
-    result.append("Unrecognized option, -h for help.");
+    result.append("unrecognized option, -h for help.");
     return DM_OK;
 }
 

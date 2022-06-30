@@ -35,7 +35,7 @@ class HiDumpHelper {
 public:
     int32_t HiDump(const std::vector<std::string>& args, std::string &result);
     int32_t GetArgsType(const std::vector<std::string>& args, std::vector<HidumperFlag> &Flag);
-    void SetNodeInfo(const DmDeviceInfo& deviceInfo, const bool deviceStates);
+    void SetNodeInfo(const DmDeviceInfo& deviceInfo);
 };
 } // namespace DistributedHardware
 } // namespace OHOS
