@@ -16,6 +16,7 @@
 #define OHOS_DM_DFX_CONSTANTS_H
 
 #include <string>
+#include <unordered_map>
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -64,6 +65,23 @@ const std::string DM_HITRACE_AUTH_TO_CONSULT = "DM_HITRACE_AUTH_TO_CONSULT";
 const std::string DM_HITRACE_AUTH_TO_OPPEN_SESSION = "DM_HITRACE_AUTH_TO_OPPEN_SESSION";
 const std::string DM_HITRACE_DEVICE_ONLINE = "DM_HITRACE_DEVICE_ONLINE";
 const std::string DM_HITRACE_INIT = "DM_HITRACE_INIT";
+
+// HiDumper Flag
+enum class HidumperFlag {
+    HIDUMPER_UNKNOWN = 0,
+    HIDUMPER_GET_HELP,
+    HIDUMPER_GET_TRUSTED_LIST,
+    HIDUMPER_GET_DEVICE_STATE,
+};
+
+// HiDumper info
+const std::string ARGS_HELP_INFO = "-help";
+const std::string HIDUMPER_GET_TRUSTED_LIST_INFO = "-getTrustlist";
+
+const std::unordered_map<std::string, HidumperFlag> MAP_ARGS = {
+    { ARGS_HELP_INFO, HidumperFlag::HIDUMPER_GET_HELP },
+    { HIDUMPER_GET_TRUSTED_LIST_INFO, HidumperFlag::HIDUMPER_GET_TRUSTED_LIST },
+};
 } // namespace DistributedHardware
 } // namespace OHOS
 #endif // OHOS_DM_DFX_CONSTANTS_H

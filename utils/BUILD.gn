@@ -28,6 +28,7 @@ if (defined(ohos_lite)) {
         "${utils_path}/include/dfx/lite",
         "${utils_path}/include/permission/lite",
         "${common_path}/include",
+        "${innerkits_path}/native_cpp/include",
       ]
 
       include_dirs += [
@@ -42,6 +43,7 @@ if (defined(ohos_lite)) {
       ]
 
       sources = [
+        "${utils_path}/src/dfx/lite/dm_hidumper.cpp",
         "${utils_path}/src/dfx/lite/dm_hisysevent.cpp",
         "${utils_path}/src/dfx/lite/dm_hitrace.cpp",
         "${utils_path}/src/dm_anonymous.cpp",
@@ -74,6 +76,7 @@ if (defined(ohos_lite)) {
         "${common_path}/include",
         "${common_path}/include/ipc",
         "${common_path}/include/ipc/model",
+        "${innerkits_path}/native_cpp/include",
         "include",
         "include/dfx",
         "include/dfx/lite",
@@ -98,6 +101,7 @@ if (defined(ohos_lite)) {
         "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
       ]
       sources = [
+        "src/dfx/lite/dm_hidumper.cpp",
         "src/dfx/lite/dm_hisysevent.cpp",
         "src/dfx/lite/dm_hitrace.cpp",
         "src/dm_anonymous.cpp",
@@ -137,6 +141,7 @@ if (defined(ohos_lite)) {
       "${common_path}/include",
       "${common_path}/include/ipc",
       "${common_path}/include/ipc/model",
+      "${innerkits_path}/native_cpp/include",
       "include/permission/standard",
       "//third_party/mbedtls/include/mbedtls",
     ]
@@ -144,6 +149,7 @@ if (defined(ohos_lite)) {
 
   ohos_shared_library("devicemanagerutils") {
     sources = [
+      "src/dfx/standard/dm_hidumper.cpp",
       "src/dfx/standard/dm_hisysevent.cpp",
       "src/dfx/standard/dm_hitrace.cpp",
       "src/dm_anonymous.cpp",

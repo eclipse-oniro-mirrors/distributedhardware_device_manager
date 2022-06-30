@@ -113,6 +113,13 @@ public:
      */
     const sptr<IpcRemoteBroker> GetDmListener(std::string pkgName) const;
 
+    /**
+     * @tc.name: IpcServerStub::Dump
+     * @tc.desc: Dump of the Device Manager Service
+     * @tc.type: FUNC
+     */
+    int32_t Dump(int32_t fd, const std::vector<std::u16string>& args) override;
+
 private:
     IpcServerStub();
     ~IpcServerStub() = default;
