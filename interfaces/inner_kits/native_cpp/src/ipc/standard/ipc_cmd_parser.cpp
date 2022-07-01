@@ -26,7 +26,6 @@
 #include "ipc_get_local_device_info_rsp.h"
 #include "ipc_get_trustdevice_req.h"
 #include "ipc_get_trustdevice_rsp.h"
-#include "ipc_register_credential_callback_req.h"
 #include "ipc_register_listener_req.h"
 #include "ipc_req.h"
 #include "ipc_rsp.h"

@@ -39,7 +39,6 @@
 #include "ipc_unauthenticate_device_req.h"
 #include "ipc_verify_authenticate_req.h"
 #include "ipc_register_dev_state_callback_req.h"
-#include "ipc_register_credential_callback_req.h"
 #include "securec.h"
 
 namespace OHOS {
