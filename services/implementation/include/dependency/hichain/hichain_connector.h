@@ -159,14 +159,14 @@ public:
      * @tc.desc: Register HiChain Callback of the HiChain Connector
      * @tc.type: FUNC
      */
-    int32_t RegisterhiChainCredentialCallback(const std::shared_ptr<IDmCredentialCallback> &callback);
+    int32_t RegisterHiChainGroupCallback(const std::shared_ptr<IDmGroupResCallback> &callback);
 
     /**
      * @tc.name: HiChainConnector::UnRegisterHiChainCallback
      * @tc.desc: Un Register HiChain Callback of the HiChain Connector
      * @tc.type: FUNC
      */
-    int32_t UnRegisterhiChainCredentialCallback();
+    int32_t UnRegisterHiChainGroupCallback();
 
      /**
      * @tc.name: HiChainConnector::getRegisterInfo
@@ -192,7 +192,8 @@ private:
     const DeviceGroupManager *deviceGroupManager_ = nullptr;
     DeviceAuthCallback deviceAuthCallback_;
     static std::shared_ptr<IHiChainConnectorCallback> hiChainConnectorCallback_;
-    static std::shared_ptr<IDmCredentialCallback> hiChainCredentialCallback_;
+    static std::shared_ptr<IDmGroupResCallback> hiChainCredentialCallback_;
+    int32_t networkStyle_ = PIN_CODE_NETWORK;
 };
 } // namespace DistributedHardware
 } // namespace OHOS

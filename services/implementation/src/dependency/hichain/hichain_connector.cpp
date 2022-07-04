@@ -61,11 +61,10 @@ void from_json(const nlohmann::json &jsonObject, GroupInfo &groupInfo)
 }
 
 std::shared_ptr<IHiChainConnectorCallback> HiChainConnector::hiChainConnectorCallback_ = nullptr;
-std::shared_ptr<IDmCredentialCallback> HiChainConnector::hiChainCredentialCallback_ = nullptr;
+std::shared_ptr<IDmGroupResCallback> HiChainConnector::hiChainResCallback_ = nullptr;
 bool g_createGroupFlag = false;
 bool g_deleteGroupFlag = false;
 bool g_groupIsRedundance = false;
-int32_t g_networkStyle = PIN_CODE_NETWORK;
 
 HiChainConnector::HiChainConnector()
 {
@@ -108,7 +107,7 @@ int32_t HiChainConnector::CreateGroup(int64_t requestId, const std::string &grou
         LOGE("HiChainConnector::CreateGroup group manager is null, requestId %lld.", requestId);
         return ERR_DM_INPUT_PARAMETER_EMPTY;
     }
-    g_networkStyle = PIN_CODE_NETWORK;
+    networkStyle_ = PIN_CODE_NETWORK;
     GroupInfo groupInfo;
     if (IsGroupCreated(groupName, groupInfo)) {
         DeleteGroup(groupInfo.groupId);
@@ -302,10 +301,10 @@ void HiChainConnector::onFinish(int64_t requestId, int operationCode, const char
     if (operationCode == GroupOperationCode::GROUP_CREATE) {
         LOGI("Create group success");
         SysEventWrite(DM_CREATE_GROUP_SUCCESS, DM_HISYEVENT_BEHAVIOR, DM_CREATE_GROUP_SUCCESS_MSG);
-        if (g_networkStyle == CREDENTIAL_NETWORK) {
-            if (hiChainCredentialCallback_ != nullptr) {
+        if (networkStyle_ == CREDENTIAL_NETWORK) {
+            if (hiChainResCallback_ != nullptr) {
                 int32_t importAction = 0;
-                hiChainCredentialCallback_->OnCredentialResult(requestId, importAction, data);
+                hiChainResCallback_->OnGroupResult(requestId, importAction, data);
                 g_createGroupFlag = true;
             }
         } else {
@@ -319,10 +318,10 @@ void HiChainConnector::onFinish(int64_t requestId, int operationCode, const char
         LOGI("Delete Member from group success");
     }
     if (operationCode == GroupOperationCode::GROUP_DISBAND) {
-        if (g_networkStyle == CREDENTIAL_NETWORK && hiChainCredentialCallback_ != nullptr) {
+        if (networkStyle_ == CREDENTIAL_NETWORK && hiChainResCallback_ != nullptr) {
             if (!g_groupIsRedundance) {
                 int32_t deleteAction = 1;
-                hiChainCredentialCallback_->OnCredentialResult(requestId, deleteAction, data);
+                hiChainResCallback_->OnGroupResult(requestId, deleteAction, data);
             }
             g_deleteGroupFlag = true;
         }
@@ -347,10 +346,10 @@ void HiChainConnector::onError(int64_t requestId, int operationCode, int errorCo
     if (operationCode == GroupOperationCode::GROUP_CREATE) {
         LOGE("Create group failed");
         SysEventWrite(DM_CREATE_GROUP_FAILED, DM_HISYEVENT_BEHAVIOR, DM_CREATE_GROUP_FAILED_MSG);
-        if (g_networkStyle == CREDENTIAL_NETWORK) {
-            if (hiChainCredentialCallback_ != nullptr) {
+        if (networkStyle_ == CREDENTIAL_NETWORK) {
+            if (hiChainResCallback_ != nullptr) {
                 int32_t importAction = 0;
-                hiChainCredentialCallback_->OnCredentialResult(requestId, importAction, data);
+                hiChainResCallback_->OnGroupResult(requestId, importAction, data);
                 g_createGroupFlag = true;
             }
         } else {
@@ -363,10 +362,10 @@ void HiChainConnector::onError(int64_t requestId, int operationCode, int errorCo
         LOGE("Delete Member from group failed");
     }
     if (operationCode == GroupOperationCode::GROUP_DISBAND) {
-        if (g_networkStyle == CREDENTIAL_NETWORK && hiChainCredentialCallback_ != nullptr) {
+        if (networkStyle_ == CREDENTIAL_NETWORK && hiChainResCallback_ != nullptr) {
             if (!g_groupIsRedundance) {
                 int32_t deleteAction = 1;
-                hiChainCredentialCallback_->OnCredentialResult(requestId, deleteAction, data);
+                hiChainResCallback_->OnGroupResult(requestId, deleteAction, data);
             }
             g_deleteGroupFlag = true;
         }
@@ -580,7 +579,7 @@ int32_t HiChainConnector::DeleteGroup(const int32_t userId, std::string &groupId
 
 int32_t HiChainConnector::DeleteGroup(int64_t requestId_, const std::string &userId, const int32_t authType)
 {
-    g_networkStyle = CREDENTIAL_NETWORK;
+    networkStyle_ = CREDENTIAL_NETWORK;
     nlohmann::json jsonObj;
     jsonObj[FIELD_GROUP_TYPE] = authType;
     std::string queryParams = jsonObj.dump();
@@ -687,7 +686,7 @@ int32_t HiChainConnector::CreateGroup(int64_t requestId, int32_t authType, const
         return ERR_DM_INPUT_PARAMETER_EMPTY;
     }
     DealRedundanceGroup(userId, authType);
-    g_networkStyle = CREDENTIAL_NETWORK;
+    networkStyle_ = CREDENTIAL_NETWORK;
     LOGI("HiChainConnector::CreateGroup requestId %lld", requestId);
     char localDeviceId[DEVICE_UUID_LENGTH] = {0};
     GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
@@ -724,15 +723,15 @@ int32_t HiChainConnector::CreateGroup(int64_t requestId, int32_t authType, const
     return DM_OK;
 }
 
-int32_t HiChainConnector::RegisterhiChainCredentialCallback(const std::shared_ptr<IDmCredentialCallback> &callback)
+int32_t HiChainConnector::RegisterHiChainGroupCallback(const std::shared_ptr<IDmGroupResCallback> &callback)
 {
-    hiChainCredentialCallback_ = callback;
+    hiChainResCallback_ = callback;
     return DM_OK;
 }
 
-int32_t HiChainConnector::UnRegisterhiChainCredentialCallback()
+int32_t HiChainConnector::UnRegisterHiChainGroupCallback()
 {
-    hiChainCredentialCallback_ = nullptr;
+    hiChainResCallback_ = nullptr;
     return DM_OK;
 }
 

@@ -26,9 +26,9 @@ public:
     virtual int32_t GetPinCode() = 0;
 };
 
-class IDmCredentialCallback {
+class IDmGroupResCallback {
 public:
-    virtual void OnCredentialResult(int64_t requestId, int32_t action, const std::string &resultInfo) = 0;
+    virtual void OnGroupResult(int64_t requestId, int32_t action, const std::string &resultInfo) = 0;
 };
 } // namespace DistributedHardware
 } // namespace OHOS

@@ -31,7 +31,7 @@ typedef struct {
     std::string authCode;
     std::string peerDeviceId;
 } CredentialData;
-class DmCredentialManager final : public IDmCredentialCallback,
+class DmCredentialManager final : public IDmGroupResCallback,
                                   public std::enable_shared_from_this<DmCredentialManager> {
 public:
     DmCredentialManager(std::shared_ptr<HiChainConnector> hiChainConnector,
@@ -92,7 +92,7 @@ public:
      * @tc.desc: Credential Result of the DmCredential Manager
      * @tc.type: FUNC
      */
-    void OnCredentialResult(int64_t requestId, int32_t action, const std::string &resultInfo);
+    void OnGroupResult(int64_t requestId, int32_t action, const std::string &resultInfo);
 private:
     std::shared_ptr<HiChainConnector> hiChainConnector_;
     std::shared_ptr<IDeviceManagerServiceListener> listener_;

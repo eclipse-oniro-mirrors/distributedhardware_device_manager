@@ -30,7 +30,7 @@ void from_json(const nlohmann::json &jsonObject, CredentialData &credentialData)
         !jsonObject.contains(FIELD_SERVER_PK) || !jsonObject.contains(FIELD_PKINFO_SIGNATURE) ||
         !jsonObject.contains(FIELD_PKINFO) || !jsonObject.contains(FIELD_AUTH_CODE) ||
         !jsonObject.contains(FIELD_PEER_DEVICE_ID)) {
-        LOGE("CredentialData json key Not complete");
+        LOGE("CredentialData json key not complete");
         return;
     }
     jsonObject[FIELD_CREDENTIAL_TYPE].get_to(credentialData.credentialType);
@@ -192,7 +192,7 @@ int32_t DmCredentialManager::DeleteCredential(const std::string &pkgName, const 
     return DM_OK;
 }
 
-void DmCredentialManager::OnCredentialResult(int64_t requestId, int32_t action,
+void DmCredentialManager::OnGroupResult(int64_t requestId, int32_t action,
     const std::string &resultInfo)
 {
     LOGI("DmCredentialManager::OnImportResult");
@@ -211,7 +211,7 @@ void DmCredentialManager::RegisterCredentialCallback(const std::string &pkgName)
     LOGI("DmCredentialManager::RegisterCredentialCallback pkgName=%s",
         GetAnonyString(pkgName).c_str());
     credentialVec_.push_back(pkgName);
-    hiChainConnector_->RegisterhiChainCredentialCallback(std::shared_ptr<IDmCredentialCallback>(shared_from_this()));
+    hiChainConnector_->RegisterHiChainGroupCallback(std::shared_ptr<IDmGroupResCallback>(shared_from_this()));
 }
 
 void DmCredentialManager::UnRegisterCredentialCallback(const std::string &pkgName)
@@ -226,7 +226,7 @@ void DmCredentialManager::UnRegisterCredentialCallback(const std::string &pkgNam
     if (iter != credentialVec_.end()) {
         credentialVec_.erase(iter);
     }
-    hiChainConnector_->UnRegisterhiChainCredentialCallback();
+    hiChainConnector_->UnRegisterHiChainGroupCallback();
 }
 
 int32_t DmCredentialManager::GetCredentialData(const std::string &credentialInfo, const CredentialData &inputCreData,
