@@ -222,6 +222,7 @@ const std::string FIELD_PROCESS_TYPE = "processType";
 const std::string FIELD_AUTH_TYPE = "authType";
 const std::string FIELD_CREDENTIAL_DATA = "credentialData";
 const std::string FIELD_CREDENTIAL_ID = "credentialId";
+const std::string FIELD_PEER_CREDENTIAL_INFO = "peerCredentialInfo";
 const int32_t SAME_ACCOUNT_TYPE = 1;
 const int32_t CROSS_ACCOUNT_TYPE = 2;
 const int32_t PIN_CODE_NETWORK = 0;
