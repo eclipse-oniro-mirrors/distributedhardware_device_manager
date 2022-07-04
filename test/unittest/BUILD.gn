@@ -142,9 +142,9 @@ ohos_unittest("UTTest_softbus_connector") {
   module_out_path = module_out_path
 
   sources = [
-    "${services_path}/src/device_manager_service.cpp",
-    "${services_path}/src/device_manager_service_listener.cpp",
-    "${services_path}/src/softbus/softbus_listener.cpp",
+    "${servicesimpl_path}/src/device_manager_service.cpp",
+    "${servicesimpl_path}/src/device_manager_service_listener.cpp",
+    "${servicesimpl_path}/src/softbus/softbus_listener.cpp",
     "${servicesimpl_path}/src/adapter/standard/dm_adapter_manager.cpp",
     "${servicesimpl_path}/src/config/dm_config_manager.cpp",
     "${servicesimpl_path}/src/dependency/hichain/hichain_connector.cpp",
@@ -359,9 +359,9 @@ ohos_unittest("UTTest_dm_device_state_manager") {
   module_out_path = module_out_path
 
   sources = [
-    "${services_path}/src/device_manager_service.cpp",
-    "${services_path}/src/device_manager_service_listener.cpp",
-    "${services_path}/src/softbus/softbus_listener.cpp",
+    "${servicesimpl_path}/src/device_manager_service.cpp",
+    "${servicesimpl_path}/src/device_manager_service_listener.cpp",
+    "${servicesimpl_path}/src/softbus/softbus_listener.cpp",
     "${servicesimpl_path}/src/adapter/standard/dm_adapter_manager.cpp",
     "${servicesimpl_path}/src/config/dm_config_manager.cpp",
     "${servicesimpl_path}/src/dependency/hichain/hichain_connector.cpp",
@@ -391,7 +391,7 @@ ohos_unittest("UTTest_device_manager_service_listener") {
   module_out_path = module_out_path
 
   sources = [
-    "${services_path}/src/device_manager_service_listener.cpp",
+    "${servicesimpl_path}/src/device_manager_service_listener.cpp",
     "//foundation/distributedhardware/device_manager/test/unittest/mock/ipc_server_listener.cpp",
     "UTTest_device_manager_service_listener.cpp",
   ]
@@ -460,9 +460,9 @@ ohos_unittest("UTTest_dm_discovery_manager") {
   module_out_path = module_out_path
 
   sources = [
-    "${services_path}/src/device_manager_service.cpp",
-    "${services_path}/src/device_manager_service_listener.cpp",
-    "${services_path}/src/softbus/softbus_listener.cpp",
+    "${servicesimpl_path}/src/device_manager_service.cpp",
+    "${servicesimpl_path}/src/device_manager_service_listener.cpp",
+    "${servicesimpl_path}/src/softbus/softbus_listener.cpp",
     "${servicesimpl_path}/src/dependency/softbus/softbus_connector.cpp",
     "${servicesimpl_path}/src/dependency/softbus/softbus_session.cpp",
     "${servicesimpl_path}/src/dependency/timer/dm_timer.cpp",

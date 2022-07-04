@@ -15,6 +15,8 @@
 #ifndef OHOS_DM_DFX_CONSTANTS_H
 #define OHOS_DM_DFX_CONSTANTS_H
 
+#include "dm_device_info.h"
+
 #include <string>
 #include <unordered_map>
 
@@ -26,7 +28,7 @@ const int DM_HISYEVENT_STATISTIC = 2;
 const int DM_HISYEVENT_SECURITY  = 3;
 const int DM_HISYEVENT_BEHAVIOR  = 4;
 
-// state
+// HisysEvent state
 const std::string DM_INIT_DEVICE_MANAGER_SUCCESS = "DM_INIT_DEVICE_MANAGER_SUCCESS";
 const std::string DM_INIT_DEVICE_MANAGER_FAILED = "DM_INIT_DEVICE_MANAGER_FAILED";
 const std::string START_DEVICE_DISCOVERY_SUCCESS = "START_DEVICE_DISCOVERY_SUCCESS";
@@ -42,7 +44,7 @@ const std::string DM_CREATE_GROUP_FAILED = "DM_CREATE_GROUP_FAILED";
 const std::string UNAUTHENTICATE_DEVICE_SUCCESS = "UNAUTHENTICATE_DEVICE_SUCCESS";
 const std::string UNAUTHENTICATE_DEVICE_FAILED = "UNAUTHENTICATE_DEVICE_FAILED";
 
-// msg
+// HisysEvent msg
 const std::string DM_INIT_DEVICE_MANAGER_SUCCESS_MSG = "init devicemanager success.";
 const std::string DM_INIT_DEVICE_MANAGER_FAILED_MSG = "init devicemanager failed.";
 const std::string START_DEVICE_DISCOVERY_SUCCESS_MSG = "device manager discovery success.";
@@ -66,6 +68,10 @@ const std::string DM_HITRACE_AUTH_TO_OPPEN_SESSION = "DM_HITRACE_AUTH_TO_OPPEN_S
 const std::string DM_HITRACE_DEVICE_ONLINE = "DM_HITRACE_DEVICE_ONLINE";
 const std::string DM_HITRACE_INIT = "DM_HITRACE_INIT";
 
+enum DeviceManagerTaskId {
+    DeviceManager_OPEN_CHANNEL_TASKID = 0,
+};
+
 // HiDumper Flag
 enum class HidumperFlag {
     HIDUMPER_UNKNOWN = 0,
@@ -78,10 +84,29 @@ enum class HidumperFlag {
 const std::string ARGS_HELP_INFO = "-help";
 const std::string HIDUMPER_GET_TRUSTED_LIST_INFO = "-getTrustlist";
 
+// HiDumper command
 const std::unordered_map<std::string, HidumperFlag> MAP_ARGS = {
     { ARGS_HELP_INFO, HidumperFlag::HIDUMPER_GET_HELP },
     { HIDUMPER_GET_TRUSTED_LIST_INFO, HidumperFlag::HIDUMPER_GET_TRUSTED_LIST },
 };
+
+typedef struct DumperDeviceTypeId {
+    DmDeviceType dmDeviceTypeId;
+    std::string dmDeviceTypeIdString;
+} ERROR_INFO;
+
+static DumperDeviceTypeId dumperDeviceType[] = {
+    {DEVICE_TYPE_UNKNOWN, "DEVICE_TYPE_UNKNOWN"},
+    {DEVICE_TYPE_WIFI_CAMERA, "DEVICE_TYPE_WIFI_CAMERA"},
+    {DEVICE_TYPE_AUDIO, "DEVICE_TYPE_AUDIO"},
+    {DEVICE_TYPE_PC, "DEVICE_TYPE_PC"},
+    {DEVICE_TYPE_PHONE, "DEVICE_TYPE_PHONE"},
+    {DEVICE_TYPE_PAD, "DEVICE_TYPE_PAD"},
+    {DEVICE_TYPE_WATCH, "DEVICE_TYPE_WATCH"},
+    {DEVICE_TYPE_CAR, "DEVICE_TYPE_CAR"},
+    {DEVICE_TYPE_TV, "DEVICE_TYPE_TV"},
+};
+
 } // namespace DistributedHardware
 } // namespace OHOS
 #endif // OHOS_DM_DFX_CONSTANTS_H

@@ -25,5 +25,15 @@ void DmTraceEnd()
 {
     return;
 }
+
+void DmStartAsyncTrace(const std::string& msg)
+{
+    return;
+}
+
+void DmFinishAsyncTrace(const std::string& msg)
+{
+    return;
+}
 } // namespace DistributedHardware
 } // namespace OHOS
