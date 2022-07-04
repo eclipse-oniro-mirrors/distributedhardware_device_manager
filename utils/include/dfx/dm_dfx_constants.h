@@ -86,12 +86,12 @@ const std::unordered_map<std::string, HidumperFlag> MAP_ARGS = {
 };
 
 // HiDumper device type
-typedef struct Dumper_INFO {
+typedef struct DumperInfo {
     DmDeviceType deviceTypeId;
     std::string deviceTypeInfo;
-} Dumper_INFO;
+} DumperInfo;
 
-static Dumper_INFO dumperDeviceType[] = {
+static DumperInfo dumperDeviceType[] = {
     {DEVICE_TYPE_UNKNOWN, "DEVICE_TYPE_UNKNOWN"},
     {DEVICE_TYPE_WIFI_CAMERA, "DEVICE_TYPE_WIFI_CAMERA"},
     {DEVICE_TYPE_AUDIO, "DEVICE_TYPE_AUDIO"},
