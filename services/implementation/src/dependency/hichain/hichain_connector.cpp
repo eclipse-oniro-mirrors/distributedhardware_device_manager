@@ -783,7 +783,7 @@ int32_t HiChainConnector::addMultiMembers(const int32_t groupType, const std::st
         return ERR_DM_INPUT_PARAMETER_EMPTY;
     }
     LOGI("addMultiMembers in!");
-    if ( userId.empty() || !jsonDeviceList.contains(FIELD_DEVICE_LIST)) {
+    if (userId.empty() || !jsonDeviceList.contains(FIELD_DEVICE_LIST)) {
         LOGE("userId or deviceList is empty");
         return ERR_DM_INPUT_PARAMETER_EMPTY;
     }
@@ -806,7 +806,7 @@ int32_t HiChainConnector::addMultiMembers(const int32_t groupType, const std::st
         return ERR_DM_FAILED;
     }
     int32_t ret = deviceGroupManager_->addMultiMembersToGroup(osAccountUserId,
-                                    appId.c_str(), addParams.c_str());
+        appId.c_str(), addParams.c_str());
     if (ret!= DM_OK) {
         LOGE("HiChainConnector::addMultiMemberstoGroup failure! ret=%d", ret);
         return ret;
@@ -815,7 +815,7 @@ int32_t HiChainConnector::addMultiMembers(const int32_t groupType, const std::st
 }
 
 int32_t HiChainConnector::deleteMultiMembers(const int32_t groupType, const std::string userId,
-     const nlohmann::json &jsonDeviceList)
+    const nlohmann::json &jsonDeviceList)
 {
     if (deviceGroupManager_ == nullptr) {
         LOGE("HiChainConnector::deviceGroupManager_ is nullptr.");
@@ -842,7 +842,7 @@ int32_t HiChainConnector::deleteMultiMembers(const int32_t groupType, const std:
         return ERR_DM_FAILED;
     }
     int32_t ret = deviceGroupManager_->delMultiMembersFromGroup(osAccountUserId,
-                                    appId.c_str(), deleteParams.c_str());
+        appId.c_str(), deleteParams.c_str());
     if (ret != DM_OK) {
         LOGE("HiChainConnector::deleteMultiMembers failure!, ret=%d", ret);
         return ret;

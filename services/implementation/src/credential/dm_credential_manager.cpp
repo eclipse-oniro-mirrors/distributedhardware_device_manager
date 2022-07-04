@@ -411,7 +411,7 @@ void from_json(const nlohmann::json &jsonObject, PeerCredentialInfo &peerCredent
     }
 }
 
-void to_json( nlohmann::json &jsonObject, const PeerCredentialInfo &peerCredentialInfo)
+void to_json(nlohmann::json &jsonObject, const PeerCredentialInfo &peerCredentialInfo)
 {
     jsonObject[FIELD_DEVICE_ID] = peerCredentialInfo.peerDeviceId;
 }
