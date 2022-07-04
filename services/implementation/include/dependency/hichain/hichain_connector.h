@@ -23,7 +23,6 @@
 #include <vector>
 
 #include "device_auth.h"
-#include "dm_constants.h"
 #include "hichain_connector_callback.h"
 #include "nlohmann/json.hpp"
 #include "single_instance.h"
@@ -194,7 +193,7 @@ private:
     DeviceAuthCallback deviceAuthCallback_;
     static std::shared_ptr<IHiChainConnectorCallback> hiChainConnectorCallback_;
     static std::shared_ptr<IDmGroupResCallback> hiChainResCallback_;
-    static int32_t networkStyle_ = PIN_CODE_NETWORK;
+    static int32_t networkStyle_;
 };
 } // namespace DistributedHardware
 } // namespace OHOS
