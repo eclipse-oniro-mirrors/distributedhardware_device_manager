@@ -91,8 +91,6 @@ if (defined(ohos_lite)) {
         "${servicesimpl_path}/src/dependency/softbus/softbus_connector.cpp",
         "${servicesimpl_path}/src/dependency/softbus/softbus_session.cpp",
         "${servicesimpl_path}/src/dependency/timer/mini/dm_timer.cpp",
-        "${servicesimpl_path}/src/device_manager_service.cpp",
-        "${servicesimpl_path}/src/deviceinfo/dm_device_info_manager.cpp",
         "${servicesimpl_path}/src/devicestate/dm_device_state_manager.cpp",
         "${servicesimpl_path}/src/discovery/dm_discovery_manager.cpp",
         "${servicesimpl_path}/src/dispatch/command_dispatch.cpp",
