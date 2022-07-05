@@ -33,7 +33,7 @@ struct CredentialDataInfo {
     std::string authCode;
     std::string peerDeviceId;
     std::string userId;
-    CredentialDataInfo() : credentialType(0)
+    CredentialDataInfo() : credentialType(UNKNOWN_CREDENTIAL_TYPE)
     {
     }
 };
@@ -289,7 +289,7 @@ int32_t DmCredentialManager::GetCredentialData(const std::string &credentialInfo
 void from_json(const nlohmann::json &jsonObject, CredentialDataInfo &credentialDataInfo)
 {
     if (!jsonObject.contains(FIELD_CREDENTIAL_TYPE)) {
-        LOGE("credentialType json key Not exist");
+        LOGE("credentialType json key not exist");
         return;
     }
     jsonObject[FIELD_CREDENTIAL_TYPE].get_to(credentialDataInfo.credentialType);
@@ -311,6 +311,9 @@ void from_json(const nlohmann::json &jsonObject, CredentialDataInfo &credentialD
         if (jsonObject.contains(FIELD_AUTH_CODE)) {
             jsonObject[FIELD_AUTH_CODE].get_to(credentialDataInfo.authCode);
         }
+    } eles {
+        LOGE("credentialType john key is unknown");
+        return;
     }
     if (jsonObject.contains(FIELD_PEER_DEVICE_ID)) {
         jsonObject[FIELD_PEER_DEVICE_ID].get_to(credentialDataInfo.peerDeviceId);
@@ -400,7 +403,6 @@ int32_t DmCredentialManager::ImportRemoteCredential(const std::string &credentia
         LOGE("failed to add members to group.");
         return ERR_DM_FAILED;
     }
-    LOGI("ImportRemoteCredential complete!");
     return DM_OK;
 }
 

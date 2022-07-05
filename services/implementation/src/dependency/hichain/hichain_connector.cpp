@@ -754,7 +754,7 @@ int32_t HiChainConnector::getRegisterInfo(const std::string &queryParams, std::s
     return DM_OK;
 }
 
-int32_t HiChainConnector::GetGroupId(const std::string userId, const int32_t groupType, std::string &groupId)
+int32_t HiChainConnector::GetGroupId(const std::string &userId, const int32_t groupType, std::string &groupId)
 {
     nlohmann::json jsonObjGroup;
     jsonObjGroup[FIELD_GROUP_TYPE] = groupType;
@@ -775,25 +775,22 @@ int32_t HiChainConnector::GetGroupId(const std::string userId, const int32_t gro
     return DM_OK;
 }
 
-int32_t HiChainConnector::addMultiMembers(const int32_t groupType, const std::string userId,
+int32_t HiChainConnector::addMultiMembers(const int32_t groupType, const std::string &userId,
     const nlohmann::json &jsonDeviceList)
 {
     if (deviceGroupManager_ == nullptr) {
         LOGE("HiChainConnector::deviceGroupManager_ is nullptr.");
         return ERR_DM_INPUT_PARAMETER_EMPTY;
     }
-    LOGI("addMultiMembers in!");
     if (userId.empty() || !jsonDeviceList.contains(FIELD_DEVICE_LIST)) {
         LOGE("userId or deviceList is empty");
         return ERR_DM_INPUT_PARAMETER_EMPTY;
     }
     std::string groupId;
-    LOGI("GetGroupId before!");
     if (GetGroupId(userId, groupType, groupId) != DM_OK) {
         LOGE("failed to get groupid");
         return ERR_DM_FAILED;
     }
-    LOGI("GetGroupId end!");
     std::string appId = DM_PKG_NAME;
     nlohmann::json jsonObj;
     jsonObj[FIELD_GROUP_ID] = groupId;
@@ -814,7 +811,7 @@ int32_t HiChainConnector::addMultiMembers(const int32_t groupType, const std::st
     return DM_OK;
 }
 
-int32_t HiChainConnector::deleteMultiMembers(const int32_t groupType, const std::string userId,
+int32_t HiChainConnector::deleteMultiMembers(const int32_t groupType, const std::string &userId,
     const nlohmann::json &jsonDeviceList)
 {
     if (deviceGroupManager_ == nullptr) {
