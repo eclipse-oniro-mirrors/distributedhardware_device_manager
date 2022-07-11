@@ -202,6 +202,8 @@ private:
     int32_t GetStrFieldByType(const std::string &reqJsonStr, const std::string &outField, int32_t type);
     int32_t GetNumsFieldByType(const std::string &reqJsonStr, int32_t &outField, int32_t type);
     int32_t GetGroupId(const std::string &userId, const int32_t groupType, std::string &groupId);
+    int32_t ParseRemoteCredential(const int32_t groupType, const std::string &userId,
+    const nlohmann::json &jsonDeviceList, std::string &params, int32_t &osAccountUserId);
 private:
     const DeviceGroupManager *deviceGroupManager_ = nullptr;
     DeviceAuthCallback deviceAuthCallback_;
