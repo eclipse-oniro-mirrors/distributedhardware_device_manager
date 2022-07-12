@@ -34,15 +34,15 @@ void DeviceManagerCredentialFuzzTest(const uint8_t* data, size_t size)
     if ((data == nullptr) || (size <= 0)) {
         return;
     }
-    std::string packName(reinterpret_cast<const char*>(data), size);
+    std::string szData(reinterpret_cast<const char*>(data), size);
     std::shared_ptr<CredentialCallbackFuzzTest> callback = std::make_shared<CredentialCallbackFuzzTest>();
     std::string returnJsonStr;
 
-    DeviceManager::GetInstance().RequestCredential(packName, packName, returnJsonStr);
-    DeviceManager::GetInstance().ImportCredential(packName, packName);
-    DeviceManager::GetInstance().DeleteCredential(packName, packName);
-    DeviceManager::GetInstance().RegisterCredentialCallback(packName, callback);
-    DeviceManager::GetInstance().UnRegisterCredentialCallback(packName);
+    DeviceManager::GetInstance().RequestCredential(szData, szData, returnJsonStr);
+    DeviceManager::GetInstance().ImportCredential(szData, szData);
+    DeviceManager::GetInstance().DeleteCredential(szData, szData);
+    DeviceManager::GetInstance().RegisterCredentialCallback(szData, callback);
+    DeviceManager::GetInstance().UnRegisterCredentialCallback(szData);
 }
 }
 }
