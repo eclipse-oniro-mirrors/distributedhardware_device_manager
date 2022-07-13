@@ -30,6 +30,8 @@
 #include "multiple_user_connector.h"
 #include "nlohmann/json.hpp"
 #include "parameter.h"
+#include "dm_dfx_constants.h"
+#include "unistd.h"
 
 namespace OHOS {
 namespace DistributedHardware {

@@ -17,12 +17,12 @@
 #define OHOS_DEVICE_MANAGER_H
 
 #include <memory>
-#include <string>
 #include <vector>
-
-#include "device_manager_callback.h"
 #include "dm_device_info.h"
+#include "device_manager_callback.h"
 #include "dm_subscribe_info.h"
+#include <stdint.h>             // for int32_t, uint16_t
+#include <iosfwd>               // for string
 
 namespace OHOS {
 namespace DistributedHardware {

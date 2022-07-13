@@ -18,10 +18,11 @@
 
 #include <cstdint>
 #include <memory>
-
 #include "ipc_client.h"
-#include "ipc_req.h"
-#include "ipc_rsp.h"
+#include "iosfwd"
+#include "ipc_def.h"
+namespace OHOS::DistributedHardware{ class IpcReq; }
+namespace OHOS::DistributedHardware{ class IpcRsp; }
 
 namespace OHOS {
 namespace DistributedHardware {

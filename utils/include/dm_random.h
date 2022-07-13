@@ -16,7 +16,7 @@
 #ifndef OHOS_DM_RANDOM_H
 #define OHOS_DM_RANDOM_H
 
-#include <string>
+#include <stdint.h>  // for int32_t, int64_t, uint32_t, uint8_t
 
 namespace OHOS {
 namespace DistributedHardware {

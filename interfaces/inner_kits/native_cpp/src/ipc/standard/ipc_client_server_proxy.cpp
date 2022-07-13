@@ -14,11 +14,13 @@
  */
 
 #include "ipc_client_server_proxy.h"
-
 #include "dm_constants.h"
 #include "dm_log.h"
 #include "ipc_cmd_register.h"
-#include "ipc_types.h"
+#include "iremote_object.h"    // for IRemoteObject
+#include <memory>              // for shared_ptr
+#include "message_option.h"    // for MessageOption
+#include "message_parcel.h"    // for MessageParcel
 
 namespace OHOS {
 namespace DistributedHardware {

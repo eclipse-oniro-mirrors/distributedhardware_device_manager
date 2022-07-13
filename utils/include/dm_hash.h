@@ -16,13 +16,7 @@
 #ifndef OHOS_DM_HASH_H
 #define OHOS_DM_HASH_H
 
-#include <iostream>
-#include "base64.h"
-#include "ctr_drbg.h"
-#include "entropy.h"
-#include "gcm.h"
-#include "md.h"
-#include "platform.h"
+#include <stdint.h>  // for int32_t, uint8_t, uint32_t
 
 namespace OHOS {
 namespace DistributedHardware {

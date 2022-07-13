@@ -14,12 +14,16 @@
  */
 
 #include "ipc_client_stub.h"
-
 #include "dm_constants.h"
 #include "dm_log.h"
 #include "ipc_cmd_register.h"
-#include "ipc_skeleton.h"
-#include "ipc_types.h"
+#include "ipc_object_stub.h"   // for IPCObjectStub
+#include <memory>              // for shared_ptr
+#include "message_option.h"    // for MessageOption
+#include "message_parcel.h"    // for MessageParcel
+#include <string>              // for operator!=, u16string
+namespace OHOS::DistributedHardware{ class IpcReq; }
+namespace OHOS::DistributedHardware{ class IpcRsp; }
 
 namespace OHOS {
 namespace DistributedHardware {

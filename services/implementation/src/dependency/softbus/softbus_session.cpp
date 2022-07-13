@@ -21,6 +21,7 @@
 #include "dm_log.h"
 #include "nlohmann/json.hpp"
 #include "softbus_connector.h"
+#include "dm_dfx_constants.h"
 
 namespace OHOS {
 namespace DistributedHardware {

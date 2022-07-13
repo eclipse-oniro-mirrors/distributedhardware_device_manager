@@ -15,11 +15,12 @@
 
 #ifndef OHOS_DM_DISTRIBUTEED_HARDWARE_LOAD_H
 #define OHOS_DM_DISTRIBUTEED_HARDWARE_LOAD_H
-#include "if_system_ability_manager.h"
-#include "iservice_registry.h"
+
 #include "single_instance.h"
-#include "system_ability_definition.h"
 #include "system_ability_load_callback_stub.h"
+#include <stdint.h>                             // for int32_t, uint32_t
+#include "refbase.h"                            // for sptr
+namespace OHOS{ class IRemoteObject; }
 
 namespace OHOS {
 namespace DistributedHardware {

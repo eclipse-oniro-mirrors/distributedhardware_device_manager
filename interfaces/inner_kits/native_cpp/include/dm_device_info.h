@@ -17,7 +17,7 @@
 #define OHOS_DM_DEVICE_INFO_H
 
 #include <cstdint>
-
+#include <string>
 #include "dm_app_image_info.h"
 
 #define DM_MAX_DEVICE_ID_LEN (96)

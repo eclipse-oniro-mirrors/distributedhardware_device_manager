@@ -15,6 +15,8 @@
 
 #include "dm_anonymous.h"
 #include "dm_log.h"
+#include <stddef.h>  // for size_t
+#include <string>    // for basic_string, to_string
 
 namespace OHOS {
 namespace DistributedHardware {

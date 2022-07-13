@@ -16,10 +16,7 @@
 #ifndef OHOS_DM_ERROMSG_H
 #define OHOS_DM_ERROMSG_H
 
-#include "dm_log.h"
-#include "dm_constants.h"
-
-#include <string>
+#include "iosfwd"  // for string
 
 namespace OHOS {
 namespace DistributedHardware {

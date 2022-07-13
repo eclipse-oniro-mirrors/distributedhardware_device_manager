@@ -16,15 +16,8 @@
 #ifndef OHOS_DISTRIBUTED_DM_HISYSEVENT_H
 #define OHOS_DISTRIBUTED_DM_HISYSEVENT_H
 
-#include "dm_anonymous.h"
-#include "dm_log.h"
-#include "dm_constants.h"
-#include "dm_dfx_constants.h"
-#include "hisysevent.h"
-#include "single_instance.h"
-
-#include <cstring>
-#include <unistd.h>
+#include <stdint.h>  // for int32_t
+#include "iosfwd"    // for string
 
 namespace OHOS {
 namespace DistributedHardware {

@@ -16,12 +16,7 @@
 #ifndef OHOS_DM_HITRACE_H
 #define OHOS_DM_HITRACE_H
 
-#include <string>
-
-#include "hitrace_meter.h"
-
-#include "dm_constants.h"
-#include "dm_dfx_constants.h"
+#include "iosfwd"  // for string
 
 namespace OHOS {
 namespace DistributedHardware {
