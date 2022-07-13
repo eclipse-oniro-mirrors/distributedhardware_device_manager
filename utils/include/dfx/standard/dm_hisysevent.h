@@ -16,6 +16,7 @@
 #ifndef OHOS_DISTRIBUTED_DM_HISYSEVENT_H
 #define OHOS_DISTRIBUTED_DM_HISYSEVENT_H
 
+#include <cstdint>   // for int32_t
 #include "iosfwd"    // for string
 
 namespace OHOS {
