@@ -19,10 +19,10 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include "dm_dfx_constants.h"
-#include "single_instance.h"
 #include "dm_device_info.h"
+#include "dm_dfx_constants.h"
 #include "iosfwd"              // for string
+#include "single_instance.h"
 
 namespace OHOS {
 namespace DistributedHardware {

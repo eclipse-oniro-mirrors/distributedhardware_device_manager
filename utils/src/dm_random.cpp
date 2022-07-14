@@ -14,9 +14,9 @@
  */
 
 #include "dm_random.h"
-#include <random>
-#include <cstdlib>             // for free, malloc
 #include <algorithm>           // for uniform_int_distribution
+#include <cstdlib>             // for free, malloc
+#include <random>
 #include "dm_constants.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/entropy.h"

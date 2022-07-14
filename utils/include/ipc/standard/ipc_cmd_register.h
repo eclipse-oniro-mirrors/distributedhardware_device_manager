@@ -19,9 +19,9 @@
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
-#include "single_instance.h"
 #include "ipc_req.h"
 #include "ipc_rsp.h"
+#include "single_instance.h"
 namespace OHOS { class MessageParcel; }
 
 namespace OHOS {

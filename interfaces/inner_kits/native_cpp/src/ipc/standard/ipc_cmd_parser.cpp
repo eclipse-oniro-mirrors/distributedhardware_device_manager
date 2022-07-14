@@ -15,13 +15,15 @@
 
 #include <cstddef>                                // for size_t
 #include <cstdint>                                // for int32_t, int16_t
+#include <memory>                                 // for shared_ptr, static_...
 #include <string>                                 // for basic_string
 #include <vector>                                 // for vector
-#include <memory>                                 // for shared_ptr, static_...
 #include "device_manager_notify.h"
 #include "dm_constants.h"
 #include "dm_device_info.h"
 #include "dm_log.h"
+#include "dm_subscribe_info.h"                    // for DmSubscribeInfo
+#include "iosfwd"                                 // for string
 #include "ipc_authenticate_device_req.h"
 #include "ipc_cmd_register.h"
 #include "ipc_def.h"
@@ -31,6 +33,7 @@
 #include "ipc_get_local_device_info_rsp.h"
 #include "ipc_get_trustdevice_req.h"
 #include "ipc_get_trustdevice_rsp.h"
+#include "ipc_register_dev_state_callback_req.h"
 #include "ipc_register_listener_req.h"
 #include "ipc_req.h"
 #include "ipc_rsp.h"
@@ -41,12 +44,9 @@
 #include "ipc_stop_discovery_req.h"
 #include "ipc_unauthenticate_device_req.h"
 #include "ipc_verify_authenticate_req.h"
-#include "ipc_register_dev_state_callback_req.h"
-#include "securec.h"
-#include "dm_subscribe_info.h"                    // for DmSubscribeInfo
-#include "iosfwd"                                 // for string
 #include "message_parcel.h"                       // for MessageParcel
 #include "refbase.h"                              // for sptr
+#include "securec.h"
 
 namespace OHOS { class IRemoteObject; }
 

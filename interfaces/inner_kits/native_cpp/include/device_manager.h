@@ -16,11 +16,11 @@
 #ifndef OHOS_DEVICE_MANAGER_H
 #define OHOS_DEVICE_MANAGER_H
 
+#include <iosfwd>              // for string
 #include <memory>
 #include <vector>
-#include <iosfwd>              // for string
-#include "dm_device_info.h"
 #include "device_manager_callback.h"
+#include "dm_device_info.h"
 #include "dm_subscribe_info.h"
 
 namespace OHOS {
