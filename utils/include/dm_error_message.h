@@ -16,7 +16,7 @@
 #ifndef OHOS_DM_ERROMSG_H
 #define OHOS_DM_ERROMSG_H
 
-#include "iosfwd"  // for string
+#include <string>  // for string
 
 namespace OHOS {
 namespace DistributedHardware {

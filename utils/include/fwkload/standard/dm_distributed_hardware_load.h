@@ -16,8 +16,6 @@
 #ifndef OHOS_DM_DISTRIBUTEED_HARDWARE_LOAD_H
 #define OHOS_DM_DISTRIBUTEED_HARDWARE_LOAD_H
 
-#include <cstdint>                              // for int32_t, uint32_t
-#include "refbase.h"                            // for sptr
 #include "single_instance.h"
 #include "system_ability_load_callback_stub.h"
 namespace OHOS { class IRemoteObject; }

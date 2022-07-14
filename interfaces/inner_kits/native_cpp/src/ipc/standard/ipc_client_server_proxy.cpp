@@ -17,9 +17,6 @@
 #include "dm_constants.h"
 #include "dm_log.h"
 #include "ipc_cmd_register.h"
-#include "iremote_object.h"    // for IRemoteObject
-#include "message_option.h"    // for MessageOption
-#include "message_parcel.h"    // for MessageParcel
 
 namespace OHOS {
 namespace DistributedHardware {

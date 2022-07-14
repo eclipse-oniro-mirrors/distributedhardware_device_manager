@@ -18,14 +18,10 @@
 
 #include <cstdint>
 #include <memory>
-#include "functional"           // for __base
 #include "ipc_remote_broker.h"
 #include "ipc_req.h"
 #include "ipc_rsp.h"
-#include "iremote_broker.h"     // for BrokerDelegator
 #include "iremote_proxy.h"
-#include "refbase.h"            // for sptr
-namespace OHOS { class IRemoteObject; }
 
 namespace OHOS {
 namespace DistributedHardware {

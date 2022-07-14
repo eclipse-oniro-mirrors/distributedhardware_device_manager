@@ -14,15 +14,11 @@
  */
 
 #include "ipc_cmd_register.h"
-#include <memory>          // for operator==, shared_ptr
-#include <unordered_map>   // for __hash_map_iterator, unordered_map, operat...
 #include <utility>         // for pair
 #include "dm_constants.h"
 #include "dm_log.h"
 #include "ipc_def.h"
 namespace OHOS { class MessageParcel; }
-namespace OHOS::DistributedHardware { class IpcReq; }
-namespace OHOS::DistributedHardware { class IpcRsp; }
 
 namespace OHOS {
 namespace DistributedHardware {

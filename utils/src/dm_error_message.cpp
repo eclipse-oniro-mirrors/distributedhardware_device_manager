@@ -14,8 +14,6 @@
  */
 
 #include "dm_error_message.h"
-#include <cstdint>         // for uint32_t
-#include <string>          // for basic_string
 #include "dm_constants.h"  // for ERR_DM_AUTH_BUSINESS_BUSY, ERR_DM_AUTH_FAILED
 
 namespace OHOS {

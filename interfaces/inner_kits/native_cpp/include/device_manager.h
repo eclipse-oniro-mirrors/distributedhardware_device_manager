@@ -16,7 +16,7 @@
 #ifndef OHOS_DEVICE_MANAGER_H
 #define OHOS_DEVICE_MANAGER_H
 
-#include <iosfwd>              // for string
+#include <string>              // for string
 #include <memory>
 #include <vector>
 #include "device_manager_callback.h"

@@ -16,7 +16,7 @@
 #ifndef OHOS_DM_HITRACE_H
 #define OHOS_DM_HITRACE_H
 
-#include "iosfwd"  // for string
+#include <string>  // for string
 
 namespace OHOS {
 namespace DistributedHardware {

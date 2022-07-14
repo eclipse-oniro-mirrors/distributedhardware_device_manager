@@ -14,8 +14,6 @@
  */
 
 #include "dm_anonymous.h"
-#include <cstddef>   // for size_t
-#include <string>    // for basic_string, to_string
 #include "dm_log.h"
 
 namespace OHOS {
