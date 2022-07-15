@@ -17,11 +17,14 @@ import("//build/test.gni")
 import("//foundation/distributedhardware/device_manager/device_manager.gni")
 
 ##############################fuzztest##########################################
-ohos_fuzztest("DeviceManagerNotifyFuzzTest") {
+ohos_fuzztest("GetUuidByNetworkIdFuzzTest") {
   module_out_path = "device_manager/devicemanager"
-  fuzz_config_file = "//foundation/distributedhardware/device_manager/test/fuzztest/devicemanagernotify_fuzzer"
+  fuzz_config_file = "//foundation/distributedhardware/device_manager/test/fuzztest/getuuidbynetworkid_fuzzer"
 
   include_dirs = [
+    "${utils_path}/include",
+    "//foundation/arkui/napi/native_engine",
+    "//foundation/arkui/napi/interfaces/kits",
     "//utils/native/base/include",
     "//utils/system/safwk/native/include",
     "${innerkits_path}/native_cpp/include",
@@ -32,7 +35,6 @@ ohos_fuzztest("DeviceManagerNotifyFuzzTest") {
     "${common_path}/include",
     "${common_path}/include/ipc",
     "${common_path}/include/ipc/model",
-    "${utils_path}/include",
     "${utils_path}/include/ipc/standard",
     "${servicesimpl_path}/include",
     "${servicesimpl_path}/include/dependency/timer",
@@ -45,7 +47,6 @@ ohos_fuzztest("DeviceManagerNotifyFuzzTest") {
     "${servicesimpl_path}/include/ipc/standard",
     "${servicesimpl_path}/include/discovery",
     "${servicesimpl_path}/include/dependency/hichain",
-    "${servicesimpl_path}/include/deviceinfo/",
     "${servicesimpl_path}/include/devicestate",
     "//foundation/communication/dsoftbus/interfaces/kits/bus_center",
     "//foundation/communication/softbus_lite/interfaces/kits/transport",
@@ -61,31 +62,55 @@ ohos_fuzztest("DeviceManagerNotifyFuzzTest") {
     "//base/security/device_auth/interfaces/innerkits",
     "${servicesimpl_path}/include/ability",
     "${servicesimpl_path}/include/config",
+    "//utils/native/lite/include",
+    "//base/hiviewdfx/hilog_lite/interfaces/native/innerkits/hilog",
+    "//third_party/bounds_checking_function/include",
+    "//foundation/distributedschedule/samgr_lite/interfaces/kits/samgr",
+    "//foundation/distributedschedule/samgr_lite/interfaces/kits/registry",
+    "//foundation/arkui/napi/interfaces/inner_api/napi",
+    "//foundation/arkui/napi/interfaces/innerkits",
+    "//third_party/jsframework/runtime/main/extend",
+    "//third_party/jsframework/runtime/main/extend/systemplugin",
+    "//third_party/node/benchmark",
+    "//third_party/libuv/include",
+    "//foundation/distributedhardware/device_manager/interfaces/kits/js/include",
+    "//third_party/node/src",
+    "//foundation/arkui/napi/native_engine",
+    "//foundation/arkui/napi/interfaces/kits",
   ]
+
   cflags = [
     "-g",
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
-  sources = [ "device_manager_notify_fuzzer.cpp" ]
+  sources = [ "get_uuid_by_network_id_fuzzer.cpp" ]
 
   deps = [
+    "${utils_path}:devicemanagerutils",
+    "//foundation/arkui/napi:ace_napi",
     "//foundation/distributedhardware/device_manager/interfaces/inner_kits/native_cpp:devicemanagersdk",
-    "//foundation/distributedhardware/device_manager/services/implementation:devicemanagerserviceimpl",
-    "//foundation/distributedhardware/device_manager/services/service:devicemanagerservice",
+    "//utils/native/base:utils",
   ]
 
   defines = [
     "HI_LOG_ENABLE",
-    "DH_LOG_TAG=\"DeviceManagerNotifyFuzzTest\"",
+    "DH_LOG_TAG=\"GetUuidByNetworkIdFuzzTest\"",
     "LOG_DOMAIN=0xD004100",
   ]
 
   external_deps = [
-    "init:libbegetutil",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "eventhandler:libeventhandler",
+    "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
     "samgr_standard:samgr_proxy",
+    "samgr_standard:samgr_proxy",
+    "startup_l2:syspara",
   ]
 }
 
@@ -93,6 +118,6 @@ ohos_fuzztest("DeviceManagerNotifyFuzzTest") {
 group("fuzztest") {
   testonly = true
 
-  deps = [ ":DeviceManagerNotifyFuzzTest" ]
+  deps = [ ":GetUuidByNetworkIdFuzzTest" ]
 }
 ###############################################################################

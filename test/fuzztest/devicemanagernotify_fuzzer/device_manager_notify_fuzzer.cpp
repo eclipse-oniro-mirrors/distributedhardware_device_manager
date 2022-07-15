@@ -13,6 +13,10 @@
  * limitations under the License.
  */
 
+#include <cstddef>
+#include <cstdint>
+#include <string>
+
 #include <algorithm>
 #include <chrono>
 #include <cstddef>

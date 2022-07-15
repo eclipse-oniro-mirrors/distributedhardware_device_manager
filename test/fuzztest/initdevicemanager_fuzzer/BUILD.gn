@@ -17,75 +17,72 @@ import("//build/test.gni")
 import("//foundation/distributedhardware/device_manager/device_manager.gni")
 
 ##############################fuzztest##########################################
-ohos_fuzztest("DeviceManagerNotifyFuzzTest") {
+ohos_fuzztest("InitDeviceManagerFuzzTest") {
   module_out_path = "device_manager/devicemanager"
-  fuzz_config_file = "//foundation/distributedhardware/device_manager/test/fuzztest/devicemanagernotify_fuzzer"
+  fuzz_config_file = "//foundation/distributedhardware/device_manager/test/fuzztest/initdevicemanager_fuzzer"
 
   include_dirs = [
-    "//utils/native/base/include",
-    "//utils/system/safwk/native/include",
+    "${utils_path}/include",
     "${innerkits_path}/native_cpp/include",
     "${innerkits_path}/native_cpp/include/ipc/standard",
     "${innerkits_path}/native_cpp/include/ipc",
     "${innerkits_path}/native_cpp/include/notify",
-    "//third_party/json/include",
     "${common_path}/include",
     "${common_path}/include/ipc",
     "${common_path}/include/ipc/model",
-    "${utils_path}/include",
     "${utils_path}/include/ipc/standard",
     "${servicesimpl_path}/include",
-    "${servicesimpl_path}/include/dependency/timer",
-    "${servicesimpl_path}/include/discovery",
+
+    #    "${servicesimpl_path}/include/dependency/timer",
+    #    "${servicesimpl_path}/include/discovery",
     "${servicesimpl_path}/include/dependency/softbus",
-    "${servicesimpl_path}/include/dependency/softbus",
-    "${servicesimpl_path}/include/authentication",
+
+    #    "${servicesimpl_path}/include/authentication",
     "${servicesimpl_path}/include/adapter",
-    "${servicesimpl_path}/include",
     "${servicesimpl_path}/include/ipc/standard",
-    "${servicesimpl_path}/include/discovery",
     "${servicesimpl_path}/include/dependency/hichain",
-    "${servicesimpl_path}/include/deviceinfo/",
-    "${servicesimpl_path}/include/devicestate",
     "//foundation/communication/dsoftbus/interfaces/kits/bus_center",
-    "//foundation/communication/softbus_lite/interfaces/kits/transport",
     "//foundation/communication/dsoftbus/interfaces/kits/common",
     "//foundation/communication/dsoftbus/interfaces/kits/discovery",
     "//foundation/communication/dsoftbus/interfaces/inner_kits/transport",
+    "//foundation/communication/ipc/interfaces/innerkits/ipc_core/include",
     "//foundation/distributedhardware/device_manager/test/unittest/mock",
-    "//foundation/distributedschedule/safwk/interfaces/innerkits/safwk",
-    "//foundation/distributedhardware/device_manager/ext/mini/services/service/include/dispatch",
-    "//foundation/distributedhardware/device_manager/ext/profile/include",
-    "//foundation/deviceprofile/device_profile_core/interfaces/innerkits/core/include",
-    "//foundation/distributedhardware/device_manager/ext/mini/common/include",
+
+    #    "//foundation/distributedhardware/device_manager/ext/profile/include",
     "//base/security/device_auth/interfaces/innerkits",
-    "${servicesimpl_path}/include/ability",
-    "${servicesimpl_path}/include/config",
+
+    #    "${servicesimpl_path}/include/ability",
+    #    "${servicesimpl_path}/include/config",
   ]
+
   cflags = [
     "-g",
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
-  sources = [ "device_manager_notify_fuzzer.cpp" ]
+  sources = [ "init_device_manager_fuzzer.cpp" ]
 
   deps = [
+    "${utils_path}:devicemanagerutils",
     "//foundation/distributedhardware/device_manager/interfaces/inner_kits/native_cpp:devicemanagersdk",
-    "//foundation/distributedhardware/device_manager/services/implementation:devicemanagerserviceimpl",
-    "//foundation/distributedhardware/device_manager/services/service:devicemanagerservice",
   ]
 
   defines = [
     "HI_LOG_ENABLE",
-    "DH_LOG_TAG=\"DeviceManagerNotifyFuzzTest\"",
+    "DH_LOG_TAG=\"InitDeviceManagerFuzzTest\"",
     "LOG_DOMAIN=0xD004100",
   ]
 
   external_deps = [
-    "init:libbegetutil",
+    #    "bundle_framework:appexecfwk_base",
+    #    "bundle_framework:appexecfwk_core",
+    #    "eventhandler:libeventhandler",
+    #    "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
-    "samgr_standard:samgr_proxy",
+    #    "safwk:system_ability_fwk",
+    #    "samgr_standard:samgr_proxy",
+    #    "startup_l2:syspara",
   ]
 }
 
@@ -93,6 +90,6 @@ ohos_fuzztest("DeviceManagerNotifyFuzzTest") {
 group("fuzztest") {
   testonly = true
 
-  deps = [ ":DeviceManagerNotifyFuzzTest" ]
+  deps = [ ":InitDeviceManagerFuzzTest" ]
 }
 ###############################################################################
