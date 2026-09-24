@@ -38,33 +38,15 @@ DM_DECLARE_SINGLE_INSTANCE(DeviceManagerService);
 int32_t DmServiceInit(void);
 
 int32_t DmServiceGetTrustedDeviceList(const DmString* pkgName, const DmString* extra, DmVec_DmDeviceInfo* deviceList);
-int32_t DmServiceShiftLnnGear(const DmString* pkgName, const DmString* callerId, bool isRefresh, bool isWakeUp);
 int32_t DmServiceGetLocalDeviceInfo(DmDeviceInfo* info);
 int32_t DmServiceGetDeviceInfo(const DmString* networkId, DmDeviceInfo* info);
-int32_t DmServiceGetUdidByNetworkId(const DmString* pkgName, const DmString* netWorkId, DmString* udid);
-int32_t DmServiceGetUuidByNetworkId(const DmString* pkgName, const DmString* netWorkId, DmString* uuid);
 int32_t DmServicePublishDeviceDiscovery(const DmString* pkgName, const DmPublishInfo* publishInfo);
 int32_t DmServiceUnpublishDeviceDiscovery(const DmString* pkgName, int32_t publishId);
 
-int32_t DmServiceRequestCredential(const DmString* reqJsonStr, DmString* returnJsonStr);
-int32_t DmServiceImportCredential(const DmString* pkgName, const DmString* credentialInfo);
-int32_t DmServiceDeleteCredential(const DmString* pkgName, const DmString* deleteInfo);
-int32_t DmServiceRegisterCredentialCallback(const DmString* pkgName);
-int32_t DmServiceUnregisterCredentialCallback(const DmString* pkgName);
-int32_t DmServiceNotifyEvent(const DmString* pkgName, int32_t eventId, const DmString* event);
-int32_t DmServiceCheckApiPermission(int32_t permissionLevel, const DmString* pkgName);
-int32_t DmServiceGetNetworkTypeByNetworkId(const DmString* pkgName, const DmString* netWorkId, int32_t* networkType);
 
-int32_t DmServiceStartAdvertising(const DmString* pkgName, const DmMap_DmString_DmString* advertiseParam);
-int32_t DmServiceStopAdvertising(const DmString* pkgName, const DmMap_DmString_DmString* advertiseParam);
-int32_t DmServiceLeaveLnn(const DmString* pkgName, const DmString* networkId);
 
-int32_t DmServiceGetDeviceSecurityLevel(const DmString* pkgName, const DmString* networkId, int32_t* securityLevel);
-bool DmServiceCheckAccessControl(const DmAccessCaller* caller, const DmAccessCallee* callee);
 int32_t DmServiceSetLocalDisplayNameToSoftbus(const DmString* displayName);
 
-int32_t DmServiceTestTriggerAclWrite(const char* json, uint32_t len);
-int32_t DmServiceTestTriggerCredDelete(const char* credId, const char* credInfo);
 
 #ifdef __cplusplus
 }

@@ -32,11 +32,6 @@ extern "C" {
 #define DM_EXPORT __attribute__((visibility("default")))
 #endif
 
-typedef enum DmAllowAuthType {
-    DM_ALLOW_AUTH_ONCE = 1,
-    DM_ALLOW_AUTH_ALWAYS = 2
-} DmAllowAuthType;
-
 DM_EXPORT extern const uint32_t DM_INVALIED_TYPE;
 DM_EXPORT extern const uint32_t DM_APP_PEER_TO_PEER_TYPE;
 DM_EXPORT extern const uint32_t DM_APP_ACROSS_ACCOUNT_TYPE;
@@ -60,7 +55,6 @@ DM_EXPORT extern const char* DM_TAG_PEER_TOKENID;
 #define DM_LNN_VAL 3
 #define DM_POINT_TO_POINT_VAL 256
 #define DM_ACROSS_ACCOUNT_VAL 1282
-#define DM_VERSION_INT_5_1_0 510
 
 typedef enum DmProfileState {
     DM_INACTIVE = 0,
@@ -74,8 +68,6 @@ typedef struct {
     DmString remoteDeviceIdHash;
 } DmDiscoveryInfo;
 
-void DmDiscoveryInfoInit(DmDiscoveryInfo* info);
-void DmDiscoveryInfoDestroy(DmDiscoveryInfo* info);
 
 typedef struct {
     DmString sessionKey;
@@ -88,8 +80,6 @@ typedef struct {
     DmString extraData;
 } DmAclInfo;
 
-void DmAclInfoInit(DmAclInfo* info);
-void DmAclInfoDestroy(DmAclInfo* info);
 
 typedef struct {
     uint64_t requestTokenId;
@@ -104,18 +94,7 @@ typedef struct {
     DmString requestExtraData;
 } DmAccesser;
 
-void DmAccesserStructInit(DmAccesser* info);
-void DmAccesserStructDestroy(DmAccesser* info);
 
-void DmAccesserSetDeviceId(DmAccesser* info, const char* value);
-void DmAccesserSetUserId(DmAccesser* info, int32_t value);
-void DmAccesserSetAccountId(DmAccesser* info, const char* value);
-void DmAccesserSetTokenId(DmAccesser* info, uint64_t value);
-void DmAccesserSetBundleName(DmAccesser* info, const char* value);
-void DmAccesserSetDeviceName(DmAccesser* info, const char* value);
-void DmAccesserSetCredentialIdStr(DmAccesser* info, const char* value);
-void DmAccesserSetSkTimeStamp(DmAccesser* info, int64_t value);
-void DmAccesserSetExtraData(DmAccesser* info, const char* value);
 
 typedef struct {
     uint64_t trustTokenId;
@@ -130,18 +109,7 @@ typedef struct {
     DmString trustExtraData;
 } DmAccessee;
 
-void DmAccesseeStructInit(DmAccessee* info);
-void DmAccesseeStructDestroy(DmAccessee* info);
 
-void DmAccesseeSetDeviceId(DmAccessee* info, const char* value);
-void DmAccesseeSetUserId(DmAccessee* info, int32_t value);
-void DmAccesseeSetAccountId(DmAccessee* info, const char* value);
-void DmAccesseeSetTokenId(DmAccessee* info, uint64_t value);
-void DmAccesseeSetBundleName(DmAccessee* info, const char* value);
-void DmAccesseeSetDeviceName(DmAccessee* info, const char* value);
-void DmAccesseeSetCredentialIdStr(DmAccessee* info, const char* value);
-void DmAccesseeSetSkTimeStamp(DmAccessee* info, int64_t value);
-void DmAccesseeSetExtraData(DmAccessee* info, const char* value);
 
 typedef struct {
     DmString udid;
@@ -152,7 +120,6 @@ typedef struct {
 } DmAclIdParam;
 
 void DmAclIdParamInit(DmAclIdParam* param);
-void DmAclIdParamDestroy(DmAclIdParam* param);
 
 DM_VEC_DEFINE(DmAclIdParam);
 DM_VEC_DEFINE(DmUserRemovedServiceInfo);
@@ -173,7 +140,6 @@ typedef struct {
 } DmOfflineParam;
 
 void DmOfflineParamInit(DmOfflineParam* param);
-void DmOfflineParamDestroy(DmOfflineParam* param);
 
 DM_VEC_DEFINE(DmOfflineParam);
 
@@ -183,8 +149,6 @@ typedef struct {
     DmVec_DmString peerUdids;
 } DmLocalUserRemovedInfo;
 
-void DmLocalUserRemovedInfoInit(DmLocalUserRemovedInfo* info);
-void DmLocalUserRemovedInfoDestroy(DmLocalUserRemovedInfo* info);
 
 typedef struct {
     DmString peerUdid;
@@ -192,16 +156,12 @@ typedef struct {
     DmVec_int localUserIds;
 } DmRemoteUserRemovedInfo;
 
-void DmRemoteUserRemovedInfoInit(DmRemoteUserRemovedInfo* info);
-void DmRemoteUserRemovedInfoDestroy(DmRemoteUserRemovedInfo* info);
 
 typedef struct {
     DmString version;
     DmVec_DmString aclHashList;
 } DmAclHashItem;
 
-void DmAclHashItemInit(DmAclHashItem* item);
-void DmAclHashItemDestroy(DmAclHashItem* item);
 
 DM_VEC_DEFINE(DmAclHashItem);
 
@@ -211,8 +171,6 @@ typedef struct {
     int32_t localUserId;
 } DmAuthOnceAclInfo;
 
-void DmAuthOnceAclInfoInit(DmAuthOnceAclInfo* info);
-void DmAuthOnceAclInfoDestroy(DmAuthOnceAclInfo* info);
 
 DM_HMAP_DEFINE(DmAuthOnceAclInfo_int, DmAuthOnceAclInfo, int);
 DM_SET_DEFINE(DmAuthOnceAclInfo);

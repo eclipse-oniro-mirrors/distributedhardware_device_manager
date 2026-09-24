@@ -18,10 +18,3 @@
 #include "dm_log.h"
 #include "dm_error_type.h"
 #include "serializer.h"
-
-bool DmParcelWriteRemoteObject(void* parcel, void* remoteObj)
-{
-    (void)parcel;
-    (void)remoteObj;
-    return true;
-}

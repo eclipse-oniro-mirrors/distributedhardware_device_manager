@@ -215,11 +215,7 @@ int32_t SoftbusCache::GetDeviceInfoFromCache(std::vector<DmDeviceInfo> &deviceIn
 
 bool SoftbusCache::CheckIsDeviceOnlineFormCache()
 {
-#if !(defined(__LITEOS_M__) || defined(LITE_DEVICE))
     std::lock_guard<ffrt::mutex> mutexLock(deviceInfosMutex_);
-#else
-    std::lock_guard<std::mutex> mutexLock(deviceInfosMutex_);
-#endif
     for (const auto &item : deviceInfo_) {
         if (std::string(item.second.second.networkId) == std::string(localDeviceInfo_.networkId)) {
             continue;

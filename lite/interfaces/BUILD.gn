@@ -83,12 +83,7 @@ config("devicemanagersdk_config") {
         "${lite_common_path}/src/dm_container.c",
         "${lite_common_path}/src/dm_thread.c",
         "${lite_common_path}/src/dm_device_info_c.c",
-        "${lite_common_path}/src/dm_device_profile_info_c.c",
         "${lite_common_path}/src/ipc/ipc_cmd_register.c",
-        "${lite_common_path}/src/ipc/ipc_model_codec_shell_lite.c",
-        "${lite_common_path}/src/ipc/model/ipc_check_access_control.c",
-        "${lite_common_path}/src/ipc/model/ipc_req.c",
-        "${lite_common_path}/src/ipc/model/ipc_rsp.c",
       ]
     } else {
       sources = [
@@ -96,13 +91,7 @@ config("devicemanagersdk_config") {
         "${lite_common_path}/src/dm_container.c",
         "${lite_common_path}/src/dm_thread.c",
         "${lite_common_path}/src/dm_device_info_c.c",
-        "${lite_common_path}/src/dm_device_profile_info_c.c",
         "${lite_common_path}/src/ipc/ipc_cmd_register.c",
-        "${lite_common_path}/src/ipc/ipc_model_codec_shell_lite.c",
-        "${lite_common_path}/src/ipc/model/ipc_check_access_control.c",
-        "${lite_common_path}/src/ipc/model/ipc_req.c",
-        "${lite_common_path}/src/ipc/model/ipc_rsp.c",
-        "${lite_utils_path}/src/dm_random.c",
         "src/device_manager.c",
         "src/device_manager_impl.c",
         "src/ipc/ipc_client_manager.c",

@@ -27,8 +27,6 @@ extern "C" {
 int32_t DmShellGetAccessControlProfileByUserId(DmVecVoid* profiles, int32_t userId);
 int32_t DmShellGetAclProfileByUserId(DmVecVoid* profiles, const char* localUdid,
     int32_t userId, const char* remoteUdid);
-int32_t DmShellGetAllAccessControlProfile(DmVecVoid* profiles);
-int32_t DmShellGetAllAclIncludeLnnAcl(DmVecVoid* profiles);
 typedef struct DmFilterAclCtx {
     const char* localDeviceId;
     uint32_t localTokenId;
@@ -54,11 +52,6 @@ int32_t DmShellPutAllTrustedDevices(DmVecVoid* deviceInfos);
 void DmShellGetAppTrustDeviceListC(DmHmap_DmString_DmAuthForm* resultMap,
     const char* pkgName, const char* deviceId);
 int32_t DmShellGetForegroundUserIds(DmVec_int* userVec);
-DmString DmShellImplGetAccesserExtraData(void* profilePtr);
-DmString DmShellImplGetAccesseeExtraData(void* profilePtr);
-void DmShellImplSetAccesserExtraData(void* profilePtr, const char* extraData);
-void DmShellImplSetAccesseeExtraData(void* profilePtr, const char* extraData);
-int32_t DmShellImplUpdateAccessControlProfile(void* profilePtr);
 
 int32_t DmShellGetCurrentAccountUserId(void);
 int32_t DmShellQueryActiveOsAccountIds(int32_t* userId);

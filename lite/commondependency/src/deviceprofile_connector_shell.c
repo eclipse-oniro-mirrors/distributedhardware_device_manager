@@ -22,7 +22,6 @@
 #include "dm_container.h"
 #include "dm_constants.h"
 #include "dm_local_acl_profile.h"
-#include "dm_jsonstr_handle.h"
 #include "json_object.h"
 #include "cJSON.h"
 #include "securec.h"
@@ -46,16 +45,6 @@ int32_t DmShellGetAclProfileByUserId(DmVecVoid* profiles, const char* localUdid,
     int32_t userId, const char* remoteUdid)
 {
     return DmAclStoreGetByUdid(profiles, localUdid, userId, remoteUdid);
-}
-
-int32_t DmShellGetAllAccessControlProfile(DmVecVoid* profiles)
-{
-    return DmAclStoreGetAll(profiles);
-}
-
-int32_t DmShellGetAllAclIncludeLnnAcl(DmVecVoid* profiles)
-{
-    return DmAclStoreGetAll(profiles);
 }
 
 
@@ -397,38 +386,6 @@ int32_t DmShellGetForegroundUserIds(DmVec_int* userVec)
 DmString DmShellLocalServiceInfoGetExtraInfo(void* localServiceInfoPtr)
 {
     return DmStringCreateEmpty();
-}
-
-DmString DmShellImplGetAccesserExtraData(void* profilePtr)
-{
-    (void)profilePtr;
-    return DmStringCreateEmpty();
-}
-
-DmString DmShellImplGetAccesseeExtraData(void* profilePtr)
-{
-    (void)profilePtr;
-    return DmStringCreateEmpty();
-}
-
-void DmShellImplSetAccesserExtraData(void* profilePtr, const char* extraData)
-{
-    (void)profilePtr;
-    (void)extraData;
-}
-
-void DmShellImplSetAccesseeExtraData(void* profilePtr, const char* extraData)
-{
-    (void)profilePtr;
-    (void)extraData;
-}
-
-int32_t DmShellImplUpdateAccessControlProfile(void* profilePtr)
-{
-    if (profilePtr == NULL) {
-        return ERR_DM_POINT_NULL;
-    }
-    return DmAclStorePut((DmLocalAclProfile*)profilePtr);
 }
 
 DmString DmShellProfileGetAccesserExtraData(void* profilePtr)

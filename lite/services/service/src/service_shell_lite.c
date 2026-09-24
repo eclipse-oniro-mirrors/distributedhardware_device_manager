@@ -302,23 +302,6 @@ static CredChangeListener g_credChangeListener = {
     .onCredDelete = OnCredDelete,
 };
 
-int32_t DmServiceTestTriggerAclWrite(const char* json, uint32_t len)
-{
-    if (json == NULL || len == 0) {
-        return ERR_DM_INPUT_PARA_INVALID;
-    }
-    LOGW("[test_stub] DmServiceTestTriggerAclWrite len=%u", len);
-    char res[8] = {0};
-    return OnCommand(0, json, len, res, sizeof(res));
-}
-
-int32_t DmServiceTestTriggerCredDelete(const char* credId, const char* credInfo)
-{
-    LOGW("[test_stub] DmServiceTestTriggerCredDelete credId=%s", credId ? credId : "NULL");
-    OnCredDelete(credId, credInfo);
-    return DM_OK;
-}
-
 static void DmLogCallbackReg(FILE* df, unsigned int h, uintptr_t t, uintptr_t c, int32_t aclRet)
 {
     (void)fprintf(df, "[register_callbacks] softbus identity handle=%u token=%u cookie=%u\n",

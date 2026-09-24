@@ -302,54 +302,6 @@ int32_t DmSoftbusListenerGetDeviceInfo(const DmString* networkId, DmDeviceInfo* 
     return DmGetDeviceInfoFromTrustedList(networkId, info);
 }
 
-int32_t DmSoftbusListenerGetUuidByNetworkId(const char* networkId, DmString* uuid)
-{
-    CHECK_NULL_RETURN(networkId, ERR_DM_FAILED);
-    uint8_t buf[UUID_BUF_LEN] = {0};
-    if (GetNodeKeyInfo(DM_PKG_NAME_LITE, networkId, NODE_KEY_UUID, buf, sizeof(buf)) == 0) {
-        DmStringAssignCstr(uuid, (const char*)buf);
-        return DM_OK;
-    }
-    LOGE("GetNodeKeyInfo UUID failed");
-    return ERR_DM_FAILED;
-}
-
-int32_t DmSoftbusListenerGetUdidByNetworkId(const char* networkId, DmString* udid)
-{
-    CHECK_NULL_RETURN(networkId, ERR_DM_FAILED);
-    uint8_t buf[UDID_BUF_LEN] = {0};
-    if (GetNodeKeyInfo(DM_PKG_NAME_LITE, networkId, NODE_KEY_UDID, buf, sizeof(buf)) == 0) {
-        DmStringAssignCstr(udid, (const char*)buf);
-        return DM_OK;
-    }
-    LOGE("GetNodeKeyInfo UDID failed");
-    return ERR_DM_FAILED;
-}
-
-int32_t DmSoftbusListenerGetDeviceSecurityLevel(const char* networkId, int32_t* securityLevel)
-{
-    CHECK_NULL_RETURN(networkId, ERR_DM_FAILED);
-    uint8_t buf[64] = {0};
-    if (GetNodeKeyInfo(DM_PKG_NAME_LITE, networkId, NODE_KEY_DEVICE_SECURITY_LEVEL, buf, sizeof(buf)) == 0) {
-        *securityLevel = atoi((const char*)buf);
-        return DM_OK;
-    }
-    LOGE("GetNodeKeyInfo security level failed");
-    return ERR_DM_FAILED;
-}
-
-int32_t DmSoftbusListenerGetNetworkTypeByNetworkId(const char* networkId, int32_t* networkType)
-{
-    CHECK_NULL_RETURN(networkId, ERR_DM_FAILED);
-    uint8_t buf[64] = {0};
-    if (GetNodeKeyInfo(DM_PKG_NAME_LITE, networkId, NODE_KEY_NETWORK_TYPE, buf, sizeof(buf)) == 0) {
-        *networkType = atoi((const char*)buf);
-        return DM_OK;
-    }
-    LOGE("GetNodeKeyInfo network type failed");
-    return ERR_DM_FAILED;
-}
-
 int32_t DmSoftbusListenerRefreshSoftbusLnn(const char* pkgName,
     const DmSubscribeInfo* dmSubInfo, const DmString* customData)
 {

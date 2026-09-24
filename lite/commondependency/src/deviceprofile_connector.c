@@ -36,7 +36,6 @@ DM_SET_IMPL(DmAuthOnceAclInfo, DmCmp_Dmauthonceaclinfo)
 DM_MAP_IMPL(DmString_DmOfflineParam, DmString, DmOfflineParam, DmCmpDmString)
 #include "dm_log.h"
 #include "multiple_user_connector.h"
-#include "dm_jsonstr_handle.h"
 #include "json_object.h"
 #include "dm_shell_functions.h"
 #include <stdio.h>
@@ -79,192 +78,7 @@ typedef enum {
     DM_IDENTICAL_ACCOUNT_BIND_TYPE = 5
 } DmDevBindType;
 
-void DmDiscoveryInfoInit(DmDiscoveryInfo* info)
-{
-    info->pkgname = DmStringCreateEmpty();
-    info->localDeviceId = DmStringCreateEmpty();
-    info->userId = 0;
-    info->remoteDeviceIdHash = DmStringCreateEmpty();
-}
 
-void DmDiscoveryInfoDestroy(DmDiscoveryInfo* info)
-{
-    DmStringDestroy(&info->pkgname);
-    DmStringDestroy(&info->localDeviceId);
-    DmStringDestroy(&info->remoteDeviceIdHash);
-}
-
-void DmAclInfoInit(DmAclInfo* info)
-{
-    info->sessionKey = DmStringCreateEmpty();
-    info->bindType = 0;
-    info->state = 0;
-    info->trustDeviceId = DmStringCreateEmpty();
-    info->bindLevel = 0;
-    info->authenticationType = 0;
-    info->deviceIdHash = DmStringCreateEmpty();
-    info->extraData = DmStringCreateEmpty();
-}
-
-void DmAclInfoDestroy(DmAclInfo* info)
-{
-    DmStringDestroy(&info->sessionKey);
-    DmStringDestroy(&info->trustDeviceId);
-    DmStringDestroy(&info->deviceIdHash);
-    DmStringDestroy(&info->extraData);
-}
-
-void DmAccesserStructInit(DmAccesser* info)
-{
-    info->requestTokenId = 0;
-    info->requestBundleName = DmStringCreateEmpty();
-    info->requestUserId = 0;
-    info->requestAccountId = DmStringCreateEmpty();
-    info->requestDeviceId = DmStringCreateEmpty();
-    info->requestTargetClass = 0;
-    info->requestDeviceName = DmStringCreateEmpty();
-    info->requestCredentialId = DmStringCreateEmpty();
-    info->requestSkTimeStamp = 0;
-    info->requestExtraData = DmStringCreateEmpty();
-}
-
-void DmAccesserStructDestroy(DmAccesser* info)
-{
-    DmStringDestroy(&info->requestBundleName);
-    DmStringDestroy(&info->requestAccountId);
-    DmStringDestroy(&info->requestDeviceId);
-    DmStringDestroy(&info->requestDeviceName);
-    DmStringDestroy(&info->requestCredentialId);
-    DmStringDestroy(&info->requestExtraData);
-}
-
-void DmAccesserSetDeviceId(DmAccesser* info, const char* value)
-{
-    DmStringDestroy(&info->requestDeviceId);
-    info->requestDeviceId = DmStringCreate(value);
-}
-
-void DmAccesserSetUserId(DmAccesser* info, int32_t value)
-{
-    info->requestUserId = value;
-}
-
-void DmAccesserSetAccountId(DmAccesser* info, const char* value)
-{
-    DmStringDestroy(&info->requestAccountId);
-    info->requestAccountId = DmStringCreate(value);
-}
-
-void DmAccesserSetTokenId(DmAccesser* info, uint64_t value)
-{
-    info->requestTokenId = value;
-}
-
-void DmAccesserSetBundleName(DmAccesser* info, const char* value)
-{
-    DmStringDestroy(&info->requestBundleName);
-    info->requestBundleName = DmStringCreate(value);
-}
-
-void DmAccesserSetDeviceName(DmAccesser* info, const char* value)
-{
-    DmStringDestroy(&info->requestDeviceName);
-    info->requestDeviceName = DmStringCreate(value);
-}
-
-void DmAccesserSetCredentialIdStr(DmAccesser* info, const char* value)
-{
-    DmStringDestroy(&info->requestCredentialId);
-    info->requestCredentialId = DmStringCreate(value);
-}
-
-
-void DmAccesserSetSkTimeStamp(DmAccesser* info, int64_t value)
-{
-    info->requestSkTimeStamp = value;
-}
-
-void DmAccesserSetExtraData(DmAccesser* info, const char* value)
-{
-    DmStringDestroy(&info->requestExtraData);
-    info->requestExtraData = DmStringCreate(value);
-}
-
-void DmAccesseeStructInit(DmAccessee* info)
-{
-    info->trustTokenId = 0;
-    info->trustBundleName = DmStringCreateEmpty();
-    info->trustUserId = 0;
-    info->trustAccountId = DmStringCreateEmpty();
-    info->trustDeviceId = DmStringCreateEmpty();
-    info->trustTargetClass = 0;
-    info->trustDeviceName = DmStringCreateEmpty();
-    info->trustCredentialId = DmStringCreateEmpty();
-    info->trustSkTimeStamp = 0;
-    info->trustExtraData = DmStringCreateEmpty();
-}
-
-void DmAccesseeStructDestroy(DmAccessee* info)
-{
-    DmStringDestroy(&info->trustBundleName);
-    DmStringDestroy(&info->trustAccountId);
-    DmStringDestroy(&info->trustDeviceId);
-    DmStringDestroy(&info->trustDeviceName);
-    DmStringDestroy(&info->trustCredentialId);
-    DmStringDestroy(&info->trustExtraData);
-}
-
-void DmAccesseeSetDeviceId(DmAccessee* info, const char* value)
-{
-    DmStringDestroy(&info->trustDeviceId);
-    info->trustDeviceId = DmStringCreate(value);
-}
-
-void DmAccesseeSetUserId(DmAccessee* info, int32_t value)
-{
-    info->trustUserId = value;
-}
-
-void DmAccesseeSetAccountId(DmAccessee* info, const char* value)
-{
-    DmStringDestroy(&info->trustAccountId);
-    info->trustAccountId = DmStringCreate(value);
-}
-
-void DmAccesseeSetTokenId(DmAccessee* info, uint64_t value)
-{
-    info->trustTokenId = value;
-}
-
-void DmAccesseeSetBundleName(DmAccessee* info, const char* value)
-{
-    DmStringDestroy(&info->trustBundleName);
-    info->trustBundleName = DmStringCreate(value);
-}
-
-void DmAccesseeSetDeviceName(DmAccessee* info, const char* value)
-{
-    DmStringDestroy(&info->trustDeviceName);
-    info->trustDeviceName = DmStringCreate(value);
-}
-
-void DmAccesseeSetCredentialIdStr(DmAccessee* info, const char* value)
-{
-    DmStringDestroy(&info->trustCredentialId);
-    info->trustCredentialId = DmStringCreate(value);
-}
-
-
-void DmAccesseeSetSkTimeStamp(DmAccessee* info, int64_t value)
-{
-    info->trustSkTimeStamp = value;
-}
-
-void DmAccesseeSetExtraData(DmAccessee* info, const char* value)
-{
-    DmStringDestroy(&info->trustExtraData);
-    info->trustExtraData = DmStringCreate(value);
-}
 
 void DmAclIdParamInit(DmAclIdParam* param)
 {
@@ -273,14 +87,6 @@ void DmAclIdParamInit(DmAclIdParam* param)
     param->credId = DmStringCreateEmpty();
     param->pkgName = DmStringCreateEmpty();
     DmVecInt64_t_Init(&param->tokenIds);
-}
-
-void DmAclIdParamDestroy(DmAclIdParam* param)
-{
-    DmStringDestroy(&param->udid);
-    DmStringDestroy(&param->credId);
-    DmStringDestroy(&param->pkgName);
-    DmVecInt64_t_Destroy(&param->tokenIds);
 }
 
 void DmOfflineParamInit(DmOfflineParam* param)
@@ -297,66 +103,6 @@ void DmOfflineParamInit(DmOfflineParam* param)
     DmVec_DmAclIdParam_Init(&param->allLnnAclInfos);
     DmVec_DmAclIdParam_Init(&param->allLeftAppOrSvrAclInfos);
     DmVec_DmAclIdParam_Init(&param->allUserAclInfos);
-}
-
-void DmOfflineParamDestroy(DmOfflineParam* param)
-{
-    DmVec_ProcessInfo_Destroy(&param->processVec);
-    DmVec_DmString_Destroy(&param->credIdVec);
-    DmVec_DmAclIdParam_Destroy(&param->needDelAclInfos);
-    DmVec_DmAclIdParam_Destroy(&param->allLnnAclInfos);
-    DmVec_DmAclIdParam_Destroy(&param->allLeftAppOrSvrAclInfos);
-    DmVec_DmAclIdParam_Destroy(&param->allUserAclInfos);
-}
-
-void DmLocalUserRemovedInfoInit(DmLocalUserRemovedInfo* info)
-{
-    info->localUdid = DmStringCreateEmpty();
-    info->preUserId = 0;
-    DmVec_DmString_Init(&info->peerUdids);
-}
-
-void DmLocalUserRemovedInfoDestroy(DmLocalUserRemovedInfo* info)
-{
-    DmStringDestroy(&info->localUdid);
-    DmVec_DmString_Destroy(&info->peerUdids);
-}
-
-void DmRemoteUserRemovedInfoInit(DmRemoteUserRemovedInfo* info)
-{
-    info->peerUdid = DmStringCreateEmpty();
-    info->peerUserId = 0;
-    DmVec_int_Init(&info->localUserIds);
-}
-
-void DmRemoteUserRemovedInfoDestroy(DmRemoteUserRemovedInfo* info)
-{
-    DmStringDestroy(&info->peerUdid);
-    DmVec_int_Destroy(&info->localUserIds);
-}
-
-void DmAclHashItemInit(DmAclHashItem* item)
-{
-    item->version = DmStringCreateEmpty();
-    DmVec_DmString_Init(&item->aclHashList);
-}
-
-void DmAclHashItemDestroy(DmAclHashItem* item)
-{
-    DmStringDestroy(&item->version);
-    DmVec_DmString_Destroy(&item->aclHashList);
-}
-
-void DmAuthOnceAclInfoInit(DmAuthOnceAclInfo* info)
-{
-    info->peerUdid = DmStringCreateEmpty();
-    info->peerUserId = 0;
-    info->localUserId = 0;
-}
-
-void DmAuthOnceAclInfoDestroy(DmAuthOnceAclInfo* info)
-{
-    DmStringDestroy(&info->peerUdid);
 }
 
 static DmString DmDpConnectorGetLocalDeviceId(void)

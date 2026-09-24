@@ -80,8 +80,6 @@ ohos_shared_library("devicemanagerutils") {
       "${lite_common_path}/src/dm_container.c",
       "${lite_common_path}/src/dm_thread.c",
       "src/crypto/dm_crypto.c",
-      "src/dm_random.c",
-      "src/jsonstr_handle/dm_jsonstr_handle.c",
       "src/kvadapter/dm_kv_info.c",
       "src/kvadapter/kv_adapter.c",
       "src/kvadapter/kv_adapter_manager.c",
