@@ -302,45 +302,12 @@ static CredChangeListener g_credChangeListener = {
     .onCredDelete = OnCredDelete,
 };
 
-static void DmLogCallbackReg(FILE* df, unsigned int h, uintptr_t t, uintptr_t c, int32_t aclRet)
-{
-    (void)fprintf(df, "[register_callbacks] softbus identity handle=%u token=%u cookie=%u\n",
-        h, (unsigned int)t, (unsigned int)c);
-    (void)fflush(df);
-    if (c == 0) {
-        (void)fprintf(df, "[register_callbacks] FAILED null cookie\n");
-        (void)fflush(df);
-        (void)fclose(df);
-        return;
-    }
-    (void)fprintf(df, "[register_callbacks] SUCCESS\n");
-    (void)fflush(df);
-    (void)fprintf(df, "[register_callbacks] RegisterCommandCb ret=%d\n", aclRet);
-    (void)fflush(df);
-    (void)fclose(df);
-}
-
 int32_t DmSoftbusListenerRegisterCallbacksInner(void)
 {
-    FILE* df = fopen("/userdata/dm_debug.log", "a");
-    if (df != NULL) {
-        (void)fprintf(df, "[register_callbacks] BEGIN pid=%d\n", getpid());
-        (void)fflush(df);
-    }
-
     int32_t ret = RegNodeDeviceStateCb(DM_PKG_NAME, &g_nodeStateCb);
-    if (df != NULL) {
-        (void)fprintf(df, "[register_callbacks] RegNodeDeviceStateCb ret=%d\n", ret);
-        (void)fflush(df);
-    }
     LOGW("[register_callbacks] RegNodeDeviceStateCb ret=%d", ret);
     if (ret != 0) {
         LOGE("RegNodeDeviceStateCb failed %d", ret);
-        if (df != NULL) {
-            (void)fprintf(df, "[register_callbacks] RegNodeDeviceStateCb FAILED ret=%d\n", ret);
-            (void)fflush(df);
-            (void)fclose(df);
-        }
         return ERR_DM_FAILED;
     }
 
@@ -348,13 +315,9 @@ int32_t DmSoftbusListenerRegisterCallbacksInner(void)
     uintptr_t t = 0;
     uintptr_t c = 0;
     GetClientIdentity(&h, &t, &c);
-    LOGW("[register_callbacks] softbus-managed client identity handle=%u token=%u cookie=%u",
-         h, (unsigned int)t, (unsigned int)c);
+    LOGW("[register_callbacks] softbus identity obtained");
     if (c == 0) {
         LOGE("[register_callbacks] softbus client cookie is NULL, callbacks cannot be delivered");
-        if (df != NULL) {
-            DmLogCallbackReg(df, h, t, c, 0);
-        }
         return ERR_DM_FAILED;
     }
 
@@ -362,9 +325,6 @@ int32_t DmSoftbusListenerRegisterCallbacksInner(void)
 
     int32_t aclRet = RegisterCommandCb(DM_PKG_NAME, &g_commandCb);
     LOGW("[register_callbacks] RegisterCommandCb ret=%d", aclRet);
-    if (df != NULL) {
-        DmLogCallbackReg(df, h, t, c, aclRet);
-    }
 
     return DM_OK;
 }
@@ -393,12 +353,6 @@ static void DmTrySoftbusRecovery(void)
         return;
     }
     LOGE("[recovery] softbus recovered, re-registering callbacks");
-    FILE* df = fopen("/userdata/dm_debug.log", "a");
-    if (df != NULL) {
-        (void)fprintf(df, "[recovery] softbus recovered, re-registering\n");
-        (void)fflush(df);
-        (void)fclose(df);
-    }
     int32_t regRet = DmSoftbusListenerRegisterCallbacksInner();
     DmHandleSoftbusRegResult(regRet);
 }
@@ -417,34 +371,22 @@ static void* DmSoftbusRecoveryThread(void* arg)
     return NULL;
 }
 
-static IUnknown* DmWaitForSoftbusService(SamgrLite *samgr, FILE* df)
+static IUnknown* DmWaitForSoftbusService(SamgrLite *samgr)
 {
     IUnknown *proxy = NULL;
     for (int i = 0; i < DM_SOFTBUS_RETRY_COUNT; i++) {
         proxy = samgr->GetDefaultFeatureApi("softbus_service");
         if (proxy != NULL) {
             LOGE("[early_reg] softbus_service found after %d seconds", i);
-            if (df != NULL) {
-                (void)fprintf(df, "[early_reg] softbus_service found after %d seconds\n", i);
-                (void)fflush(df);
-            }
             break;
         }
         if (i == 0) {
             LOGE("[early_reg] waiting for softbus_service in SAMGR...");
-            if (df != NULL) {
-                (void)fprintf(df, "[early_reg] waiting for softbus_service...\n");
-                (void)fflush(df);
-            }
         }
         sleep(1);
     }
     if (proxy == NULL) {
         LOGE("[early_reg] softbus_service NOT found after 60s, trying registration anyway");
-        if (df != NULL) {
-            (void)fprintf(df, "[early_reg] softbus_service NOT found after 60s\n");
-            (void)fflush(df);
-        }
     }
     return proxy;
 }
@@ -461,24 +403,16 @@ static void DmRegisterCredListener(void)
     }
 }
 
-static void DmLogRegResult(int32_t ret, SoftbusCache* cache, FILE* df)
+static void DmLogRegResult(int32_t ret, SoftbusCache* cache)
 {
     if (ret == DM_OK) {
         g_softbusOnline = true;
         LOGE("[early_reg] softbus registration SUCCESS");
-        if (df != NULL) {
-            (void)fprintf(df, "[early_reg] SUCCESS\n");
-            (void)fflush(df);
-        }
         if (cache != NULL) {
             DmSoftbusCacheUpdateDeviceInfoCache(cache);
         }
     } else {
         LOGE("[early_reg] softbus registration FAILED %d", ret);
-        if (df != NULL) {
-            (void)fprintf(df, "[early_reg] FAILED ret=%d\n", ret);
-            (void)fflush(df);
-        }
     }
 }
 
@@ -487,11 +421,6 @@ void DmServiceRegisterLite(void)
     DmLiteClientNotifyInit();
     DmServiceInit();
     LOGE("[early_reg] DmServiceRegisterLite BEGIN pid=%d", getpid());
-    FILE* df = fopen("/userdata/dm_debug.log", "a");
-    if (df != NULL) {
-        (void)fprintf(df, "[early_reg] BEGIN pid=%d\n", getpid());
-        (void)fflush(df);
-    }
     SoftbusCache* cache = SoftbusCacheGetInstance();
     if (cache != NULL) {
         DmSoftbusCacheInit(cache);
@@ -500,21 +429,13 @@ void DmServiceRegisterLite(void)
     SamgrLite *samgr = SAMGR_GetInstance();
     if (samgr == NULL) {
         LOGE("[early_reg] SAMGR_GetInstance returned NULL");
-        if (df != NULL) {
-            (void)fprintf(df, "[early_reg] SAMGR_GetInstance NULL\n");
-            (void)fflush(df);
-            (void)fclose(df);
-        }
         return;
     }
-    IUnknown *proxy = DmWaitForSoftbusService(samgr, df);
+    IUnknown *proxy = DmWaitForSoftbusService(samgr);
     (void)proxy;
     sleep(1);
     int32_t ret = DmSoftbusListenerRegisterCallbacksInner();
-    DmLogRegResult(ret, cache, df);
-    if (df != NULL) {
-        (void)fclose(df);
-    }
+    DmLogRegResult(ret, cache);
     DmRegisterCredListener();
     pthread_t tid;
     pthread_create(&tid, NULL, DmSoftbusRecoveryThread, NULL);

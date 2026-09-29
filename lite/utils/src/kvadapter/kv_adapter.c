@@ -306,7 +306,6 @@ static int32_t DmLiteKvDeleteStore(const char* storeDir)
     }
     DmStringDestroy(&idListStr);
     if (ret > 0) {
-        idListBuf[ret] = '\0';
         char* save = NULL;
         char* tok = strtok_r(idListBuf, ",", &save);
         while (tok != NULL) {
@@ -321,7 +320,6 @@ static int32_t DmLiteKvDeleteStore(const char* storeDir)
         (void)UtilsDeleteValue("acl_key_list");
     }
     (void)UtilsDeleteValue("acl_key_list");
-    free(idListBuf);
     return DM_OK;
 }
 
@@ -347,7 +345,6 @@ static int32_t DmLiteKvDeleteByPrefix(const char* storeDir, const char* prefix)
         }
         DmStringDestroy(&skListStr);
         if (ret > 0) {
-            skListBuf[ret] = '\0';
             char* save = NULL;
             char* tok = strtok_r(skListBuf, ",", &save);
             while (tok != NULL) {
@@ -356,7 +353,6 @@ static int32_t DmLiteKvDeleteByPrefix(const char* storeDir, const char* prefix)
             }
             (void)UtilsDeleteValue("sk_id_list");
         }
-        free(skListBuf);
     }
     return DM_OK;
 }
