@@ -78,8 +78,6 @@ typedef enum {
     DM_IDENTICAL_ACCOUNT_BIND_TYPE = 5
 } DmDevBindType;
 
-
-
 void DmAclIdParamInit(DmAclIdParam* param)
 {
     param->udid = DmStringCreateEmpty();

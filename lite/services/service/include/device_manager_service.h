@@ -43,10 +43,7 @@ int32_t DmServiceGetDeviceInfo(const DmString* networkId, DmDeviceInfo* info);
 int32_t DmServicePublishDeviceDiscovery(const DmString* pkgName, const DmPublishInfo* publishInfo);
 int32_t DmServiceUnpublishDeviceDiscovery(const DmString* pkgName, int32_t publishId);
 
-
-
 int32_t DmServiceSetLocalDisplayNameToSoftbus(const DmString* displayName);
-
 
 #ifdef __cplusplus
 }

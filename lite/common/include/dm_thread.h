@@ -49,9 +49,6 @@ void DmMutexLock(DmMutex* m);
 void DmMutexUnlock(DmMutex* m);
 void DmMutexDestroy(DmMutex* m);
 
-
-
-
 uint64_t DmGetTimestampMs(void);
 
 #ifdef __cplusplus

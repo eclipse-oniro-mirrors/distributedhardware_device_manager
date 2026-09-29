@@ -109,8 +109,6 @@ typedef struct {
     DmString trustExtraData;
 } DmAccessee;
 
-
-
 typedef struct {
     DmString udid;
     int32_t userId;

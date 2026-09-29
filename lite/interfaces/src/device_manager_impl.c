@@ -335,6 +335,36 @@ int32_t DmImplUnInitDeviceManager(const DmString* pkgName)
     return result;
 }
 
+static int32_t DmParseTrustedDeviceFromReply(IpcIo* reply, DmVec_DmDeviceInfo* deviceList)
+{
+    DmDeviceInfo info;
+    (void)memset_s(&info, sizeof(DmDeviceInfo), 0, sizeof(DmDeviceInfo));
+    const char* deviceId = (const char*)ReadString(reply, NULL);
+    const char* deviceName = (const char*)ReadString(reply, NULL);
+    int32_t deviceTypeId = 0;
+    if (!ReadInt32(reply, &deviceTypeId)) {
+        return ERR_DM_FAILED;
+    }
+    const char* networkId = (const char*)ReadString(reply, NULL);
+    if (deviceId != NULL) {
+        (void)strncpy_s(info.deviceId, sizeof(info.deviceId), deviceId, sizeof(info.deviceId) - 1);
+    }
+    if (deviceName != NULL) {
+        (void)strncpy_s(info.deviceName, sizeof(info.deviceName), deviceName, sizeof(info.deviceName) - 1);
+    }
+    info.deviceTypeId = (uint16_t)deviceTypeId;
+    if (networkId != NULL) {
+        (void)strncpy_s(info.networkId, sizeof(info.networkId), networkId, sizeof(info.networkId) - 1);
+    }
+    int32_t authForm = 0;
+    if (!ReadInt32(reply, &authForm)) {
+        return ERR_DM_FAILED;
+    }
+    info.authForm = (DmAuthForm)authForm;
+    DmVec_DmDeviceInfo_Push(deviceList, info);
+    return DM_OK;
+}
+
 int32_t DmImplGetTrustedDeviceList(const DmString* pkgName, const DmString* extra, DmVec_DmDeviceInfo* deviceList)
 {
     if (pkgName == NULL || deviceList == NULL) {
@@ -363,31 +393,9 @@ int32_t DmImplGetTrustedDeviceList(const DmString* pkgName, const DmString* extr
         return ERR_DM_FAILED;
     }
     for (int32_t i = 0; i < count; i++) {
-        DmDeviceInfo info;
-        (void)memset_s(&info, sizeof(DmDeviceInfo), 0, sizeof(DmDeviceInfo));
-        const char* deviceId = (const char*)ReadString(&reply, NULL);
-        const char* deviceName = (const char*)ReadString(&reply, NULL);
-        int32_t deviceTypeId = 0;
-        if (!ReadInt32(&reply, &deviceTypeId)) {
+        if (DmParseTrustedDeviceFromReply(&reply, deviceList) != DM_OK) {
             break;
         }
-        const char* networkId = (const char*)ReadString(&reply, NULL);
-        if (deviceId != NULL) {
-            (void)strncpy_s(info.deviceId, sizeof(info.deviceId), deviceId, sizeof(info.deviceId) - 1);
-        }
-        if (deviceName != NULL) {
-            (void)strncpy_s(info.deviceName, sizeof(info.deviceName), deviceName, sizeof(info.deviceName) - 1);
-        }
-        info.deviceTypeId = (uint16_t)deviceTypeId;
-        if (networkId != NULL) {
-            (void)strncpy_s(info.networkId, sizeof(info.networkId), networkId, sizeof(info.networkId) - 1);
-        }
-        int32_t authForm = 0;
-        if (!ReadInt32(&reply, &authForm)) {
-            break;
-        }
-        info.authForm = (DmAuthForm)authForm;
-        DmVec_DmDeviceInfo_Push(deviceList, info);
     }
     return result;
 }
