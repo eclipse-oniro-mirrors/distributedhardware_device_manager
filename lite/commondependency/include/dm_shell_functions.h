@@ -27,30 +27,8 @@ extern "C" {
 int32_t DmShellGetAccessControlProfileByUserId(DmVecVoid* profiles, int32_t userId);
 int32_t DmShellGetAclProfileByUserId(DmVecVoid* profiles, const char* localUdid,
     int32_t userId, const char* remoteUdid);
-typedef struct DmFilterAclCtx {
-    const char* localDeviceId;
-    uint32_t localTokenId;
-    const char* extra;
-} DmFilterAclCtx;
-
-void DmShellFilterNeedDeleteAclInfos(DmVecVoid* profiles, const char* remoteDeviceId,
-    DmFilterAclCtx* ctx, DmOfflineParam* offlineParam);
-void DmShellFilterNeedDeleteAclInfosByPeer(DmVecVoid* profiles, const char* localUdid,
-    const char* peerUdid, DmOfflineParam* offlineParam);
 uint32_t DmShellGetAuthFormPriority(void* profilePtr, const char* peerUdid, const char* localUdid);
-int32_t DmShellPutAccessControlList(DmAclInfo* aclInfo, DmAccesser* dmAccesser, DmAccessee* dmAccessee);
-void DmShellGetUdidHash(const char* udid, uint8_t* hash);
-int32_t DmShellHandleDmAuthForm(void* profilePtr, DmDiscoveryInfo* discoveryInfo);
 bool DmShellIsLnnAcl(void* profilePtr);
-void DmShellCacheAcerAclId(void* profilePtr, DmAclIdParam* param);
-void DmShellCacheAceeAclId(void* profilePtr, DmAclIdParam* param);
-void DmShellUpdateAccessControlProfile(void* profilePtr);
-DmString DmShellAccessToStr(void* acl);
-int32_t DmShellSubscribeDeviceProfileInited(void* dpInitedCallback);
-int32_t DmShellUnSubscribeDeviceProfileInited(void);
-int32_t DmShellPutAllTrustedDevices(DmVecVoid* deviceInfos);
-void DmShellGetAppTrustDeviceListC(DmHmap_DmString_DmAuthForm* resultMap,
-    const char* pkgName, const char* deviceId);
 int32_t DmShellGetForegroundUserIds(DmVec_int* userVec);
 
 int32_t DmShellGetCurrentAccountUserId(void);
