@@ -1745,11 +1745,6 @@ int32_t DeviceManagerService::GetOsTypeByNetworkId(const std::string &pkgName, c
 {
     CHECK_EMPTY_RETURN(pkgName, ERR_DM_INPUT_PARA_INVALID);
     CHECK_EMPTY_RETURN(networkId, ERR_DM_INPUT_PARA_INVALID);
-    if (CheckConstraintEnabledByNetworkId(networkId)) {
-        LOGI("constraint enable is true");
-        osType = -1;
-        return DM_OK;
-    }
     if (!PermissionManager::GetInstance().CheckAccessServicePermission() ||
         !PermissionManager::GetInstance().CheckDataSyncPermission()) {
         LOGE("The caller: %{public}s does not have permission to call GetOsTypeByNetworkId.", pkgName.c_str());
