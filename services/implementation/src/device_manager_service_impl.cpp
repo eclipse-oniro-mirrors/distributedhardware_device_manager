@@ -2873,12 +2873,19 @@ void DeviceManagerServiceImpl::HandleCredentialDeleted(const char *credId, const
         userId = jsonObject[userIdTag].Get<int32_t>();
     }
 
+    // L1-L2 interconnection scenario.
+    // L1-L2 uses same-account credential (credType=1) with POINT_TO_POINT ACL.
+    // In the same-account credential credInfo:
+    //   "deviceId" is the local UDID (assigned to remoteUdid),
+    //   "osAccountId" is the local OS account ID (assigned to userId).
     for (const auto &item : profiles) {
         if (item.GetBindType() == DM_SHARE) {
             HandleShareAclDeleted(item, std::string(credId), localUdid, localUserId, userId, remoteUdid,
                 isSendBroadCast);
         } else if (item.GetBindType() == DM_POINT_TO_POINT) {
             HandlePointToPointAclDeleted(item, std::string(credId), remoteUdid, userId, isSendBroadCast);
+        } else {
+            LOGI("Unhandled bindType: %{public}u, skip.", item.GetBindType());
         }
     }
 }
@@ -2909,10 +2916,14 @@ void DeviceManagerServiceImpl::HandleShareAclDeleted(const DistributedDeviceProf
     }
 }
 
-// POINT_TO_POINT(点对点)绑定场景下，credInfo中的deviceId和osAccountId均为本端信息，
-// 其中credInfo.deviceId为本端UDID(赋给remoteUdid)，credInfo.osAccountId为本端OS账户ID(赋给userId)。
-// ACL中accesser侧记录的也是本端信息(deviceId=本端UDID, userId=本端OS账户ID)，
-// 因此用credId + accesser.deviceId + accesser.userId三项匹配即可定位到本端的ACL。
+// L1-L2 interconnection scenario: POINT_TO_POINT binding.
+// In credInfo, deviceId and osAccountId are both local device info:
+// credInfo.deviceId is the local UDID (assigned to remoteUdid),
+// credInfo.osAccountId is the local OS account ID (assigned to userId).
+// The ACL accesser side also records local device info
+// (deviceId=local UDID, userId=local OS account ID).
+// Match by credId + accesser.deviceId + accesser.userId to locate the local ACL.
+// No broadcast is sent in L1-L2 scenario; ACL is deleted first, then session key.
 void DeviceManagerServiceImpl::HandlePointToPointAclDeleted(
     const DistributedDeviceProfile::AccessControlProfile &item, const std::string &credId,
     const std::string &remoteUdid, int32_t userId, bool &isSendBroadCast)
@@ -2920,10 +2931,10 @@ void DeviceManagerServiceImpl::HandlePointToPointAclDeleted(
     if (item.GetAccesser().GetAccesserCredentialIdStr() == credId &&
         item.GetAccesser().GetAccesserDeviceId() == remoteUdid &&
         item.GetAccesser().GetAccesserUserId() == userId) {
-        isSendBroadCast = true;
+        isSendBroadCast = false;
+        DeviceProfileConnector::GetInstance().DeleteAccessControlById(item.GetAccessControlId());
         int32_t skId = item.GetAccesser().GetAccesserSessionKeyId();
         DeviceProfileConnector::GetInstance().DeleteSessionKey(userId, skId);
-        DeviceProfileConnector::GetInstance().DeleteAccessControlById(item.GetAccessControlId());
     }
 }
 
@@ -2937,34 +2948,28 @@ void DeviceManagerServiceImpl::HandleShareUnbindBroadCast(const std::string &cre
     }
     int32_t localUserId = MultipleUserConnector::GetCurrentAccountUserID();
     for (const auto &item : profiles) {
-        if (item.GetBindType() == DM_SHARE) {
-            std::string accesserCredId = "";
-            std::string accesseeCredId = "";
-            for (int32_t i = 0; i < BROADCAST_CREDID_LENGTH; i++) {
-                accesserCredId += item.GetAccesser().GetAccesserCredentialIdStr()[i];
-                accesseeCredId += item.GetAccessee().GetAccesseeCredentialIdStr()[i];
-            }
-            if (accesserCredId == credId && item.GetAccessee().GetAccesseeDeviceId() == localUdid &&
-                item.GetAccessee().GetAccesseeUserId() == localUserId &&
-                item.GetAccesser().GetAccesserUserId() == userId) {
-                int32_t skId = item.GetAccessee().GetAccesseeSessionKeyId();
-                DeviceProfileConnector::GetInstance().DeleteSessionKey(userId, skId);
-                DeviceProfileConnector::GetInstance().DeleteAccessControlById(item.GetAccessControlId());
-            }
-            if (accesseeCredId == credId && item.GetAccesser().GetAccesserDeviceId() == localUdid &&
-                item.GetAccesser().GetAccesserUserId() == localUserId &&
-                item.GetAccessee().GetAccesseeUserId() == userId) {
-                int32_t skId = item.GetAccessee().GetAccesseeSessionKeyId();
-                DeviceProfileConnector::GetInstance().DeleteSessionKey(userId, skId);
-                DeviceProfileConnector::GetInstance().DeleteAccessControlById(item.GetAccessControlId());
-            }
-        } else if (item.GetBindType() == DM_POINT_TO_POINT) {
-            if (item.GetAccesser().GetAccesserCredentialIdStr() == credId &&
-                item.GetAccesser().GetAccesserDeviceId() == localUdid) {
-                int32_t skId = item.GetAccesser().GetAccesserSessionKeyId();
-                DeviceProfileConnector::GetInstance().DeleteSessionKey(userId, skId);
-                DeviceProfileConnector::GetInstance().DeleteAccessControlById(item.GetAccessControlId());
-            }
+        if (item.GetBindType() != DM_SHARE) {
+            continue;
+        }
+        std::string accesserCredId = "";
+        std::string accesseeCredId = "";
+        for (int32_t i = 0; i < BROADCAST_CREDID_LENGTH; i++) {
+            accesserCredId += item.GetAccesser().GetAccesserCredentialIdStr()[i];
+            accesseeCredId += item.GetAccessee().GetAccesseeCredentialIdStr()[i];
+        }
+        if (accesserCredId == credId && item.GetAccessee().GetAccesseeDeviceId() == localUdid &&
+            item.GetAccessee().GetAccesseeUserId() == localUserId &&
+            item.GetAccesser().GetAccesserUserId() == userId) {
+            int32_t skId = item.GetAccessee().GetAccesseeSessionKeyId();
+            DeviceProfileConnector::GetInstance().DeleteSessionKey(userId, skId);
+            DeviceProfileConnector::GetInstance().DeleteAccessControlById(item.GetAccessControlId());
+        }
+        if (accesseeCredId == credId && item.GetAccesser().GetAccesserDeviceId() == localUdid &&
+            item.GetAccesser().GetAccesserUserId() == localUserId &&
+            item.GetAccessee().GetAccesseeUserId() == userId) {
+            int32_t skId = item.GetAccessee().GetAccesseeSessionKeyId();
+            DeviceProfileConnector::GetInstance().DeleteSessionKey(userId, skId);
+            DeviceProfileConnector::GetInstance().DeleteAccessControlById(item.GetAccessControlId());
         }
     }
 }
