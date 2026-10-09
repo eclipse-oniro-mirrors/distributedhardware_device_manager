@@ -923,6 +923,7 @@ void DeviceManagerServiceImpl3rd::AuthCredentialImpl(const PeerTargetId3rd &targ
     if (!sessionEnableCvMap_[sessionId].wait_for(cvLock, std::chrono::milliseconds(OPEN_AUTH_SESSION_TIMEOUT),
         [&] { return sessionEnableCvReadyMap_[sessionId]; })) {
         CredSessionOpenFailed(sessionId, processInfo3rd);
+        CleanAuthMgrByLogicalSessionId(logicalSessionId, 0, processInfo3rd, true);
         return;
     }
     authMgr->AuthCredential(targetId, authParamTmp, sessionId, logicalSessionId);
