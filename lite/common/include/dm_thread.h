@@ -49,21 +49,6 @@ void DmMutexLock(DmMutex* m);
 void DmMutexUnlock(DmMutex* m);
 void DmMutexDestroy(DmMutex* m);
 
-int DmCondInit(DmCond* c, DmMutex* m);
-void DmCondWait(DmCond* c);
-void DmCondSignal(DmCond* c);
-void DmCondBroadcast(DmCond* c);
-void DmCondDestroy(DmCond* c);
-
-int DmThreadCreate(DmThread* t, void* (*func)(void*), void* arg);
-void DmThreadJoin(DmThread* t);
-void DmThreadDetach(DmThread* t);
-
-int DmSemInit(DmSem* s, int val);
-void DmSemWait(DmSem* s);
-void DmSemPost(DmSem* s);
-void DmSemDestroy(DmSem* s);
-
 uint64_t DmGetTimestampMs(void);
 
 #ifdef __cplusplus

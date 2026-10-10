@@ -64,8 +64,3 @@ bool DmPermissionCheckDataSync(const DmString* pkgName)
 {
     return DmPermissionCheckSystemSa(pkgName);
 }
-
-bool DmPermissionCheckMonitor(const DmString* pkgName)
-{
-    return DmPermissionCheckSystemSa(pkgName);
-}

@@ -275,8 +275,6 @@ void DmAclKeyFromProfile(char* buf, size_t bufSize, const DmLocalAclProfile* p)
         return;
     }
 
-    LOGW("[ACL_KEY] composite=%s", composite);
-
     uint32_t h1 = 2166136261u;
     uint32_t h2 = 1469347982u;
     for (int i = 0; composite[i] != '\0'; i++) {

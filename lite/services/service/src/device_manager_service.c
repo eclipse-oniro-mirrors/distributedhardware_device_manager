@@ -78,12 +78,6 @@ int32_t DmServiceGetTrustedDeviceList(const DmString* pkgName, const DmString* e
     return DM_OK;
 }
 
-int32_t DmServiceShiftLnnGear(const DmString* pkgName, const DmString* callerId, bool isRefresh, bool isWakeUp)
-{
-    LOGI("ShiftLNNGear.");
-    return DM_OK;
-}
-
 int32_t DmServiceGetLocalDeviceInfo(DmDeviceInfo* info)
 {
     CHECK_NULL_RETURN(info, ERR_DM_FAILED);
@@ -94,18 +88,6 @@ int32_t DmServiceGetDeviceInfo(const DmString* networkId, DmDeviceInfo* info)
 {
     CHECK_NULL_RETURN(networkId, ERR_DM_FAILED);
     return DmSoftbusListenerGetDeviceInfo(networkId, info);
-}
-
-int32_t DmServiceGetUdidByNetworkId(const DmString* pkgName, const DmString* netWorkId, DmString* udid)
-{
-    CHECK_NULL_RETURN(pkgName, ERR_DM_FAILED);
-    return DmSoftbusListenerGetUdidByNetworkId(DmStringCstr(netWorkId), udid);
-}
-
-int32_t DmServiceGetUuidByNetworkId(const DmString* pkgName, const DmString* netWorkId, DmString* uuid)
-{
-    CHECK_NULL_RETURN(pkgName, ERR_DM_FAILED);
-    return DmSoftbusListenerGetUuidByNetworkId(DmStringCstr(netWorkId), uuid);
 }
 
 int32_t DmServicePublishDeviceDiscovery(const DmString* pkgName, const DmPublishInfo* publishInfo)
@@ -129,145 +111,6 @@ int32_t DmServiceUnpublishDeviceDiscovery(const DmString* pkgName, int32_t publi
 {
     CHECK_NULL_RETURN(pkgName, ERR_DM_FAILED);
     return DmSoftbusListenerStopPublishSoftbusLnn(publishId);
-}
-
-int32_t DmServiceCheckApiPermission(int32_t permissionLevel, const DmString* pkgName)
-{
-    LOGI("CheckApiPermission lite permissionLevel=%d", permissionLevel);
-    if (pkgName == NULL || DmStringEmpty(pkgName)) {
-        LOGE("CheckApiPermission invalid pkgName");
-        return ERR_DM_NO_PERMISSION;
-    }
-    bool allowed = false;
-    if (permissionLevel == 0) {
-        allowed = DmPermissionCheckDataSync(pkgName);
-    } else if (permissionLevel == 1) {
-        allowed = DmPermissionCheckAccessService(pkgName);
-    } else if (permissionLevel == DM_PERMISSION_LEVEL_MONITOR) {
-        allowed = DmPermissionCheckMonitor(pkgName);
-    }
-    return allowed ? DM_OK : ERR_DM_NO_PERMISSION;
-}
-
-int32_t DmServiceNotifyEvent(const DmString* pkgName, int32_t eventId, const DmString* event)
-{
-    LOGI("NotifyEvent pkgName=%s eventId=%d", DmStringCstr(pkgName), eventId);
-    return DM_OK;
-}
-
-int32_t DmServiceRequestCredential(const DmString* reqJsonStr, DmString* returnJsonStr)
-{
-    LOGI("RequestCredential lite");
-    const DeviceGroupManager *gm = GetGmInstance();
-    if (gm == NULL) {
-        LOGE("GetGmInstance failed");
-        return ERR_DM_FAILED;
-    }
-    char *returnData = NULL;
-    int32_t ret = gm->getRegisterInfo(DmStringCstr(reqJsonStr), &returnData);
-    if (ret != 0 || returnData == NULL) {
-        LOGE("getRegisterInfo failed ret=%d", ret);
-        if (returnData) gm->destroyInfo(&returnData);
-        return ERR_DM_FAILED;
-    }
-    DmStringAssignCstr(returnJsonStr, returnData);
-    gm->destroyInfo(&returnData);
-    LOGI("RequestCredential success");
-    return DM_OK;
-}
-
-int32_t DmServiceImportCredential(const DmString* pkgName, const DmString* credentialInfo)
-{
-    LOGI("ImportCredential lite pkgName=%s", DmStringCstr(pkgName));
-    const CredManager *cm = GetCredMgrInstance();
-    if (cm == NULL) {
-        LOGE("GetCredMgrInstance failed");
-        return ERR_DM_FAILED;
-    }
-    char *returnData = NULL;
-    int32_t ret = cm->addCredential(0, DmStringCstr(credentialInfo), &returnData);
-    if (ret != 0) {
-        LOGE("addCredential failed ret=%d", ret);
-        if (returnData) cm->destroyInfo(&returnData);
-        return ERR_DM_FAILED;
-    }
-    if (returnData) cm->destroyInfo(&returnData);
-    LOGI("ImportCredential success");
-    return DM_OK;
-}
-
-int32_t DmServiceDeleteCredential(const DmString* pkgName, const DmString* deleteInfo)
-{
-    LOGI("DeleteCredential lite pkgName=%s", DmStringCstr(pkgName));
-    const CredManager *cm = GetCredMgrInstance();
-    if (cm == NULL) {
-        LOGE("GetCredMgrInstance failed");
-        return ERR_DM_FAILED;
-    }
-    int32_t ret = cm->deleteCredential(0, DmStringCstr(deleteInfo));
-    if (ret != 0) {
-        LOGE("deleteCredential failed ret=%d", ret);
-        return ERR_DM_FAILED;
-    }
-    LOGI("DeleteCredential success");
-    return DM_OK;
-}
-
-int32_t DmServiceRegisterCredentialCallback(const DmString* pkgName)
-{
-    LOGI("RegisterCredentialCallback.");
-    return DM_OK;
-}
-
-int32_t DmServiceUnregisterCredentialCallback(const DmString* pkgName)
-{
-    LOGI("UnRegisterCredentialCallback.");
-    return DM_OK;
-}
-
-int32_t DmServiceGetNetworkTypeByNetworkId(const DmString* pkgName, const DmString* netWorkId, int32_t* networkType)
-{
-    return DmSoftbusListenerGetNetworkTypeByNetworkId(DmStringCstr(netWorkId), networkType);
-}
-
-int32_t DmServiceStartAdvertising(const DmString* pkgName, const DmMap_DmString_DmString* advertiseParam)
-{
-    LOGI("StartAdvertising pkgName=%s", DmStringCstr(pkgName));
-    return DM_OK;
-}
-
-int32_t DmServiceStopAdvertising(const DmString* pkgName, const DmMap_DmString_DmString* advertiseParam)
-{
-    LOGI("StopAdvertising pkgName=%s", DmStringCstr(pkgName));
-    return DM_OK;
-}
-
-int32_t DmServiceLeaveLnn(const DmString* pkgName, const DmString* networkId)
-{
-    LOGI("LeaveLNN lite networkId=%s", DmStringCstr(networkId));
-    int32_t ret = LeaveLNN(DmStringCstr(pkgName), DmStringCstr(networkId), NULL);
-    if (ret != 0) {
-        LOGE("LeaveLNN failed ret=%d", ret);
-        return ERR_DM_FAILED;
-    }
-    LOGI("LeaveLNN success");
-    return DM_OK;
-}
-
-int32_t DmServiceGetDeviceSecurityLevel(const DmString* pkgName, const DmString* networkId, int32_t* securityLevel)
-{
-    return DmSoftbusListenerGetDeviceSecurityLevel(DmStringCstr(networkId), securityLevel);
-}
-
-bool DmServiceCheckAccessControl(const DmAccessCaller* caller, const DmAccessCallee* callee)
-{
-    char localUdid[UDID_BUF_LEN] = {0};
-    NodeBasicInfo localInfo;
-    if (GetLocalNodeDeviceInfo("ohos.distributedhardware.devicemanager", &localInfo) == 0) {
-        GetNodeKeyInfo("ohos.distributedhardware.devicemanager", localInfo.networkId,
-            NODE_KEY_UDID, (uint8_t*)localUdid, sizeof(localUdid));
-    }
-    return DmDpConnectorCheckAccessControl(caller, localUdid, callee, "");
 }
 
 int32_t DmServiceSetLocalDisplayNameToSoftbus(const DmString* displayName)

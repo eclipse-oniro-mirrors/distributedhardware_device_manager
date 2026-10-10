@@ -306,7 +306,6 @@ static int32_t DmLiteKvDeleteStore(const char* storeDir)
     }
     DmStringDestroy(&idListStr);
     if (ret > 0) {
-        idListBuf[ret] = '\0';
         char* save = NULL;
         char* tok = strtok_r(idListBuf, ",", &save);
         while (tok != NULL) {
@@ -321,7 +320,6 @@ static int32_t DmLiteKvDeleteStore(const char* storeDir)
         (void)UtilsDeleteValue("acl_key_list");
     }
     (void)UtilsDeleteValue("acl_key_list");
-    free(idListBuf);
     return DM_OK;
 }
 
@@ -347,7 +345,6 @@ static int32_t DmLiteKvDeleteByPrefix(const char* storeDir, const char* prefix)
         }
         DmStringDestroy(&skListStr);
         if (ret > 0) {
-            skListBuf[ret] = '\0';
             char* save = NULL;
             char* tok = strtok_r(skListBuf, ",", &save);
             while (tok != NULL) {
@@ -355,80 +352,6 @@ static int32_t DmLiteKvDeleteByPrefix(const char* storeDir, const char* prefix)
                 tok = strtok_r(NULL, ",", &save);
             }
             (void)UtilsDeleteValue("sk_id_list");
-        }
-        free(skListBuf);
-    }
-    return DM_OK;
-}
-
-static int32_t DmLiteKvGetByPrefix(const char* storeDir, const char* prefix, DmVec_DmString* values)
-{
-    (void)storeDir;
-    if (prefix == NULL) {
-        return DM_OK;
-    }
-    if (strcmp(prefix, "acl_") != 0) {
-        return DM_OK;
-    }
-    char listBuf[DM_MAX_STRING_LEN] = {0};
-    DmString listStr = {0};
-    if (DmSysKvGet(NULL, "acl_key_list", &listStr) == DM_OK && DmStringSize(&listStr) > 0) {
-        if (strncpy_s(listBuf, sizeof(listBuf), DmStringCstr(&listStr), sizeof(listBuf) - 1) != 0) {
-            DmStringDestroy(&listStr);
-            return DM_OK;
-        }
-    }
-    DmStringDestroy(&listStr);
-    if (listBuf[0] == '\0') {
-        return DM_OK;
-    }
-    char* save = NULL;
-    char* tok = strtok_r(listBuf, ",", &save);
-    while (tok != NULL) {
-        char aclKey[DM_SYS_KV_MAX_KEY];
-        if (snprintf_s(aclKey, sizeof(aclKey), sizeof(aclKey) - 1, "acl_%s", tok) < 0) {
-            tok = strtok_r(NULL, ",", &save);
-            continue;
-        }
-        DmString val = {0};
-        if (DmSysKvGet(NULL, aclKey, &val) == DM_OK && DmStringSize(&val) > 0) {
-            (void)DmVec_DmString_Push(values, val);
-        } else {
-            DmStringDestroy(&val);
-        }
-        tok = strtok_r(NULL, ",", &save);
-    }
-    free(listBuf);
-    return DM_OK;
-}
-
-static int32_t DmLiteKvCountByPrefix(const char* storeDir, const char* prefix, int32_t* count)
-{
-    (void)storeDir;
-    *count = 0;
-    if (prefix == NULL) {
-        return DM_OK;
-    }
-    if (strcmp(prefix, "acl_") == 0) {
-        char idListBuf[DM_MAX_STRING_LEN] = {0};
-        DmString idListStr = {0};
-        int ret = (DmSysKvGet(NULL, "acl_key_list", &idListStr) == DM_OK &&
-            DmStringSize(&idListStr) > 0) ? (int)DmStringSize(&idListStr) : -1;
-        if (ret > 0) {
-            if (strncpy_s(idListBuf, sizeof(idListBuf), DmStringCstr(&idListStr), sizeof(idListBuf) - 1) != 0) {
-                DmStringDestroy(&idListStr);
-                return DM_OK;
-            }
-        }
-        DmStringDestroy(&idListStr);
-        if (ret > 0) {
-            idListBuf[ret] = '\0';
-            char* save = NULL;
-            char* tok = strtok_r(idListBuf, ",", &save);
-            while (tok != NULL) {
-                (*count)++;
-                tok = strtok_r(NULL, ",", &save);
-            }
         }
     }
     return DM_OK;
@@ -572,32 +495,4 @@ int32_t DmKvAdapterDelete(KVAdapter* adapter, const char* key)
     int32_t ret = DmLiteKvDelete(DmLiteGetStoreDir(adapter), key);
     DmMutexUnlock(&adapter->kvAdapterMutex);
     return ret;
-}
-
-int32_t DmKvAdapterGetAllOstypeData(KVAdapter* adapter, const char* key, DmVec_DmString* values)
-{
-    if (adapter == NULL) {
-        return ERR_DM_POINT_NULL;
-    }
-    if (key == NULL) {
-        return ERR_DM_FAILED;
-    }
-    DmMutexLock(&adapter->kvAdapterMutex);
-    DmLiteKvGetByPrefix(DmLiteGetStoreDir(adapter), key, values);
-    DmMutexUnlock(&adapter->kvAdapterMutex);
-    return DM_OK;
-}
-
-int32_t DmKvAdapterGetOstypeCountByPrefix(KVAdapter* adapter, const char* prefix, int32_t* count)
-{
-    if (adapter == NULL) {
-        return ERR_DM_POINT_NULL;
-    }
-    if (prefix == NULL) {
-        return ERR_DM_FAILED;
-    }
-    DmMutexLock(&adapter->kvAdapterMutex);
-    DmLiteKvCountByPrefix(DmLiteGetStoreDir(adapter), prefix, count);
-    DmMutexUnlock(&adapter->kvAdapterMutex);
-    return DM_OK;
 }

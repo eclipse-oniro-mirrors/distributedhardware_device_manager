@@ -43,28 +43,10 @@ typedef struct {
 DM_DECLARE_SINGLE_INSTANCE(DmIpcCmdRegister);
 
 void DmIpcCmdRegisterInit(DmIpcCmdRegister* inst);
-void DmIpcCmdRegisterRegisterSetRequestFunc(int32_t cmdCode, DmSetIpcRequestFunc func);
-void DmIpcCmdRegisterRegisterReadResponseFunc(int32_t cmdCode, DmReadResponseFunc func);
 void DmIpcCmdRegisterRegisterCmdProcessFunc(int32_t cmdCode, DmOnIpcCmdFunc func);
 
-int32_t DmIpcCmdRegisterSetRequest(int32_t cmdCode, void* pBaseReq, void* data);
-int32_t DmIpcCmdRegisterReadResponse(int32_t cmdCode, void* reply, void* pBaseRsp);
 int32_t DmIpcCmdRegisterOnIpcCmd(int32_t cmdCode, void* data, void* reply);
 int32_t DmIpcCmdRegisterOnRemoteRequest(int32_t cmdCode, void* data, void* reply);
-
-#define DM_ON_IPC_SET_REQUEST(cmdCode, paraA, paraB) \
-    static int32_t DmIpcSetRequest_##cmdCode(paraA, paraB); \
-    __attribute__((constructor)) static void DmIpcRegisterSetRequest_##cmdCode(void) { \
-        DmIpcCmdRegisterRegisterSetRequestFunc(cmdCode, (DmSetIpcRequestFunc)DmIpcSetRequest_##cmdCode); \
-    } \
-    static int32_t DmIpcSetRequest_##cmdCode(paraA, paraB)
-
-#define DM_ON_IPC_READ_RESPONSE(cmdCode, paraA, paraB) \
-    static int32_t DmIpcReadResponse_##cmdCode(paraA, paraB); \
-    __attribute__((constructor)) static void DmIpcRegisterReadResponse_##cmdCode(void) { \
-        DmIpcCmdRegisterRegisterReadResponseFunc(cmdCode, (DmReadResponseFunc)DmIpcReadResponse_##cmdCode); \
-    } \
-    static int32_t DmIpcReadResponse_##cmdCode(paraA, paraB)
 
 #define DM_ON_IPC_CMD(cmdCode, paraA, paraB) \
     static int32_t DmIpcCmdProcess_##cmdCode(int32_t ipcCmdCode, paraA, paraB); \

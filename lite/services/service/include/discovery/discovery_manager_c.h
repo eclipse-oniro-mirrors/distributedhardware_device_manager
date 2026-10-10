@@ -30,22 +30,6 @@
 extern "C" {
 #endif
 
-typedef enum MetaNodeType {
-    META_PROXY_TRANSMISION = 0,
-    META_PROXY_HEARTBEAT = 1,
-    META_PROXY_HICAR = 2,
-    META_PROXY_ACS = 3,
-    META_PROXY_SHARE = 4,
-    META_PROXY_CASTPLUS = 5,
-    META_PROXY_DM = 6,
-    META_PROXY_WEAR = 7,
-    META_PROXY_WINPC = 8,
-    META_PROXY_COLLABORATION_FWK = 9,
-    META_PROXY_DMSDP = 10,
-    META_PROXY_DEFAULT = 11,
-    META_CUSTOM_UNKNOWN,
-} MetaNodeType;
-
 typedef struct DiscoveryContext {
     DmString pkgName;
     DmString extra;
@@ -84,13 +68,6 @@ DM_DECLARE_SINGLE_INSTANCE(DiscoveryManager);
 
 int32_t DmDiscoveryManagerInit(DiscoveryManager* mgr, void* softbusListener, void* listener);
 
-int32_t DmDiscoveryManagerEnableDiscoveryListener(DiscoveryManager* mgr, const DmString* pkgName,
-    const DmMap_DmString_DmString* discoverParam, const DmMap_DmString_DmString* filterOptions);
-int32_t DmDiscoveryManagerDisableDiscoveryListener(DiscoveryManager* mgr, const DmString* pkgName,
-    const DmMap_DmString_DmString* extraParam);
-int32_t DmDiscoveryManagerStartDiscovering(DiscoveryManager* mgr, const DmString* pkgName,
-    const DmMap_DmString_DmString* discoverParam, const DmMap_DmString_DmString* filterOptions);
-int32_t DmDiscoveryManagerStopDiscovering(DiscoveryManager* mgr, const DmString* pkgName, uint16_t subscribeId);
 
 #ifdef __cplusplus
 }

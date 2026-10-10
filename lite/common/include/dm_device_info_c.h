@@ -176,8 +176,6 @@ typedef struct {
     char capability[DM_MAX_DEVICE_CAPABILITY_LEN];
 } DmPublishInfo;
 
-void DmPublishInfoInit(DmPublishInfo* info);
-void DmPublishInfoDestroy(DmPublishInfo* info);
 
 typedef struct {
     char deviceId[DM_MAX_DEVICE_ID_LEN];
@@ -201,9 +199,6 @@ typedef struct {
     DmString extraData;
 } DmDeviceBasicInfo;
 
-void DmDeviceBasicInfoInit(DmDeviceBasicInfo* info);
-void DmDeviceBasicInfoDestroy(DmDeviceBasicInfo* info);
-DmDeviceInfo DmDeviceBasicInfoToDeviceInfo(const DmDeviceBasicInfo* basic);
 
 typedef struct {
     DmString deviceId;
@@ -217,8 +212,6 @@ typedef struct {
 
 typedef PeerTargetId DmPeerTargetId;
 
-void DmPeerTargetIdInit(PeerTargetId* id);
-void DmPeerTargetIdDestroy(PeerTargetId* id);
 
 typedef struct {
     DmString accountId;
@@ -268,8 +261,6 @@ typedef struct {
     DmString udid;
 } DmNotifyKey;
 
-void DmNotifyKeyInit(DmNotifyKey* key);
-void DmNotifyKeyDestroy(DmNotifyKey* key);
 
 typedef struct {
     DmString bundleName;
@@ -281,8 +272,6 @@ typedef struct {
     DmString extraInfo;
 } DMLocalServiceInfo;
 
-void DmLocalServiceInfoInit(DMLocalServiceInfo* info);
-void DmLocalServiceInfoDestroy(DMLocalServiceInfo* info);
 
 DM_VEC_DEFINE(uint64_t);
 DM_VEC_DEFINE(DmDeviceInfo);
@@ -296,8 +285,6 @@ typedef struct {
     int32_t userId;
 } DevUserInfo;
 
-void DmDevUserInfoInit(DevUserInfo* info);
-void DmDevUserInfoDestroy(DevUserInfo* info);
 
 typedef struct {
     DmString localUdid;
@@ -306,8 +293,6 @@ typedef struct {
     int32_t peerUserId;
 } DMAclQuadInfo;
 
-void DmAclQuadInfoInit(DMAclQuadInfo* info);
-void DmAclQuadInfoDestroy(DMAclQuadInfo* info);
 
 typedef struct {
     int64_t serviceId;
@@ -324,8 +309,6 @@ typedef struct {
     DmString pkgName;
 } DiscoveryServiceInfo;
 
-void DmDiscoveryServiceInfoInit(DiscoveryServiceInfo* info);
-void DmDiscoveryServiceInfoDestroy(DiscoveryServiceInfo* info);
 
 typedef struct {
     int32_t regServiceId;
@@ -339,8 +322,6 @@ typedef struct {
     DmString serviceDisplayName;
 } ServiceInfoProfile;
 
-void DmServiceInfoProfileInit(ServiceInfoProfile* info);
-void DmServiceInfoProfileDestroy(ServiceInfoProfile* info);
 
 typedef struct {
     ServiceInfo serviceInfo;
@@ -348,8 +329,6 @@ typedef struct {
     uint32_t dataLen;
 } ServiceRegInfo;
 
-void DmServiceRegInfoInit(ServiceRegInfo* info);
-void DmServiceRegInfoDestroy(ServiceRegInfo* info);
 
 typedef struct {
     ServiceInfo serviceInfo;
@@ -359,8 +338,6 @@ typedef struct {
     DmExchangeFreq freq;
 } PublishServiceParam;
 
-void DmPublishServiceParamInit(PublishServiceParam* param);
-void DmPublishServiceParamDestroy(PublishServiceParam* param);
 
 typedef struct {
     int32_t userId;
@@ -383,8 +360,6 @@ typedef struct {
     DmString description;
 } DmServiceInfo;
 
-void DmServiceInfoInit(DmServiceInfo* info);
-void DmServiceInfoDestroy(DmServiceInfo* info);
 
 typedef struct {
     DmString pkgName;
@@ -395,8 +370,6 @@ typedef struct {
     uint32_t callerTokenId;
 } ServiceSyncInfo;
 
-void DmServiceSyncInfoInit(ServiceSyncInfo* info);
-void DmServiceSyncInfoDestroy(ServiceSyncInfo* info);
 
 typedef struct {
     int32_t userId;
@@ -414,8 +387,6 @@ typedef struct {
     DmString description;
 } DmRegisterServiceInfo;
 
-void DmRegisterServiceInfoInit(DmRegisterServiceInfo* info);
-void DmRegisterServiceInfoDestroy(DmRegisterServiceInfo* info);
 
 typedef struct {
     DMSrvDiscoveryMode discoverMode;
@@ -423,8 +394,6 @@ typedef struct {
     DmExchangeFreq freq;
 } DmPublishServiceParam;
 
-void DmPublishServiceParamCInit(DmPublishServiceParam* param);
-void DmPublishServiceParamCDestroy(DmPublishServiceParam* param);
 
 typedef struct {
     DmString serviceType;
@@ -435,8 +404,6 @@ typedef struct {
     DMSrvDiscoveryMode mode;
 } DmDiscoveryServiceParam;
 
-void DmDiscoveryServiceParamInit(DmDiscoveryServiceParam* param);
-void DmDiscoveryServiceParamDestroy(DmDiscoveryServiceParam* param);
 
 DM_MMAP_DEFINE(int_int64_t, int, int64_t);
 
@@ -451,8 +418,6 @@ typedef struct {
     DmMmap_int_int64_t bindTypeToServiceIdMap;
 } DmUserRemovedServiceInfo;
 
-void DmUserRemovedServiceInfoInit(DmUserRemovedServiceInfo* info);
-void DmUserRemovedServiceInfoDestroy(DmUserRemovedServiceInfo* info);
 
 typedef struct {
     int32_t userId;
@@ -461,8 +426,6 @@ typedef struct {
     int64_t serviceId;
 } DmRegisterServiceState;
 
-void DmRegisterServiceStateInit(DmRegisterServiceState* state);
-void DmRegisterServiceStateDestroy(DmRegisterServiceState* state);
 
 typedef struct {
     uint16_t subscribeId;
@@ -474,8 +437,6 @@ typedef struct {
     char capability[DM_MAX_DEVICE_CAPABILITY_LEN];
 } DmSubscribeInfo;
 
-void DmSubscribeInfoInit(DmSubscribeInfo* info);
-void DmSubscribeInfoDestroy(DmSubscribeInfo* info);
 
 DM_VEC_DEFINE(DmServiceInfo);
 DM_VEC_DEFINE(DmRegisterServiceInfo);

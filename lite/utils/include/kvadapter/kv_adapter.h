@@ -43,8 +43,6 @@ DM_EXPORT int32_t DmKvAdapterDeleteKvStore(KVAdapter* adapter);
 DM_EXPORT int32_t DmKvAdapterDeleteByAppId(KVAdapter* adapter, const char* appId, const char* prefix);
 DM_EXPORT int32_t DmKvAdapterDeleteBatch(KVAdapter* adapter, const DmVec_DmString* keys);
 DM_EXPORT int32_t DmKvAdapterDelete(KVAdapter* adapter, const char* key);
-DM_EXPORT int32_t DmKvAdapterGetAllOstypeData(KVAdapter* adapter, const char* key, DmVec_DmString* values);
-DM_EXPORT int32_t DmKvAdapterGetOstypeCountByPrefix(KVAdapter* adapter, const char* prefix, int32_t* count);
 
 #ifdef __cplusplus
 }

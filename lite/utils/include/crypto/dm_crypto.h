@@ -34,17 +34,10 @@ extern "C" {
 
 DM_EXPORT void DmGenerateStrHash(const void* data, size_t dataSize,
     unsigned char* outBuf, uint32_t outBufLen, uint32_t startIndex);
-DM_EXPORT DmString DmCryptoSha256Str(const DmString* text, bool isUpper);
-DM_EXPORT DmString DmCryptoSha256Data(const void* data, size_t size, bool isUpper);
-DM_EXPORT int32_t DmConvertHexStringToBytes(unsigned char* outBuf,
-    uint32_t outBufLen, const char* inBuf, uint32_t inLen);
 DM_EXPORT int32_t DmGetUdidHashBuf(const DmString* udid, unsigned char* udidHash);
 DM_EXPORT DmString DmGetUdidHashStr(const DmString* udid);
 DM_EXPORT DmString DmGetTokenIdHash(const DmString* tokenId);
 DM_EXPORT DmString DmGetGroupIdHash(const DmString* groupId);
-int32_t DmGetSecRandom(uint8_t* out, size_t outLen);
-DmString DmGetSecSalt(void);
-DmString DmGetHashWithSalt(const DmString* text, const DmString* salt);
 DM_EXPORT int32_t DmGetAccountIdHashBuf(const DmString* accountId, unsigned char* accountIdHash);
 DM_EXPORT DmString DmGetAccountIdHash16(const DmString* accountId);
 DM_EXPORT int32_t DmConvertBytesToHexString(char* outBuf, uint32_t outBufLen,
