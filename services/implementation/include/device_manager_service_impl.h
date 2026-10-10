@@ -183,6 +183,11 @@ public:
     int32_t RegisterAuthenticationType(int32_t authenticationType);
     void HandleCredentialDeleted(const char *credId, const char *credInfo, const std::string &localUdid,
         std::string &remoteUdid, bool &isSendBroadCast);
+    void HandleShareAclDeleted(const DistributedDeviceProfile::AccessControlProfile &item,
+        const std::string &credId, const std::string &localUdid, int32_t localUserId, int32_t userId,
+        const std::string &remoteUdid, bool &isSendBroadCast);
+    void HandlePointToPointAclDeleted(const DistributedDeviceProfile::AccessControlProfile &item,
+        const std::string &credId, const std::string &remoteUdid, int32_t userId, bool &isSendBroadCast);
     void HandleShareUnbindBroadCast(const std::string &credId, const int32_t &userId, const std::string &localUdid);
     int32_t CheckDeviceInfoPermission(const std::string &localUdid, const std::string &peerDeviceId);
     int32_t DeleteAcl(const std::string &sessionName, const std::string &localUdid, const std::string &remoteUdid,
