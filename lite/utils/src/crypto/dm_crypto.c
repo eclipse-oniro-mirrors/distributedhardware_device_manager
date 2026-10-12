@@ -39,8 +39,6 @@
 #define DM_SHORT_ACCOUNTID_ID_HASH_LENGTH 6
 #define DM_DB_KEY_DELIMITER "###"
 
-static const char* DM_SALT_DEFAULT = "salt_defsalt_def";
-
 static uint32_t DmHexifyLen(uint32_t len)
 {
     return len * DM_HEX_TO_UINT8 + 1;
@@ -83,28 +81,6 @@ DM_EXPORT int32_t DmConvertBytesToHexString(char* outBuf, uint32_t outBufLen,
         inLen--;
     }
     return DM_OK;
-}
-
-DmString DmCryptoSha256Str(const DmString* text, bool isUpper)
-{
-    return DmCryptoSha256Data(DmStringCstr(text), DmStringSize(text), isUpper);
-}
-
-DmString DmCryptoSha256Data(const void* data, size_t size, bool isUpper)
-{
-    unsigned char hashBuf[DM_SHA256_DIGEST_LENGTH * DM_HEX_TO_UINT8 + 1];
-    if (memset_s(hashBuf, sizeof(hashBuf), 0, sizeof(hashBuf)) != 0) {
-        return DmStringCreateEmpty();
-    }
-    DmGenerateStrHash(data, size, hashBuf, DmHexifyLen(DM_SHA256_DIGEST_LENGTH), DM_SHA256_DIGEST_LENGTH);
-    const char* hexCode = isUpper ? "0123456789ABCDEF" : "0123456789abcdef";
-    for (int32_t i = 0; i < DM_SHA256_DIGEST_LENGTH; ++i) {
-        unsigned char value = hashBuf[DM_SHA256_DIGEST_LENGTH + i];
-        hashBuf[i * DM_HEX_TO_UINT8] = hexCode[(value >> DM_WIDTH) & DM_MASK];
-        hashBuf[i * DM_HEX_TO_UINT8 + 1] = hexCode[value & DM_MASK];
-    }
-    hashBuf[DM_SHA256_DIGEST_LENGTH * DM_HEX_TO_UINT8] = 0;
-    return DmStringCreate((const char*)hashBuf);
 }
 
 int32_t DmGetUdidHashBuf(const DmString* udid, unsigned char* udidHash)
@@ -154,48 +130,6 @@ DM_EXPORT DmString DmGetTokenIdHash(const DmString* tokenId)
     return DmStringCreate(idHash);
 }
 
-DM_EXPORT int32_t DmConvertHexStringToBytes(unsigned char* outBuf,
-    uint32_t outBufLen, const char* inBuf, uint32_t inLen)
-{
-    if ((outBuf == NULL) || (inBuf == NULL) || (inLen % DM_HEX_TO_UINT8 != 0)) {
-        LOGE("invalid param");
-        return ERR_DM_FAILED;
-    }
-    uint32_t outLen = inLen / DM_HEX_TO_UINT8;
-    if (outBufLen < outLen) {
-        LOGE("out of memory.");
-        return ERR_DM_FAILED;
-    }
-    uint32_t i = 0;
-    while (i < outLen) {
-        unsigned char c = *inBuf++;
-        if ((c >= '0') && (c <= '9')) {
-            c -= '0';
-        } else if ((c >= 'a') && (c <= 'f')) {
-            c -= 'a' - DM_DEC_MAX_NUM;
-        } else if ((c >= 'A') && (c <= 'F')) {
-            c -= 'A' - DM_DEC_MAX_NUM;
-        } else {
-            LOGE("HexToString Error! %{public}c", c);
-            return ERR_DM_FAILED;
-        }
-        unsigned char c2 = *inBuf++;
-        if ((c2 >= '0') && (c2 <= '9')) {
-            c2 -= '0';
-        } else if ((c2 >= 'a') && (c2 <= 'f')) {
-            c2 -= 'a' - DM_DEC_MAX_NUM;
-        } else if ((c2 >= 'A') && (c2 <= 'F')) {
-            c2 -= 'A' - DM_DEC_MAX_NUM;
-        } else {
-            LOGE("HexToString Error! %{public}c", c2);
-            return ERR_DM_FAILED;
-        }
-        *outBuf++ = (c << DM_HEX_MAX_BIT_NUM) | c2;
-        i++;
-    }
-    return DM_OK;
-}
-
 DM_EXPORT DmString DmGetGroupIdHash(const DmString* groupId)
 {
     unsigned char hash[DM_SHA256_DIGEST_LENGTH];
@@ -209,45 +143,6 @@ DM_EXPORT DmString DmGetGroupIdHash(const DmString* groupId)
     DmString fullHash = DmStringCreate(hexBuf);
     DmString result = DmStringSubstr(&fullHash, 0, DM_SHORT_DEVICE_ID_HASH_LENGTH);
     DmStringDestroy(&fullHash);
-    return result;
-}
-
-int32_t DmGetSecRandom(uint8_t* out, size_t outLen)
-{
-    if (out == NULL || outLen == 0) {
-        return -1;
-    }
-    FILE* f = fopen("/dev/urandom", "rb");
-    if (f == NULL) {
-        return -1;
-    }
-    size_t rd = fread(out, 1, outLen, f);
-    (void)fclose(f);
-    if (rd != outLen) {
-        return -1;
-    }
-    return DM_OK;
-}
-
-DmString DmGetSecSalt(void)
-{
-    uint8_t out[DM_SALT_LENGTH] = {0};
-    if (DmGetSecRandom(out, DM_SALT_LENGTH) != DM_OK) {
-        return DmStringCreate(DM_SALT_DEFAULT);
-    }
-    char outHex[DM_SALT_LENGTH * DM_HEX_TO_UINT8 + 1] = {0};
-    if (DmConvertBytesToHexString(outHex, DM_SALT_LENGTH * DM_HEX_TO_UINT8 + 1, out, DM_SALT_LENGTH) != DM_OK) {
-        return DmStringCreate(DM_SALT_DEFAULT);
-    }
-    return DmStringCreate(outHex);
-}
-
-DmString DmGetHashWithSalt(const DmString* text, const DmString* salt)
-{
-    DmString rawText = DmStringCopy(text);
-    DmStringAppend(&rawText, DmStringCstr(salt));
-    DmString result = DmCryptoSha256Str(&rawText, false);
-    DmStringDestroy(&rawText);
     return result;
 }
 

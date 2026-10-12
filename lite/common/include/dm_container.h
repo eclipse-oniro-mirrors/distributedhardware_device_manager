@@ -49,7 +49,6 @@ typedef struct {
 
 DmString DmStringCreate(const char* src);
 DmString DmStringCreateEmpty(void);
-DmString DmStringCreateLen(const char* src, int len);
 void DmStringDestroy(DmString* s);
 DmString DmStringAppend(DmString* s, const char* str);
 DmString DmStringAppendChar(DmString* s, char c);
@@ -60,17 +59,13 @@ int DmStringSize(const DmString* s);
 bool DmStringEmpty(const DmString* s);
 DmString DmStringSubstr(const DmString* s, int start, int len);
 int DmStringFind(const DmString* s, const char* sub);
-DmString DmStringReplace(DmString* s, const char* oldStr, const char* newStr);
 void DmStringClear(DmString* s);
 DmString DmStringCopy(const DmString* src);
-void DmStringCopyTo(DmString* dest, const DmString* src);
 unsigned int DmStringHash(const DmString* s);
 void DmStringAssign(DmString* dest, const DmString* src);
 void DmStringAssignCstr(DmString* dest, const char* src);
 
 int DmCmpInt(int a, int b);
-int DmCmpInt32T(int32_t a, int32_t b);
-int DmCmpInt64T(int64_t a, int64_t b);
 int DmCmpUint64T(uint64_t a, uint64_t b);
 int DmCmpDmString(DmString a, DmString b);
 unsigned int DmHashInt(int key);
@@ -303,7 +298,6 @@ int DmVecVoidInit(DmVecVoid* v);
 int DmVecVoidPush(DmVecVoid* v, void* item);
 void** DmVecVoidAt(DmVecVoid* v, int idx);
 int DmVecVoidSize(DmVecVoid* v);
-void DmVecVoidClear(DmVecVoid* v);
 void DmVecVoidDestroy(DmVecVoid* v);
 
 #define DM_SET_DEFINE(T) \
@@ -356,8 +350,6 @@ typedef struct { DmString* data; int size; int cap; } DmSetDmString;
 int DmSetDmStringInit(DmSetDmString* s);
 int DmSetDmStringInsert(DmSetDmString* s, const DmString* item);
 bool DmSetDmStringContains(DmSetDmString* s, const DmString* item);
-int DmSetDmStringSize(DmSetDmString* s);
-void DmSetDmStringErase(DmSetDmString* s, const DmString* item);
 void DmSetDmStringClear(DmSetDmString* s);
 void DmSetDmStringDestroy(DmSetDmString* s);
 
@@ -460,8 +452,6 @@ DM_MMAP_IMPL_1(NAME, K, V, CMP) \
 DM_MMAP_IMPL_2(NAME, K, V, CMP)
 
 DM_MMAP_DEFINE(DmString_DmString, DmString, DmString);
-
-DM_MMAP_DEFINE(DmString_int_mmap, DmString, int);
 
 #ifdef __cplusplus
 }

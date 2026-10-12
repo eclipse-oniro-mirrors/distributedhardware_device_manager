@@ -32,20 +32,15 @@ typedef struct {
 } DmAccountInfo;
 
 void DmAccountInfoInit(DmAccountInfo* info);
-void DmAccountInfoDestroy(DmAccountInfo* info);
 
 DM_MAP_DEFINE(int_DmAccountInfo, int, DmAccountInfo);
 
 DM_EXPORT int32_t DmMultipleUserGetCurrentAccountUserId(void);
 DM_EXPORT void DmMultipleUserSetSwitchOldUserId(int32_t userId);
-int32_t DmMultipleUserGetSwitchOldUserId(void);
 DM_EXPORT DmString DmMultipleUserGetOhosAccountId(void);
 DM_EXPORT DmString DmMultipleUserGetOhosAccountIdByUserId(int32_t userId);
 DM_EXPORT DmString DmMultipleUserGetOhosAccountNameByUserId(int32_t userId);
 DM_EXPORT void DmMultipleUserSetSwitchOldAccountId(DmString accountId);
-DmString DmMultipleUserGetSwitchOldAccountId(void);
-void DmMultipleUserSetSwitchOldAccountName(DmString accountName);
-DmString DmMultipleUserGetSwitchOldAccountName(void);
 DM_EXPORT DmString DmMultipleUserGetOhosAccountName(void);
 DM_EXPORT void DmMultipleUserSetAccountInfo(int32_t userId, DmAccountInfo dmAccountInfo);
 DM_EXPORT DmAccountInfo DmMultipleUserGetAccountInfoByUserId(int32_t userId);
@@ -56,7 +51,6 @@ DM_EXPORT void DmMultipleUserGetCallerUserId(int32_t* userId);
 DM_EXPORT int32_t DmMultipleUserGetForegroundUserIds(DmVec_int* userVec);
 DM_EXPORT int32_t DmMultipleUserGetFirstForegroundUserId(void);
 DM_EXPORT int32_t DmMultipleUserGetBackgroundUserIds(DmVec_int* userIdVec);
-int32_t DmMultipleUserGetAllUserIds(DmVec_int* userIdVec);
 DM_EXPORT DmString DmMultipleUserGetAccountNickName(int32_t userId);
 DM_EXPORT bool DmMultipleUserIsUserUnlocked(int32_t userId);
 DM_EXPORT void DmMultipleUserClearLockedUser(DmVec_int* foregroundUserVec);

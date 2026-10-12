@@ -127,7 +127,6 @@ DM_EXPORT void DmJsonObjectDestroy(DmJsonObject* obj);
 DM_EXPORT bool DmJsonObjectParse(DmJsonObject* obj, const char* strJson);
 DM_EXPORT void DmJsonObjectDuplicate(DmJsonObject* obj, const DmJsonObject* source);
 DM_EXPORT DmJsonItemObject* DmJsonObjectGetItem(DmJsonObject* obj);
-DM_EXPORT DmJsonItemObject* DmJsonObjectGetByKey(DmJsonObject* obj, const char* key);
 
 #ifdef __cplusplus
 }

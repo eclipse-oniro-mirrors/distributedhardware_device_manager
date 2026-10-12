@@ -213,6 +213,7 @@ int32_t SoftbusCache::GetDeviceInfoFromCache(std::vector<DmDeviceInfo> &deviceIn
     return DM_OK;
 }
 
+
 bool SoftbusCache::GetDeviceInfoByDeviceId(const std::string &deviceId, std::string &uuid, DmDeviceInfo &devInfo)
 {
     LOGI("deviceId: %{public}s", GetAnonyString(deviceId).c_str());

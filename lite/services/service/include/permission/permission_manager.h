@@ -33,7 +33,6 @@ typedef struct PermissionManager {
 bool DmPermissionCheckSystemSa(const DmString* pkgName);
 bool DmPermissionCheckAccessService(const DmString* pkgName);
 bool DmPermissionCheckDataSync(const DmString* pkgName);
-bool DmPermissionCheckMonitor(const DmString* pkgName);
 
 #ifdef __cplusplus
 }

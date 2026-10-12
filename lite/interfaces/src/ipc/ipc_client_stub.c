@@ -53,13 +53,16 @@ static int32_t DmIpcClientStubHandleDeviceState(IpcIo* data)
 {
     int32_t state = 0;
     int32_t isOnline = 0;
-    ReadInt32(data, &state);
-    ReadInt32(data, &isOnline);
+    if (!ReadInt32(data, &state) || !ReadInt32(data, &isOnline)) {
+        return ERR_DM_FAILED;
+    }
     size_t readLen = 0;
     const char* networkId = (const char*)ReadString(data, &readLen);
     const char* deviceName = (const char*)ReadString(data, &readLen);
     int32_t deviceTypeId = 0;
-    ReadInt32(data, &deviceTypeId);
+    if (!ReadInt32(data, &deviceTypeId)) {
+        return ERR_DM_FAILED;
+    }
     const char* deviceId = (const char*)ReadString(data, &readLen);
     DmDeviceInfo deviceInfo;
     (void)memset_s(&deviceInfo, sizeof(DmDeviceInfo), 0, sizeof(DmDeviceInfo));
@@ -85,13 +88,17 @@ static int32_t DmIpcClientStubHandleDeviceState(IpcIo* data)
 static int32_t DmHandleDeviceFoundCase(IpcIo* ipcData)
 {
     int32_t subscribeId = 0;
-    ReadInt32(ipcData, &subscribeId);
+    if (!ReadInt32(ipcData, &subscribeId)) {
+        return ERR_DM_FAILED;
+    }
     size_t readLen = 0;
     const char* deviceId = (const char*)ReadString(ipcData, &readLen);
     const char* networkId = (const char*)ReadString(ipcData, &readLen);
     const char* deviceName = (const char*)ReadString(ipcData, &readLen);
     int32_t deviceTypeId = 0;
-    ReadInt32(ipcData, &deviceTypeId);
+    if (!ReadInt32(ipcData, &deviceTypeId)) {
+        return ERR_DM_FAILED;
+    }
     const char* extraData = (const char*)ReadString(ipcData, &readLen);
     DmDeviceInfo deviceInfo;
     (void)memset_s(&deviceInfo, sizeof(DmDeviceInfo), 0, sizeof(DmDeviceInfo));
@@ -123,8 +130,9 @@ static int32_t DmHandlePublishFinishCase(IpcIo* ipcData)
 {
     int32_t publishId = 0;
     int32_t result = 0;
-    ReadInt32(ipcData, &publishId);
-    ReadInt32(ipcData, &result);
+    if (!ReadInt32(ipcData, &publishId) || !ReadInt32(ipcData, &result)) {
+        return ERR_DM_FAILED;
+    }
     LOGI("recv publish_finish publishId=%d result=%d", publishId, result);
     DeviceManagerNotify* notify = DmDeviceManagerNotifyGetInstance();
     DmNotifyOnPublishResult(notify, NULL, publishId, result);
@@ -153,9 +161,10 @@ DM_EXPORT int32_t DmIpcClientStubOnRemoteRequest(IpcClientStub* self, uint32_t c
             size_t readLen = 0;
             const char* pkgName = (const char*)ReadString(ipcData, &readLen);
             int32_t subscribeId = 0;
-            ReadInt32(ipcData, &subscribeId);
             int32_t result = 0;
-            ReadInt32(ipcData, &result);
+            if (!ReadInt32(ipcData, &subscribeId) || !ReadInt32(ipcData, &result)) {
+                return ERR_DM_FAILED;
+            }
             LOGI("recv discover_finish subscribeId=%d result=%d", subscribeId, result);
             DeviceManagerNotify* notify = DmDeviceManagerNotifyGetInstance();
             DmNotifyOnDiscoveryResult(notify, pkgName, (uint16_t)subscribeId, result);

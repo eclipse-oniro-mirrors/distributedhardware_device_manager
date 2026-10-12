@@ -23,7 +23,6 @@
 extern "C" {
 #endif
 
-bool DmParcelWriteRemoteObject(void* parcel, void* remoteObj);
 
 #ifdef __cplusplus
 }
