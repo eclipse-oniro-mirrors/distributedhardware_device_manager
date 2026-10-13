@@ -1346,12 +1346,23 @@ void DmAuthState::DeleteInvalidCredAndAcl(std::shared_ptr<DmAuthContext> context
             item.GetAccessee().GetAccesseeCredentialIdStr().empty() || item.GetBindType() == DM_IDENTICAL_ACCOUNT) {
             continue;
         }
-        if ((item.GetAccesser().GetAccesserDeviceId() == localUdid &&
-            item.GetAccesser().GetAccesserUserId() == currentUserId) ||
-            (item.GetAccessee().GetAccesseeDeviceId() == localUdid &&
-            item.GetAccessee().GetAccesseeUserId() == currentUserId)) {
-            targetProfiles.push_back(item);
+        bool isLocalAccesser = (item.GetAccesser().GetAccesserDeviceId() == localUdid &&
+            item.GetAccesser().GetAccesserUserId() == currentUserId);
+        bool isLocalAccessee = (item.GetAccessee().GetAccesseeDeviceId() == localUdid &&
+            item.GetAccessee().GetAccesseeUserId() == currentUserId);
+        if (!isLocalAccesser && !isLocalAccessee) {
+            continue;
         }
+#ifdef CAR_DEVICE_ENABLE
+        std::string currentAccountId = context->GetAccountId(DM_AUTH_LOCAL_SIDE);
+        std::string aclAccountId = isLocalAccesser ?
+            item.GetAccesser().GetAccesserAccountId() :
+            item.GetAccessee().GetAccesseeAccountId();
+        if (aclAccountId != currentAccountId) {
+            continue;
+        }
+#endif
+        targetProfiles.push_back(item);
     }
     JsonObject credInfo;
     GetShareCredInfoByUserId(context, currentUserId, credInfo);

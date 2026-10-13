@@ -69,6 +69,7 @@ public:
     int32_t DeleteGroupExt(int32_t userId, std::string &groupId);
     int64_t GenRequestId();
     int32_t DeleteCredential(int32_t osAccountId, const std::string &credId);
+    int32_t DeleteCredByParams(int32_t osAccountId, const std::string &credId, int32_t subProfileId);
 
     static void OnHichainDeviceUnBound(const char *peerUdid, const char *groupInfo);
     static void OnCredentialDeleted(const char *credId, const char *credInfo);

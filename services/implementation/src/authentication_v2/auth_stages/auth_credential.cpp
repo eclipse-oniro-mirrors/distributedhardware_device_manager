@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -24,6 +26,7 @@
 #include "dm_auth_state.h"
 #include "dm_auth_state_machine.h"
 #include "dm_constants.h"
+#include "dm_crypto.h"
 #include "dm_log.h"
 #include "deviceprofile_connector.h"
 #include "ffrt.h"
@@ -40,6 +43,8 @@ constexpr const char* TAG_LOWER_DEVICE_ID = "deviceId";
 constexpr const char* TAG_LOWER_USER_ID = "userId";
 constexpr const char* DM_AUTH_CREDENTIAL_OWNER = "DM";
 constexpr const char* DELETE_CREDENTIAL_TASK = "DeleteCredentialTask";
+constexpr const char* HEAD_LESS_ACCOUNT_UID = "headlessAccountUid";
+constexpr const char* OHOS_ANONYMOUS_UID = "ohosAnonymousUid";
 const int32_t GENERATE_CERT_TIMEOUT = 300; // 300ms
 
 // decrypt process
@@ -405,8 +410,7 @@ std::string AuthCredentialAgreeState::CreateAuthParamsString(DmAuthScope authori
     if (method == DM_AUTH_CREDENTIAL_ADD_METHOD_IMPORT) {
         jsonObj[TAG_PEER_USER_SPACE_ID] = std::to_string(authContext->GetUserId(DM_AUTH_REMOTE_SIDE));
     }
-    jsonObj[TAG_LOWER_USER_ID] = (method == DM_AUTH_CREDENTIAL_ADD_METHOD_GENERATE) ?
-        authContext->GetAccountId(DM_AUTH_LOCAL_SIDE) : authContext->GetAccountId(DM_AUTH_REMOTE_SIDE);
+    jsonObj[TAG_LOWER_USER_ID] = GetLowerUserId(method, authContext);
     jsonObj[TAG_SUBJECT] = DM_AUTH_CREDENTIAL_SUBJECT_PRIMARY;
     jsonObj[TAG_CRED_TYPE] = DM_AUTH_CREDENTIAL_ACCOUNT_UNRELATED;
     jsonObj[TAG_KEY_FORMAT] = (method == DM_AUTH_CREDENTIAL_ADD_METHOD_GENERATE) ?
@@ -429,6 +433,28 @@ std::string AuthCredentialAgreeState::CreateAuthParamsString(DmAuthScope authori
     LOGI("leave.");
     return jsonObj.Dump();
 }
+
+std::string AuthCredentialAgreeState::GetLowerUserId(DmAuthCredentialAddMethod method,
+    const std::shared_ptr<DmAuthContext> &authContext)
+{
+    CHECK_NULL_RETURN(authContext, "");
+    if (method == DM_AUTH_CREDENTIAL_ADD_METHOD_GENERATE) {
+        return authContext->GetAccountId(DM_AUTH_LOCAL_SIDE);
+    }
+    const DmAccess &remoteAccess = (authContext->direction == DM_AUTH_SOURCE) ?
+        authContext->accessee : authContext->accesser;
+    if (remoteAccess.accountId == OHOS_ANONYMOUS_UID) {
+        bool isPeerCar = (remoteAccess.deviceType == static_cast<int32_t>(DmDeviceType::DEVICE_TYPE_CAR));
+        if (isPeerCar) {
+            return HEAD_LESS_ACCOUNT_UID;
+        }
+        return OHOS_ANONYMOUS_UID;
+    }
+    std::string accountId = remoteAccess.accountId;
+    std::transform(accountId.begin(), accountId.end(), accountId.begin(), ::tolower);
+    return accountId;
+}
+
 void AuthCredentialAgreeState::GenerateTokenIds(const std::shared_ptr<DmAuthContext> &context,
     JsonObject &jsonObj)
 {

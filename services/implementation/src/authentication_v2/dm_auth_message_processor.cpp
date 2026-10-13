@@ -88,6 +88,7 @@ const char* TAG_DEVICE_VERSION = "deviceVersion";
 const char* TAG_DEVICE_NAME = "deviceName";
 const char* TAG_DEVICE_ID_HASH = "deviceIdHash";
 const char* TAG_ACCOUNT_ID_HASH = "accountIdHash";
+const char* TAG_ACCOUNT_ID = "accountId";
 const char* TAG_TOKEN_ID_HASH = "tokenIdHash";
 const char* TAG_PKG_NAME = "pkgName";
 const char* TAG_ACL_CHECKSUM = "aclCheckSum";
@@ -1127,6 +1128,9 @@ int32_t DmAuthMessageProcessor::ParseMessageReqCredExchange(const JsonObject &js
     context->accesser.deviceId = jsonData[TAG_DEVICE_ID].Get<std::string>();
     context->accesser.userId = jsonData[TAG_PEER_USER_SPACE_ID].Get<int32_t>();
     context->accesser.tokenId = jsonData[TAG_TOKEN_ID].Get<int64_t>();
+    if (jsonData[TAG_ACCOUNT_ID].IsString()) {
+        context->accesser.accountId = jsonData[TAG_ACCOUNT_ID].Get<std::string>();
+    }
     ParseProxyCredExchangeToSync(context, jsonData);
     context->authStateMachine->TransitionTo(std::make_shared<AuthSinkCredentialExchangeState>());
     return DM_OK;
@@ -1173,6 +1177,9 @@ int32_t DmAuthMessageProcessor::ParseMessageRspCredExchange(const JsonObject &js
     context->accessee.deviceId = jsonData[TAG_DEVICE_ID].Get<std::string>();
     context->accessee.userId = jsonData[TAG_PEER_USER_SPACE_ID].Get<int32_t>();
     context->accessee.tokenId = jsonData[TAG_TOKEN_ID].Get<int64_t>();
+    if (jsonData[TAG_ACCOUNT_ID].IsString()) {
+        context->accessee.accountId = jsonData[TAG_ACCOUNT_ID].Get<std::string>();
+    }
     ParseProxyCredExchangeToSync(context, jsonData);
     context->authStateMachine->TransitionTo(std::make_shared<AuthSrcCredentialAuthStartState>());
     return DM_OK;
@@ -1479,6 +1486,7 @@ int32_t DmAuthMessageProcessor::CreateMessageReqCredExchange(std::shared_ptr<DmA
     jsonData[TAG_DEVICE_ID] = context->accesser.deviceId;
     jsonData[TAG_PEER_USER_SPACE_ID] = context->accesser.userId;
     jsonData[TAG_TOKEN_ID] = context->accesser.tokenId;
+    jsonData[TAG_ACCOUNT_ID] = context->accesser.accountId;
     CreateProxyCredExchangeMessage(context, jsonData);
     std::string plainText = jsonData.Dump();
     std::string cipherText;
@@ -1504,6 +1512,7 @@ int32_t DmAuthMessageProcessor::CreateMessageRspCredExchange(std::shared_ptr<DmA
     jsonData[TAG_DEVICE_ID] = context->accessee.deviceId;
     jsonData[TAG_PEER_USER_SPACE_ID] = context->accessee.userId;
     jsonData[TAG_TOKEN_ID] = context->accessee.tokenId;
+    jsonData[TAG_ACCOUNT_ID] = context->accessee.accountId;
     CreateProxyCredExchangeMessage(context, jsonData);
     std::string plainText = jsonData.Dump();
     std::string cipherText;

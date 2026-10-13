@@ -2799,7 +2799,8 @@ static bool IsCredentialSharedByUserId(
 static bool DeleteSingleSubProfileAcl(const std::string& localUdid,
     const DistributedDeviceProfile::AccessControlProfile& item,
     const std::shared_ptr<HichainListener>& hichainListener,
-    std::vector<DistributedDeviceProfile::AccessControlProfile>& remainingProfiles)
+    std::vector<DistributedDeviceProfile::AccessControlProfile>& remainingProfiles,
+    int32_t subProfileId)
 {
 #if !(defined(__LITEOS_M__) || defined(LITE_DEVICE))
 #ifdef CAR_DEVICE_ENABLE
@@ -2834,7 +2835,7 @@ static bool DeleteSingleSubProfileAcl(const std::string& localUdid,
     }
     DeviceProfileConnector::GetInstance().DeleteSessionKey(localUserId, localSkId);
     if (!localCredId.empty() && !IsCredentialSharedByUserId(remainingProfiles, localUserId, localCredId)) {
-        hichainListener->DeleteCredential(localUserId, localCredId);
+        hichainListener->DeleteCredByParams(localUserId, localCredId, subProfileId);
     }
     DeviceProfileConnector::GetInstance().DeleteAccessControlById(item.GetAccessControlId());
     return true;
@@ -2919,7 +2920,8 @@ void DeviceManagerService::DeletePreviousSubProfileAclOnSwitch(const std::string
             hichainListener_ = std::make_shared<HichainListener>();
         }
         for (const auto &item : targetProfiles) {
-            DeleteSingleSubProfileAcl(localUdid, item, hichainListener_, remainingProfiles);
+            DeleteSingleSubProfileAcl(localUdid, item, hichainListener_, remainingProfiles,
+                eventInfo.previousSubProfileId);
         }
     }
 #endif

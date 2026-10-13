@@ -492,6 +492,7 @@ public:
 protected:
     std::string CreateAuthParamsString(DmAuthScope authorizedScope, DmAuthCredentialAddMethod method,
         const std::shared_ptr<DmAuthContext> &authContext);
+    std::string GetLowerUserId(DmAuthCredentialAddMethod method, const std::shared_ptr<DmAuthContext> &authContext);
     void GenerateTokenIds(const std::shared_ptr<DmAuthContext> &authContext, JsonObject &jsonObj);
     int32_t GenerateCredIdAndPublicKey(DmAuthScope authorizedScope, std::shared_ptr<DmAuthContext> &authContext);
     int32_t AgreeCredential(DmAuthScope authorizedScope, std::shared_ptr<DmAuthContext> &authContext);
