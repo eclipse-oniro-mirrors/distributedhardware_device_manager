@@ -252,7 +252,7 @@ void AuthMessageProcessorFuzzTest(const uint8_t* data, size_t size)
     dmAuthMessageProcessor_ -> ParseMessage(context_, message);
     dmAuthMessageProcessor_ -> CreateMessage(DmMessageType::MSG_TYPE_REQ_ACL_NEGOTIATE, context_);
     dmAuthMessageProcessor_ -> CreateAndSendMsg(DmMessageType::MSG_TYPE_REQ_ACL_NEGOTIATE, context_);
-    dmAuthMessageProcessor_ -> SaveSessionKey(sessionKey.data(), keyLen);
+    dmAuthMessageProcessor_ -> SaveSessionKey(sessionKey.data(), sessionKey.size());
     dmAuthMessageProcessor_ -> SaveSessionKeyToDP(userId, skId);
     dmAuthMessageProcessor_ -> DeleteSessionKeyToDP(userId, skId);
     dmAuthMessageProcessor_ -> CompressSyncMsg(inputStr);
