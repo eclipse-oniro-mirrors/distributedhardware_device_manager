@@ -182,7 +182,7 @@ public:
     virtual std::string GetDeviceInfoList(std::vector<DmDeviceInfo> &deviceInfoList) = 0;
 };
 
-class DmRadarHelper : public IDmRadarHelper {
+class DM_EXPORT DmRadarHelper : public IDmRadarHelper {
     DM_DECLARE_SINGLE_INSTANCE(DmRadarHelper);
 public:
     bool ReportDiscoverRegCallback(struct RadarInfo &info) override;
