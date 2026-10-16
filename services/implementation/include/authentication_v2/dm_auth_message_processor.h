@@ -73,6 +73,7 @@ extern const char* TAG_DEVICE_VERSION;
 extern const char* TAG_DEVICE_NAME;
 extern const char* TAG_DEVICE_ID_HASH;
 extern const char* TAG_ACCOUNT_ID_HASH;
+extern const char* TAG_ACCOUNT_ID;
 extern const char* TAG_TOKEN_ID_HASH;
 extern const char* TAG_SESSION_NAME;
 extern const char* TAG_ACL_CHECKSUM;

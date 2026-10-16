@@ -369,5 +369,29 @@ int32_t HichainListener::DeleteCredential(int32_t osAccountId, const std::string
     }
     return DM_OK;
 }
+
+int32_t HichainListener::DeleteCredByParams(int32_t osAccountId, const std::string &credId, int32_t subProfileId)
+{
+    LOGI("start. osAccountId=%{public}s, credId=%{public}s, subProfileId=%{public}d",
+        GetAnonyInt32(osAccountId).c_str(), GetAnonyString(credId).c_str(), subProfileId);
+    if (credManager_ == nullptr) {
+        LOGE("credManager_ is nullptr");
+        return ERR_DM_POINT_NULL;
+    }
+    JsonObject jsonObj;
+    jsonObj["credId"] = credId;
+    jsonObj[TAG_SUB_PROFILE_ID] = subProfileId;
+    std::string requestParams = jsonObj.Dump();
+    char *returnData = nullptr;
+    int32_t ret = credManager_->deleteCredByParams(osAccountId, requestParams.c_str(), &returnData);
+    if (returnData != nullptr) {
+        credManager_->destroyInfo(&returnData);
+    }
+    if (ret != DM_OK) {
+        LOGE("Hichain deleteCredByParams failed ret %{public}d.", ret);
+        return ERR_DM_FAILED;
+    }
+    return DM_OK;
+}
 } // namespace DistributedHardware
 } // namespace OHOS
