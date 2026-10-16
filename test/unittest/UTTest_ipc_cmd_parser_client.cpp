@@ -1795,10 +1795,10 @@ HWTEST_F(IpcCmdParserClientTest, SetIpcRequestFunc_dm_ipc_015, testing::ext::Tes
 
 HWTEST_F(IpcCmdParserClientTest, SetIpcRequestFunc_InvalidReqType, testing::ext::TestSize.Level0)
 {
-    EXPECT_EQ(ERR_DM_FAILED, TestIpcRequestTypeMismatch(BIND_TARGET));
-    EXPECT_EQ(ERR_DM_FAILED, TestIpcRequestTypeMismatch(UNBIND_TARGET));
-    EXPECT_EQ(ERR_DM_FAILED, TestIpcRequestTypeMismatch(BIND_SERVICE_TARGET));
-    EXPECT_EQ(ERR_DM_FAILED, TestIpcRequestTypeMismatch(UNBIND_SERVICE_TARGET));
+    EXPECT_EQ(ERR_DM_INPUT_PARA_INVALID, TestIpcRequestTypeMismatch(BIND_TARGET));
+    EXPECT_EQ(ERR_DM_INPUT_PARA_INVALID, TestIpcRequestTypeMismatch(UNBIND_TARGET));
+    EXPECT_EQ(ERR_DM_INPUT_PARA_INVALID, TestIpcRequestTypeMismatch(BIND_SERVICE_TARGET));
+    EXPECT_EQ(ERR_DM_INPUT_PARA_INVALID, TestIpcRequestTypeMismatch(UNBIND_SERVICE_TARGET));
 }
 
 HWTEST_F(IpcCmdParserClientTest, TEST_IPC_REQUEST_NULL_001, testing::ext::TestSize.Level2)

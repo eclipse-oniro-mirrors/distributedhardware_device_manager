@@ -1268,7 +1268,7 @@ ON_IPC_SET_REQUEST(BIND_TARGET, std::shared_ptr<IpcReq> pBaseReq, MessageParcel 
     CHECK_NULL_RETURN(pBaseReq, ERR_DM_FAILED);
     if (pBaseReq->GetReqType() != IpcReqType::BIND_TARGET) {
         LOGE("request type mismatch for BIND_TARGET");
-        return ERR_DM_FAILED;
+        return ERR_DM_INPUT_PARA_INVALID;
     }
     std::shared_ptr<IpcBindTargetReq> pReq = std::static_pointer_cast<IpcBindTargetReq>(pBaseReq);
     std::string pkgName = pReq->GetPkgName();
@@ -1302,7 +1302,7 @@ ON_IPC_SET_REQUEST(UNBIND_TARGET, std::shared_ptr<IpcReq> pBaseReq, MessageParce
     CHECK_NULL_RETURN(pBaseReq, ERR_DM_FAILED);
     if (pBaseReq->GetReqType() != IpcReqType::BIND_TARGET) {
         LOGE("request type mismatch for UNBIND_TARGET");
-        return ERR_DM_FAILED;
+        return ERR_DM_INPUT_PARA_INVALID;
     }
     std::shared_ptr<IpcBindTargetReq> pReq = std::static_pointer_cast<IpcBindTargetReq>(pBaseReq);
     std::string pkgName = pReq->GetPkgName();
@@ -2399,7 +2399,7 @@ ON_IPC_SET_REQUEST(BIND_SERVICE_TARGET, std::shared_ptr<IpcReq> pBaseReq, Messag
     CHECK_NULL_RETURN(pBaseReq, ERR_DM_FAILED);
     if (pBaseReq->GetReqType() != IpcReqType::BIND_TARGET) {
         LOGE("request type mismatch for BIND_SERVICE_TARGET");
-        return ERR_DM_FAILED;
+        return ERR_DM_INPUT_PARA_INVALID;
     }
     std::shared_ptr<IpcBindTargetReq> pReq = std::static_pointer_cast<IpcBindTargetReq>(pBaseReq);
     std::string pkgName = pReq->GetPkgName();
@@ -2922,7 +2922,7 @@ ON_IPC_SET_REQUEST(UNBIND_SERVICE_TARGET, std::shared_ptr<IpcReq> pBaseReq, Mess
     CHECK_NULL_RETURN(pBaseReq, ERR_DM_FAILED);
     if (pBaseReq->GetReqType() != IpcReqType::BIND_TARGET) {
         LOGE("request type mismatch for UNBIND_SERVICE_TARGET");
-        return ERR_DM_FAILED;
+        return ERR_DM_INPUT_PARA_INVALID;
     }
     std::shared_ptr<IpcBindTargetReq> pReq = std::static_pointer_cast<IpcBindTargetReq>(pBaseReq);
     std::string pkgName = pReq->GetPkgName();
