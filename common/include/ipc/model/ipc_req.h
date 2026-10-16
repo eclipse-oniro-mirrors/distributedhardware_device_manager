@@ -23,10 +23,20 @@
 
 namespace OHOS {
 namespace DistributedHardware {
+enum class IpcReqType {
+    BASE,
+    BIND_TARGET,
+};
+
 class IpcReq {
     DECLARE_IPC_MODEL(IpcReq);
 
 public:
+    virtual IpcReqType GetReqType() const
+    {
+        return IpcReqType::BASE;
+    }
+
     const std::string GetPkgName() const
     {
         return pkgName_;

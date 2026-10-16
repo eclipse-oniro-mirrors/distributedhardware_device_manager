@@ -1266,6 +1266,10 @@ ON_IPC_READ_RESPONSE(STOP_ADVERTISING, MessageParcel &reply, std::shared_ptr<Ipc
 ON_IPC_SET_REQUEST(BIND_TARGET, std::shared_ptr<IpcReq> pBaseReq, MessageParcel &data)
 {
     CHECK_NULL_RETURN(pBaseReq, ERR_DM_FAILED);
+    if (pBaseReq->GetReqType() != IpcReqType::BIND_TARGET) {
+        LOGE("request type mismatch for BIND_TARGET");
+        return ERR_DM_FAILED;
+    }
     std::shared_ptr<IpcBindTargetReq> pReq = std::static_pointer_cast<IpcBindTargetReq>(pBaseReq);
     std::string pkgName = pReq->GetPkgName();
     PeerTargetId targetId = pReq->GetPeerTargetId();
@@ -1296,6 +1300,10 @@ ON_IPC_READ_RESPONSE(BIND_TARGET, MessageParcel &reply, std::shared_ptr<IpcRsp> 
 ON_IPC_SET_REQUEST(UNBIND_TARGET, std::shared_ptr<IpcReq> pBaseReq, MessageParcel &data)
 {
     CHECK_NULL_RETURN(pBaseReq, ERR_DM_FAILED);
+    if (pBaseReq->GetReqType() != IpcReqType::BIND_TARGET) {
+        LOGE("request type mismatch for UNBIND_TARGET");
+        return ERR_DM_FAILED;
+    }
     std::shared_ptr<IpcBindTargetReq> pReq = std::static_pointer_cast<IpcBindTargetReq>(pBaseReq);
     std::string pkgName = pReq->GetPkgName();
     PeerTargetId targetId = pReq->GetPeerTargetId();
@@ -2389,6 +2397,10 @@ ON_IPC_CMD(NOTIFY_SERVICE_DISCOVERY_RESULT, MessageParcel &data, MessageParcel &
 ON_IPC_SET_REQUEST(BIND_SERVICE_TARGET, std::shared_ptr<IpcReq> pBaseReq, MessageParcel &data)
 {
     CHECK_NULL_RETURN(pBaseReq, ERR_DM_FAILED);
+    if (pBaseReq->GetReqType() != IpcReqType::BIND_TARGET) {
+        LOGE("request type mismatch for BIND_SERVICE_TARGET");
+        return ERR_DM_FAILED;
+    }
     std::shared_ptr<IpcBindTargetReq> pReq = std::static_pointer_cast<IpcBindTargetReq>(pBaseReq);
     std::string pkgName = pReq->GetPkgName();
     PeerTargetId targetId = pReq->GetPeerTargetId();
@@ -2908,6 +2920,10 @@ ON_IPC_READ_RESPONSE(GET_PEER_SERVICEINFO_BY_SERVICEID, MessageParcel &reply, st
 ON_IPC_SET_REQUEST(UNBIND_SERVICE_TARGET, std::shared_ptr<IpcReq> pBaseReq, MessageParcel &data)
 {
     CHECK_NULL_RETURN(pBaseReq, ERR_DM_FAILED);
+    if (pBaseReq->GetReqType() != IpcReqType::BIND_TARGET) {
+        LOGE("request type mismatch for UNBIND_SERVICE_TARGET");
+        return ERR_DM_FAILED;
+    }
     std::shared_ptr<IpcBindTargetReq> pReq = std::static_pointer_cast<IpcBindTargetReq>(pBaseReq);
     std::string pkgName = pReq->GetPkgName();
     std::string unbindParam = pReq->GetBindParam();
