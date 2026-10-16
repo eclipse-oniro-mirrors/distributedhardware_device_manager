@@ -67,31 +67,6 @@ DmString DmStringCreateEmpty(void)
     return s;
 }
 
-DmString DmStringCreateLen(const char* src, int len)
-{
-    DmString s;
-    if (!src || len <= 0) {
-        return DmStringCreateEmpty();
-    }
-    s.cap = len + 1;
-    s.data = malloc(s.cap);
-    if (s.data) {
-        if (memcpy_s(s.data, s.cap, src, len) != 0) {
-            free(s.data);
-            s.data = NULL;
-            s.size = 0;
-            s.cap = 0;
-            return s;
-        }
-        s.data[len] = '\0';
-        s.size = len;
-    } else {
-        s.size = 0;
-        s.cap = 0;
-    }
-    return s;
-}
-
 void DmStringDestroy(DmString* s)
 {
     if (s) {
@@ -224,43 +199,6 @@ int DmStringFind(const DmString* s, const char* sub)
     return found - s->data;
 }
 
-DmString DmStringReplace(DmString* s, const char* old_str, const char* newStr)
-{
-    if (!s) {
-        return DmStringCreateEmpty();
-    }
-    if (!old_str || !s->data || s->size == 0 || strlen(old_str) == 0) {
-        return *s;
-    }
-    int oldLen = strlen(old_str);
-    DmString result = DmStringCreateEmpty();
-    const char* pos = s->data;
-    const char* end = s->data + s->size;
-    while (pos < end) {
-        const char* found = strstr(pos, old_str);
-        if (!found) {
-            DmStringAppend(&result, pos);
-            break;
-        }
-        if (found > pos) {
-            int beforeLen = found - pos;
-            char* before = malloc(beforeLen + 1);
-            if (before != NULL && memcpy_s(before, beforeLen + 1, pos, beforeLen) == 0) {
-                before[beforeLen] = '\0';
-                DmStringAppend(&result, before);
-            }
-            if (before != NULL) {
-                free(before);
-            }
-        }
-        DmStringAppend(&result, newStr);
-        pos = found + oldLen;
-    }
-    DmStringDestroy(s);
-    *s = result;
-    return *s;
-}
-
 void DmStringClear(DmString* s)
 {
     if (!s) {
@@ -278,12 +216,6 @@ void DmStringClear(DmString* s)
 DmString DmStringCopy(const DmString* src)
 {
     return DmStringCreate(DmStringCstr(src));
-}
-
-void DmStringCopyTo(DmString* dest, const DmString* src)
-{
-    DmStringDestroy(dest);
-    *dest = DmStringCopy(src);
 }
 
 void DmStringAssign(DmString* dest, const DmString* src)
@@ -310,16 +242,6 @@ unsigned int DmStringHash(const DmString* s)
 }
 
 int DmCmpInt(int a, int b)
-{
-    return (a > b) - (a < b);
-}
-
-int DmCmpInt32T(int32_t a, int32_t b)
-{
-    return (a > b) - (a < b);
-}
-
-int DmCmpInt64T(int64_t a, int64_t b)
 {
     return (a > b) - (a < b);
 }
@@ -805,24 +727,6 @@ bool DmSetDmStringContains(DmSetDmString* s, const DmString* item)
         }
     }
     return false;
-}
-int DmSetDmStringSize(DmSetDmString* s)
-{
-    return s->size;
-}
-void DmSetDmStringErase(DmSetDmString* s, const DmString* item)
-{
-    for (int i = 0; i < s->size; i++) {
-        if (DmCmpDmString(s->data[i], *item) == 0) {
-            DmStringDestroy(&s->data[i]);
-            if (memmove_s(&s->data[i], (s->cap - i) * sizeof(DmString),
-                &s->data[i + 1], (s->size - i - 1) * sizeof(DmString)) != 0) {
-                return;
-            }
-            s->size--;
-            return;
-        }
-    }
 }
 DM_SET_IMPL(int, DmCmpInt)
 DM_SET_IMPL(uint16_t, DmCmpInt)

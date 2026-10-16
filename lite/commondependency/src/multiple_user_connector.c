@@ -26,7 +26,6 @@ DM_MAP_IMPL(int_DmAccountInfo, int, DmAccountInfo, DmCmpInt)
 
 static int32_t g_dm_old_user_id = -1;
 static DmString g_dm_account_id;
-static DmString g_dm_account_name;
 static DmMutex g_dm_lock = { .mtx = PTHREAD_MUTEX_INITIALIZER };
 static DmMap_int_DmAccountInfo g_dm_account_info_map;
 static DmMutex g_dm_account_info_map_lock = { .mtx = PTHREAD_MUTEX_INITIALIZER };
@@ -41,12 +40,6 @@ void DmAccountInfoInit(DmAccountInfo* info)
 {
     info->accountId = DmStringCreateEmpty();
     info->accountName = DmStringCreateEmpty();
-}
-
-void DmAccountInfoDestroy(DmAccountInfo* info)
-{
-    DmStringDestroy(&info->accountId);
-    DmStringDestroy(&info->accountName);
 }
 
 int32_t DmMultipleUserGetCurrentAccountUserId(void)
@@ -168,44 +161,12 @@ void DmMultipleUserSetSwitchOldUserId(int32_t userId)
     DmMutexUnlock(&g_dm_lock);
 }
 
-int32_t DmMultipleUserGetSwitchOldUserId(void)
-{
-    DmMutexLock(&g_dm_lock);
-    int32_t result = g_dm_old_user_id;
-    DmMutexUnlock(&g_dm_lock);
-    return result;
-}
-
 void DmMultipleUserSetSwitchOldAccountId(DmString accountId)
 {
     DmMutexLock(&g_dm_lock);
     DmStringDestroy(&g_dm_account_id);
     g_dm_account_id = accountId;
     DmMutexUnlock(&g_dm_lock);
-}
-
-DmString DmMultipleUserGetSwitchOldAccountId(void)
-{
-    DmMutexLock(&g_dm_lock);
-    DmString result = DmStringCopy(&g_dm_account_id);
-    DmMutexUnlock(&g_dm_lock);
-    return result;
-}
-
-void DmMultipleUserSetSwitchOldAccountName(DmString accountName)
-{
-    DmMutexLock(&g_dm_lock);
-    DmStringDestroy(&g_dm_account_name);
-    g_dm_account_name = accountName;
-    DmMutexUnlock(&g_dm_lock);
-}
-
-DmString DmMultipleUserGetSwitchOldAccountName(void)
-{
-    DmMutexLock(&g_dm_lock);
-    DmString result = DmStringCopy(&g_dm_account_name);
-    DmMutexUnlock(&g_dm_lock);
-    return result;
 }
 
 void DmMultipleUserSetAccountInfo(int32_t userId, DmAccountInfo dmAccountInfo)
@@ -262,11 +223,6 @@ int32_t DmMultipleUserGetFirstForegroundUserId(void)
 int32_t DmMultipleUserGetBackgroundUserIds(DmVec_int* userIdVec)
 {
     return DmShellGetBackgroundUserIds(userIdVec);
-}
-
-int32_t DmMultipleUserGetAllUserIds(DmVec_int* userIdVec)
-{
-    return DmShellGetAllUserIds(userIdVec);
 }
 
 DmString DmMultipleUserGetAccountNickName(int32_t userId)

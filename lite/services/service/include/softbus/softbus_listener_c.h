@@ -43,10 +43,6 @@ int32_t DmSoftbusListenerGetTrustedDeviceList(DmVec_DmDeviceInfo* deviceInfoList
 int32_t DmSoftbusListenerGetLocalDeviceInfo(DmDeviceInfo* deviceInfo);
 int32_t DmSoftbusListenerGetDeviceInfo(const DmString* networkId, DmDeviceInfo* info);
 
-int32_t DmSoftbusListenerGetUuidByNetworkId(const char* networkId, DmString* uuid);
-int32_t DmSoftbusListenerGetUdidByNetworkId(const char* networkId, DmString* udid);
-int32_t DmSoftbusListenerGetDeviceSecurityLevel(const char* networkId, int32_t* securityLevel);
-int32_t DmSoftbusListenerGetNetworkTypeByNetworkId(const char* networkId, int32_t* networkType);
 
 int32_t DmSoftbusListenerRefreshSoftbusLnn(const char* pkgName, const DmSubscribeInfo* dmSubInfo,
     const DmString* customData);

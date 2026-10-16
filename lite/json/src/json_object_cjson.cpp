@@ -358,6 +358,7 @@ DmJsonItemObject DmJsonItemObjectAt(const DmJsonItemObject* obj, const char* key
         operationItem.beValid = true;
     }
     operationItem.parent = obj->item;
+    DmStringDestroy(&operationItem.itemName);
     operationItem.itemName = DmStringCreate(key);
     return operationItem;
 }
@@ -548,7 +549,9 @@ void DmJsonItemObjectSetKeyBool(DmJsonItemObject* obj, const char* key, bool val
 bool DmJsonItemObjectIsBool(const DmJsonItemObject* obj, const char* key)
 {
     DmJsonItemObject item = DmJsonItemObjectAt(obj, key);
-    return DmJsonItemObjectIsBoolean(&item);
+    bool ret = DmJsonItemObjectIsBoolean(&item);
+    DmJsonItemObjectDestroy(&item);
+    return ret;
 }
 
 bool DmJsonItemObjectGetBool(const DmJsonItemObject* obj, const char* key)
@@ -556,37 +559,48 @@ bool DmJsonItemObjectGetBool(const DmJsonItemObject* obj, const char* key)
     DmJsonItemObject item = DmJsonItemObjectAt(obj, key);
     bool value = false;
     DmJsonItemObjectGetToBool(&item, &value);
+    DmJsonItemObjectDestroy(&item);
     return value;
 }
 
 bool DmJsonItemObjectIsInt32(const DmJsonItemObject* obj, const char* key)
 {
     DmJsonItemObject item = DmJsonItemObjectAt(obj, key);
-    return DmJsonItemObjectIsNumberInteger(&item);
+    bool ret = DmJsonItemObjectIsNumberInteger(&item);
+    DmJsonItemObjectDestroy(&item);
+    return ret;
 }
 
 int32_t DmJsonItemObjectGetInt32(const DmJsonItemObject* obj, const char* key)
 {
     DmJsonItemObject item = DmJsonItemObjectAt(obj, key);
-    return DmJsonGetInt(&item);
+    int32_t ret = DmJsonGetInt(&item);
+    DmJsonItemObjectDestroy(&item);
+    return ret;
 }
 
 bool DmJsonItemObjectContainsAt(const DmJsonItemObject* obj, const char* parentKey, const char* childKey)
 {
     DmJsonItemObject parent = DmJsonItemObjectAt(obj, parentKey);
-    return DmJsonItemObjectContains(&parent, childKey);
+    bool ret = DmJsonItemObjectContains(&parent, childKey);
+    DmJsonItemObjectDestroy(&parent);
+    return ret;
 }
 
 bool DmJsonItemObjectIsInt32At(const DmJsonItemObject* obj, const char* parentKey, const char* childKey)
 {
     DmJsonItemObject parent = DmJsonItemObjectAt(obj, parentKey);
-    return DmJsonItemObjectIsInt32(&parent, childKey);
+    bool ret = DmJsonItemObjectIsInt32(&parent, childKey);
+    DmJsonItemObjectDestroy(&parent);
+    return ret;
 }
 
 int32_t DmJsonItemObjectGetInt32At(const DmJsonItemObject* obj, const char* parentKey, const char* childKey)
 {
     DmJsonItemObject parent = DmJsonItemObjectAt(obj, parentKey);
-    return DmJsonItemObjectGetInt32(&parent, childKey);
+    int32_t ret = DmJsonItemObjectGetInt32(&parent, childKey);
+    DmJsonItemObjectDestroy(&parent);
+    return ret;
 }
 
 void DmJsonItemObjectParse(DmJsonItemObject* obj, const char* strJson)
@@ -609,23 +623,30 @@ int DmJsonItemObjectArraySize(const DmJsonItemObject* obj, const char* key)
 {
     DmJsonItemObject item = DmJsonItemObjectAt(obj, key);
     if (item.item == nullptr) {
+        DmJsonItemObjectDestroy(&item);
         return 0;
     }
-    return cJSON_GetArraySize(DmGetCjsonPointer(item.item));
+    int ret = cJSON_GetArraySize(DmGetCjsonPointer(item.item));
+    DmJsonItemObjectDestroy(&item);
+    return ret;
 }
 
 int64_t DmJsonItemObjectGetInt64FromArray(const DmJsonItemObject* obj, const char* key, int index)
 {
     DmJsonItemObject arr = DmJsonItemObjectAt(obj, key);
     if (arr.item == nullptr) {
+        DmJsonItemObjectDestroy(&arr);
         return 0;
     }
     cJSON* arrItem = DmGetCjsonPointer(arr.item);
     if (index < 0 || index >= cJSON_GetArraySize(arrItem)) {
+        DmJsonItemObjectDestroy(&arr);
         return 0;
     }
     cJSON* elem = cJSON_GetArrayItem(arrItem, index);
-    return DmItemToInt64(elem);
+    int64_t ret = DmItemToInt64(elem);
+    DmJsonItemObjectDestroy(&arr);
+    return ret;
 }
 
 void DmJsonItemObjectPutInt64Array(DmJsonItemObject* obj, const char* key, DmVecInt64_t* arr)
@@ -665,10 +686,12 @@ void DmJsonItemObjectGetInt64Array(const DmJsonItemObject* obj, const char* key,
     DmVecInt64_t_Clear(arr);
     DmJsonItemObject arrItem = DmJsonItemObjectAt(obj, key);
     if (arrItem.item == nullptr) {
+        DmJsonItemObjectDestroy(&arrItem);
         return;
     }
     cJSON* arrPtr = DmGetCjsonPointer(arrItem.item);
     if (!cJSON_IsArray(arrPtr)) {
+        DmJsonItemObjectDestroy(&arrItem);
         return;
     }
     int size = cJSON_GetArraySize(arrPtr);
@@ -676,18 +699,23 @@ void DmJsonItemObjectGetInt64Array(const DmJsonItemObject* obj, const char* key,
         cJSON* elem = cJSON_GetArrayItem(arrPtr, i);
         DmVecInt64_t_Push(arr, DmItemToInt64(elem));
     }
+    DmJsonItemObjectDestroy(&arrItem);
 }
 
 bool DmJsonItemObjectIsUint64(const DmJsonItemObject* obj, const char* key)
 {
     DmJsonItemObject item = DmJsonItemObjectAt(obj, key);
-    return DmJsonItemObjectIsNumberInteger(&item);
+    bool ret = DmJsonItemObjectIsNumberInteger(&item);
+    DmJsonItemObjectDestroy(&item);
+    return ret;
 }
 
 uint64_t DmJsonItemObjectGetUint64(const DmJsonItemObject* obj, const char* key)
 {
     DmJsonItemObject item = DmJsonItemObjectAt(obj, key);
-    return DmJsonGetUint64(&item);
+    uint64_t ret = DmJsonGetUint64(&item);
+    DmJsonItemObjectDestroy(&item);
+    return ret;
 }
 
 DmString DmJsonGetString(const DmJsonItemObject* obj)
@@ -791,29 +819,6 @@ void DmJsonObjectDuplicate(DmJsonObject* obj, const DmJsonObject* source)
 DmJsonItemObject* DmJsonObjectGetItem(DmJsonObject* obj)
 {
     return &obj->base;
-}
-
-DmJsonItemObject* DmJsonObjectGetByKey(DmJsonObject* obj, const char* key)
-{
-    if (obj == nullptr || key == nullptr) {
-        return nullptr;
-    }
-    DmJsonItemObject* item = DmJsonObjectGetItem(obj);
-    if (item == nullptr || item->item == nullptr) {
-        return nullptr;
-    }
-    cJSON* found = cJSON_GetObjectItemCaseSensitive(DmGetCjsonPointer(item->item), key);
-    if (found == nullptr) {
-        return nullptr;
-    }
-    static DmJsonItemObject result;
-    DmJsonItemObjectInit(&result);
-    result.item = found;
-    result.parent = item->item;
-    result.beValid = true;
-    result.itemName = DmStringCreate(key);
-    result.needDeleteItem = false;
-    return &result;
 }
 
 DM_VEC_IMPL(DmJsonItemObject)
