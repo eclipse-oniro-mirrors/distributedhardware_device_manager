@@ -162,6 +162,17 @@ int32_t TestIpcRequestNull(int32_t cmdCode)
     return ret;
 }
 
+int32_t TestIpcRequestTypeMismatch(int32_t cmdCode)
+{
+    MessageParcel data;
+    std::shared_ptr<IpcReq> pBaseReq = std::make_shared<IpcReq>();
+    auto ptr = GetIpcRequestFunc(cmdCode);
+    if (ptr == nullptr) {
+        return ERR_DM_UNSUPPORTED_IPC_COMMAND;
+    }
+    return ptr(pBaseReq, data);
+}
+
 HWTEST_F(IpcCmdParserClientTest, ReadResponseFunc_001, testing::ext::TestSize.Level0)
 {
     int32_t cmdCode = REGISTER_DEVICE_MANAGER_LISTENER;
@@ -1780,6 +1791,11 @@ HWTEST_F(IpcCmdParserClientTest, SetIpcRequestFunc_dm_ipc_015, testing::ext::Tes
         ret = ptr(req, data);
     }
     ASSERT_EQ(DM_OK, ret);
+}
+
+HWTEST_F(IpcCmdParserClientTest, SetIpcRequestFunc_InvalidReqType, testing::ext::TestSize.Level0)
+{
+    EXPECT_EQ(ERR_DM_INPUT_PARA_INVALID, TestIpcRequestTypeMismatch(BIND_TARGET));
 }
 
 HWTEST_F(IpcCmdParserClientTest, TEST_IPC_REQUEST_NULL_001, testing::ext::TestSize.Level2)

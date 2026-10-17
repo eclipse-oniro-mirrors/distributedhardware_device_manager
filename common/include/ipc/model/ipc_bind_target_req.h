@@ -25,6 +25,11 @@ class IpcBindTargetReq : public IpcReq {
     DECLARE_IPC_MODEL(IpcBindTargetReq);
 
 public:
+    IpcReqType GetReqType() const override
+    {
+        return IpcReqType::BIND_TARGET;
+    }
+
     /**
      * @tc.name: IpcBindTargetReq::GetFirstParam
      * @tc.desc: Ipc get first string parameter
