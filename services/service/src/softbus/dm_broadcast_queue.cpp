@@ -82,46 +82,57 @@ void DmBroadcastQueue::ProcessLoop()
     LOGI("DmBroadcastQueue worker started.");
     while (running_.load()) {
         std::string msg;
-        {
-            std::unique_lock<std::mutex> lock(mutex_);
-            cv_.wait(lock, [this]() { return !queue_.empty() || !running_.load(); });
-            if (!running_.load()) {
-                break;
-            }
-            if (queue_.empty()) {
-                continue;
-            }
-            msg = queue_.front();
-            queue_.pop();
+        if (!PopNextMsg(msg) || !WaitForSpacing()) {
+            break;
         }
-        if (hasSent_) {
-            auto elapsed = std::chrono::steady_clock::now() - lastSendTime_;
-            if (elapsed < BROADCAST_INTERVAL) {
-                std::unique_lock<std::mutex> lock(mutex_);
-                cv_.wait_for(lock, BROADCAST_INTERVAL - elapsed,
-                    [this]() { return !running_.load(); });
-            }
-            if (!running_.load()) {
-                break;
-            }
-        }
-        Sender sender;
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            sender = sender_;
-        }
-        if (!sender) {
-            LOGE("sender is not set, drop msg.");
-            continue;
-        }
-        int32_t ret = sender(msg);
-        if (ret != DM_OK) {
-            LOGE("send acl changed broadcast failed, ret: %{public}d.", ret);
-        }
-        lastSendTime_ = std::chrono::steady_clock::now();
-        hasSent_ = true;
+        InvokeSender(msg);
     }
     LOGI("DmBroadcastQueue worker exited.");
+}
+
+bool DmBroadcastQueue::PopNextMsg(std::string &out)
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    cv_.wait(lock, [this]() { return !queue_.empty() || !running_.load(); });
+    if (!running_.load()) {
+        return false;
+    }
+    out = queue_.front();
+    queue_.pop();
+    return true;
+}
+
+bool DmBroadcastQueue::WaitForSpacing()
+{
+    if (!hasSent_) {
+        return true;
+    }
+    auto elapsed = std::chrono::steady_clock::now() - lastSendTime_;
+    if (elapsed >= BROADCAST_INTERVAL) {
+        return running_.load();
+    }
+    std::unique_lock<std::mutex> lock(mutex_);
+    cv_.wait_for(lock, BROADCAST_INTERVAL - elapsed, [this]() { return !running_.load(); });
+    return running_.load();
+}
+
+void DmBroadcastQueue::InvokeSender(const std::string &msg)
+{
+    Sender sender;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        sender = sender_;
+    }
+    if (!sender) {
+        LOGE("sender is not set, drop msg.");
+        return;
+    }
+    int32_t ret = sender(msg);
+    if (ret != DM_OK) {
+        LOGE("send acl changed broadcast failed, ret: %{public}d.", ret);
+    }
+    lastSendTime_ = std::chrono::steady_clock::now();
+    hasSent_ = true;
 }
 } // namespace DistributedHardware
 } // namespace OHOS

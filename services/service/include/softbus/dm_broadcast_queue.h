@@ -42,6 +42,9 @@ public:
 
 private:
     void ProcessLoop();
+    bool PopNextMsg(std::string &out);
+    bool WaitForSpacing();
+    void InvokeSender(const std::string &msg);
 
     std::queue<std::string> queue_;
     std::mutex mutex_;
