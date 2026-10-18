@@ -96,11 +96,6 @@ namespace {
     constexpr const char* ACCOUNT_COMMON_EVENT_BY_WIFI_TIMEOUT_TASK = "deviceManagerTimer:accountCommonEventByWifi";
     constexpr const char* SERVICE_UNBIND_PROXY_BY_WIFI_TIMEOUT_TASK = "deviceManagerTimer:serviceUnbindProxyByWifi";
     const int32_t USER_SWITCH_BY_WIFI_TIMEOUT_S = 2;
-    const int32_t SEND_DELAY_MAX_TIME = 5;
-    const int32_t SEND_DELAY_MIN_TIME = 0;
-    const int32_t DELAY_TIME_SEC_CONVERSION = 1000000;      // 1000*1000
-    // 2148 * 1000000 will exceed the maximum value of int32 and cause a crash
-    const int32_t SEND_LIMIT_TIME = INT32_MAX / DELAY_TIME_SEC_CONVERSION;
     const int32_t RANDOM_OFF_SET = 8;
     const int32_t HEARTBEAT_DELAY_TIME_MIN = 1000;
     const int32_t HEARTBEAT_DELAY_TIME_MAX = 15000;
@@ -122,7 +117,6 @@ namespace {
     constexpr int32_t DM_MIN_SERVICE_DISPLAYNAME = 7;
     constexpr int32_t DM_MAX_SERVICE_DISPLAYNAME = 128;
     constexpr int32_t DM_MAX_CUSTOMDATA = 1024;
-    constexpr int32_t SYNC_FOREGROUND_ACCOUNT_BROADCAST_INTERVAL_MS = 5000;
     constexpr int32_t OS_TYPE_BLE = 16;
     constexpr int32_t OS_TYPE_BLE_BR = 17;
     constexpr size_t MAX_FOREGROUND_ACCOUNT_CACHE_SIZE = 10000;
@@ -132,7 +126,6 @@ namespace {
     constexpr int32_t INVALID_SUB_PROFILE_ID = -1;
 
     constexpr const char* SYNC_SERVICE_INFO_ONLINE_TASK = "SyncServiceInfoOnlineTask";
-    constexpr const char* SEND_APP_UN_BIND_BROAD_CAST_TASK = "SendAppUnBindBroadCastTask";
     constexpr const char* SEND_APP_UN_INSTALL_BROAD_CAST_TASK = "SendAppUnInstallBroadCastTask";
     constexpr const char* HANDLE_ACCOUNT_LOGOUT_EVENT_CALLBACK_TASK = "HandleAccountLogoutEventCallbackTask";
     constexpr const char* HANDLE_USER_REMOVED_TASK = "HandleUserRemovedTask";
@@ -3910,9 +3903,6 @@ void DeviceManagerService::SendForegroundAccountBroadcast(const std::vector<std:
         std::string broadCastMsg = ReleationShipSyncMgr::GetInstance().SyncTrustRelationShip(msg, broadCastId);
         CHECK_NULL_VOID(softbusListener_);
         softbusListener_->SendAclChangedBroadcast(broadCastMsg);
-        if (i != foregroundAccounts.size() - 1) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(SYNC_FOREGROUND_ACCOUNT_BROADCAST_INTERVAL_MS));
-        }
     }
     LOGI("completed.");
 }
@@ -4390,84 +4380,44 @@ void DeviceManagerService::SendUnRegServiceBroadCast(const std::vector<std::stri
     softbusListener_->SendAclChangedBroadcast(broadCastMsg);
 }
 
-int32_t DeviceManagerService::CalculateBroadCastDelayTime()
-{
-    int64_t timeDiff = 0;
-    int32_t delayTime = 0;
-    int64_t currentTime =
-        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    {
-        std::lock_guard<std::mutex> lock(broadCastLock_);
-        if (SendLastBroadCastTime_ == 0) {
-            SendLastBroadCastTime_ = currentTime;
-        }
-        timeDiff = currentTime - SendLastBroadCastTime_;
-        delayTime = SEND_DELAY_MAX_TIME - timeDiff + lastDelayTime_;
-        if (delayTime < SEND_DELAY_MIN_TIME || delayTime == SEND_DELAY_MAX_TIME || delayTime > SEND_LIMIT_TIME) {
-            delayTime = SEND_DELAY_MIN_TIME;
-        }
-        SendLastBroadCastTime_ = currentTime;
-        lastDelayTime_ = delayTime;
-    }
-    return delayTime;
-}
-
 void DeviceManagerService::SendAppUnBindBroadCast(const std::vector<std::string> &peerUdids, int32_t userId,
     uint64_t tokenId)
 {
-    int32_t delayTime = CalculateBroadCastDelayTime();
-    std::function<void()> task = [=]() {
-        LOGI("Start.");
-        RelationShipChangeMsg msg;
-        msg.type = RelationShipChangeType::APP_UNBIND;
-        msg.userId = static_cast<uint32_t>(userId);
-        msg.peerUdids = peerUdids;
-        msg.tokenId = tokenId;
-        std::string broadCastMsg = ReleationShipSyncMgr::GetInstance().SyncTrustRelationShip(msg);
-        CHECK_NULL_VOID(softbusListener_);
-        softbusListener_->SendAclChangedBroadcast(broadCastMsg);
-    };
-    ffrt::submit(task,
-        ffrt::task_attr().name(SEND_APP_UN_BIND_BROAD_CAST_TASK).delay(delayTime * DELAY_TIME_SEC_CONVERSION));
+    RelationShipChangeMsg msg;
+    msg.type = RelationShipChangeType::APP_UNBIND;
+    msg.userId = static_cast<uint32_t>(userId);
+    msg.peerUdids = peerUdids;
+    msg.tokenId = tokenId;
+    std::string broadCastMsg = ReleationShipSyncMgr::GetInstance().SyncTrustRelationShip(msg);
+    CHECK_NULL_VOID(softbusListener_);
+    softbusListener_->SendAclChangedBroadcast(broadCastMsg);
 }
 
 void DeviceManagerService::SendAppUnBindBroadCast(const std::vector<std::string> &peerUdids, int32_t userId,
     uint64_t tokenId, uint64_t peerTokenId)
 {
-    int32_t delayTime = CalculateBroadCastDelayTime();
-    std::function<void()> task = [=]() {
-        LOGI("Start.");
-        RelationShipChangeMsg msg;
-        msg.type = RelationShipChangeType::APP_UNBIND;
-        msg.userId = static_cast<uint32_t>(userId);
-        msg.peerUdids = peerUdids;
-        msg.tokenId = tokenId;
-        msg.peerTokenId = peerTokenId;
-        std::string broadCastMsg = ReleationShipSyncMgr::GetInstance().SyncTrustRelationShip(msg);
-        CHECK_NULL_VOID(softbusListener_);
-        softbusListener_->SendAclChangedBroadcast(broadCastMsg);
-    };
-    ffrt::submit(task,
-        ffrt::task_attr().name(SEND_APP_UN_BIND_BROAD_CAST_TASK).delay(delayTime * DELAY_TIME_SEC_CONVERSION));
+    RelationShipChangeMsg msg;
+    msg.type = RelationShipChangeType::APP_UNBIND;
+    msg.userId = static_cast<uint32_t>(userId);
+    msg.peerUdids = peerUdids;
+    msg.tokenId = tokenId;
+    msg.peerTokenId = peerTokenId;
+    std::string broadCastMsg = ReleationShipSyncMgr::GetInstance().SyncTrustRelationShip(msg);
+    CHECK_NULL_VOID(softbusListener_);
+    softbusListener_->SendAclChangedBroadcast(broadCastMsg);
 }
 
 void DeviceManagerService::SendAppUnInstallBroadCast(const std::vector<std::string> &peerUdids, int32_t userId,
     uint64_t tokenId)
 {
-    int32_t delayTime = CalculateBroadCastDelayTime();
-    std::function<void()> task = [=]() {
-        LOGI("Start.");
-        RelationShipChangeMsg msg;
-        msg.type = RelationShipChangeType::APP_UNINSTALL;
-        msg.userId = static_cast<uint32_t>(userId);
-        msg.peerUdids = peerUdids;
-        msg.tokenId = tokenId;
-        std::string broadCastMsg = ReleationShipSyncMgr::GetInstance().SyncTrustRelationShip(msg);
-        CHECK_NULL_VOID(softbusListener_);
-        softbusListener_->SendAclChangedBroadcast(broadCastMsg);
-    };
-    ffrt::submit(task,
-        ffrt::task_attr().name(SEND_APP_UN_BIND_BROAD_CAST_TASK).delay(delayTime * DELAY_TIME_SEC_CONVERSION));
+    RelationShipChangeMsg msg;
+    msg.type = RelationShipChangeType::APP_UNINSTALL;
+    msg.userId = static_cast<uint32_t>(userId);
+    msg.peerUdids = peerUdids;
+    msg.tokenId = tokenId;
+    std::string broadCastMsg = ReleationShipSyncMgr::GetInstance().SyncTrustRelationShip(msg);
+    CHECK_NULL_VOID(softbusListener_);
+    softbusListener_->SendAclChangedBroadcast(broadCastMsg);
 }
 
 void DeviceManagerService::SendServiceUnBindBroadCast(const std::vector<std::string> &peerUdids, int32_t userId,

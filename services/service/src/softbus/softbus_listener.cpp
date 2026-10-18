@@ -23,6 +23,7 @@
 #include <unistd.h>
 
 #include "device_manager_service.h"
+#include "dm_broadcast_queue.h"
 #include "dm_crypto.h"
 #include "dm_constants.h"
 #include "dm_log.h"
@@ -651,6 +652,10 @@ SoftbusListener::SoftbusListener()
     CreateSessionServers();
     InitSoftbusListener();
     ClearDiscoveredDevice();
+    DmBroadcastQueue::GetInstance().SetSender(
+        [](const std::string &msg) -> int32_t {
+            return SyncTrustedRelationShip(DM_PKG_NAME, msg.c_str(), msg.length());
+        });
 }
 
 void SoftbusListener::CreateSessionServers()
@@ -739,6 +744,7 @@ void SoftbusListener::Create3rdAuthCredSessionServer()
 
 SoftbusListener::~SoftbusListener()
 {
+    DmBroadcastQueue::GetInstance().Stop();
     RemoveSessionServer(DM_PKG_NAME, DM_SESSION_NAME);
     RemoveSessionServer(DM_PKG_NAME, DM_PIN_HOLDER_SESSION_NAME);
     RemoveSessionServer(DM_PKG_NAME, DM_3RD_AUTH_ACL_SESSION_NAME);
@@ -1341,10 +1347,7 @@ std::string SoftbusListener::GetHostPkgName()
 
 void SoftbusListener::SendAclChangedBroadcast(const std::string &msg)
 {
-    LOGI("start");
-    if (SyncTrustedRelationShip(DM_PKG_NAME, msg.c_str(), msg.length()) != DM_OK) {
-        LOGE("SyncTrustedRelationShip failed.");
-    }
+    DmBroadcastQueue::GetInstance().Push(msg);
 }
 
 IRefreshCallback &SoftbusListener::GetSoftbusRefreshCb()
