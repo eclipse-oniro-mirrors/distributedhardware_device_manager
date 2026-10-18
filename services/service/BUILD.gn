@@ -149,6 +149,7 @@ if (defined(ohos_lite)) {
         "src/relationshipsyncmgr/dm_transport_msg.cpp",
         "src/relationshipsyncmgr/relationship_sync_mgr.cpp",
         "src/softbus/mine_softbus_listener.cpp",
+        "src/softbus/dm_broadcast_queue.cpp",
         "src/softbus/softbus_listener.cpp",
       ]
 
@@ -293,6 +294,7 @@ if (defined(ohos_lite)) {
         "src/relationshipsyncmgr/dm_transport_msg.cpp",
         "src/relationshipsyncmgr/relationship_sync_mgr.cpp",
         "src/softbus/mine_softbus_listener.cpp",
+        "src/softbus/dm_broadcast_queue.cpp",
         "src/softbus/softbus_listener.cpp",
       ]
 
@@ -436,6 +438,7 @@ if (defined(ohos_lite)) {
         "src/devicenamemgr/device_name_change_monitor.cpp",
         "src/devicenamemgr/device_name_manager.cpp",
         "src/softbus/mine_softbus_listener.cpp",
+        "src/softbus/dm_broadcast_queue.cpp",
         "src/softbus/softbus_listener.cpp",
       ]
 

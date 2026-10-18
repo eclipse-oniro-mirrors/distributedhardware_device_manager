@@ -61,6 +61,7 @@ group("unittest") {
     ":UTTest_dm_auth_manager_second",
     ":UTTest_dm_auth_manager_third",
     ":UTTest_dm_auth_message_processor",
+    ":UTTest_dm_broadcast_queue",
     ":UTTest_dm_comm_tool",
     ":UTTest_dm_common_event_manager",
     ":UTTest_dm_credential_manager",
@@ -3464,6 +3465,42 @@ ohos_unittest("UTTest_dm_account_common_event") {
 }
 
 ## UnitTest UTTest_dm_account_common_event }}}
+
+## UnitTest UTTest_dm_broadcast_queue {{{
+ohos_unittest("UTTest_dm_broadcast_queue") {
+  module_out_path = module_out_path
+
+  include_dirs = [ "${devicemanager_path}/test/unittest" ]
+
+  sources = [
+    "${devicemanager_path}/test/unittest/UTTest_dm_broadcast_queue.cpp",
+  ]
+
+  deps = [
+    ":device_manager_test_common",
+    "${devicemanager_path}/commondependency:devicemanagerdependencytest",
+    "${devicemanager_path}/interfaces/kits/js:devicemanager",
+    "${devicemanager_path}/radar:devicemanagerradartest",
+    "${ext_path}/pin_auth:devicemanagerext_pin_auth",
+    "${innerkits_path}/native_cpp:devicemanagersdk",
+    "${json_path}:devicemanagerjson",
+    "${mini_tools_kits_path}/native_cpp:devicemanagerminisdk",
+    "${services_path}:devicemanagerservicetest",
+    "${servicesimpl_path}:devicemanagerserviceimpl",
+    "${softbuscache_parh}:dmdevicecache",
+    "${utils_path}:devicemanagerutilstest",
+  ]
+
+  external_deps = [
+    "common_event_service:cesfwk_innerkits",
+    "c_utils:utils",
+    "ffrt:libffrt",
+    "hilog:libhilog",
+    "samgr:samgr_proxy",
+  ]
+}
+
+## UnitTest UTTest_dm_broadcast_queue }}}
 
 ## UnitTest UTTest_dm_publish_common_event {{{
 ohos_unittest("UTTest_dm_publish_common_event") {
