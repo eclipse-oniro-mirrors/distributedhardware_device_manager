@@ -2650,32 +2650,37 @@ HWTEST_F(DeviceProfileConnectorTest, CheckAuthForm_002, testing::ext::TestSize.L
 }
 
 /**
- * @tc.name: CheckSinkShareType_001
- * @tc.desc: CheckSinkShareType returns true when accessee matches and bindType is SHARE
+ * @tc.name: GetAuthFormMapSinkSideIncludeShare_001
+ * @tc.desc: GetAuthFormMap includes shared device when local device is share sink
  * @tc.type: FUNC
  */
-HWTEST_F(DeviceProfileConnectorTest, CheckSinkShareType_001, testing::ext::TestSize.Level1)
+HWTEST_F(DeviceProfileConnectorTest, GetAuthFormMapSinkSideIncludeShare_001, testing::ext::TestSize.Level1)
 {
-    int32_t userId = 456;
-    std::string deviceId = "localDeviceId";
-    std::string trustDeviceId = "remoteDeviceId";
+    std::string pkgName = "pkgName";
+    std::string localDeviceId = "localDeviceId";
+    std::string trustDeviceId = "trustDeviceId";
+    int32_t userId = 100;
+    std::vector<DistributedDeviceProfile::AccessControlProfile> profilesFilter;
     DistributedDeviceProfile::AccessControlProfile profile;
+    profile.SetBindType(DM_SHARE);
+    profile.SetBindLevel(USER);
+    profile.SetStatus(ACTIVE);
+    profile.SetTrustDeviceId(trustDeviceId);
     DistributedDeviceProfile::Accesser accesser;
-    DistributedDeviceProfile::Accessee accessee;
     accesser.SetAccesserDeviceId(trustDeviceId);
-    accessee.SetAccesseeUserId(userId);
-    accessee.SetAccesseeDeviceId(deviceId);
     profile.SetAccesser(accesser);
+    DistributedDeviceProfile::Accessee accessee;
+    accessee.SetAccesseeDeviceId(localDeviceId);
+    accessee.SetAccesseeUserId(userId);
     profile.SetAccessee(accessee);
-    bool ret = DeviceProfileConnector::GetInstance().CheckSinkShareType(profile, userId, deviceId, trustDeviceId,
-        DmAuthForm::SHARE);
-    EXPECT_TRUE(ret);
+    profilesFilter.push_back(profile);
 
-    accessee.SetAccesseeDeviceId("mismatchDevice");
-    profile.SetAccessee(accessee);
-    ret = DeviceProfileConnector::GetInstance().CheckSinkShareType(profile, userId, deviceId, trustDeviceId,
-        DmAuthForm::SHARE);
-    EXPECT_FALSE(ret);
+    std::unordered_map<std::string, DmAuthForm> deviceIdMap = DeviceProfileConnector::GetInstance().GetAuthFormMap(
+        pkgName, localDeviceId, profilesFilter, userId);
+    EXPECT_NE(deviceIdMap.find(trustDeviceId), deviceIdMap.end());
+    if (deviceIdMap.find(trustDeviceId) != deviceIdMap.end()) {
+        EXPECT_EQ(deviceIdMap[trustDeviceId], DmAuthForm::SHARE);
+    }
 }
 
 /**
