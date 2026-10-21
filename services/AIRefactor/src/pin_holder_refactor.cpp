@@ -234,7 +234,12 @@ int32_t PinHolder::DestroyPinHolder(const std::string &pkgName, const PeerTarget
     if (timer_ != nullptr) {
         timer_->DeleteTimer(PINHOLDER_CREATE_TIMEOUT_TASK);
     }
+    return SendDestroyPinHolderMsg(pinType, payload, targetId);
+}
 
+int32_t PinHolder::SendDestroyPinHolderMsg(DmPinType pinType, const std::string &payload,
+    const PeerTargetId &targetId)
+{
     JsonObject jsonObj;
     jsonObj[TAG_MSG_TYPE] = MSG_TYPE_DESTROY_PIN_HOLDER;
     jsonObj[TAG_PIN_TYPE] = pinType;
@@ -243,7 +248,7 @@ int32_t PinHolder::DestroyPinHolder(const std::string &pkgName, const PeerTarget
     std::string message = jsonObj.Dump();
     LOGI("message type is: %{public}d, pin type is: %{public}d.", MSG_TYPE_DESTROY_PIN_HOLDER,
         pinType);
-    ret = session_->SendData(sessionId_, message);
+    int32_t ret = session_->SendData(sessionId_, message);
     int32_t stageRes =
         ret == DM_OK ? static_cast<int32_t>(StageRes::STAGE_SUCC) : static_cast<int32_t>(StageRes::STAGE_FAIL);
     DmRadarHelper::GetInstance().ReportDestroyPinHolder(processInfo_.pkgName,
@@ -346,25 +351,7 @@ void PinHolder::ProcessCreateMsg(const std::string &message)
     DmRadarHelper::GetInstance().ReportSendOrReceiveHolderMsg(bizStage, std::string("ProcessCreateMsg"), "");
     JsonObject jsonObj;
     jsonObj[TAG_MSG_TYPE] = MSG_TYPE_CREATE_PIN_HOLDER_RESP;
-    if (sinkState_ != SINK_INIT) {
-        jsonObj[TAG_REPLY] = REPLY_FAILED;
-    } else {
-        if (!IsValidStateTransition(sinkState_, SINK_CREATE) || !IsValidStateTransition(sourceState_, SOURCE_CREATE)) {
-            LOGE("invalid state transition, sink: %{public}d, source: %{public}d.", sinkState_, sourceState_);
-            jsonObj[TAG_REPLY] = REPLY_FAILED;
-        } else {
-            jsonObj[TAG_REPLY] = REPLY_SUCCESS;
-            sinkState_ = SINK_CREATE;
-            sourceState_ = SOURCE_CREATE;
-            listener_->OnPinHolderCreate(processInfo_, remoteDeviceId_, pinType, payload);
-            JsonObject jsonContent;
-            jsonContent[TAG_PIN_TYPE] = pinType;
-            jsonContent[TAG_PAYLOAD] = payload;
-            jsonContent[TAG_REMOTE_DEVICE_ID] = remoteDeviceId_;
-            std::string content = jsonContent.Dump();
-            listener_->OnPinHolderEvent(processInfo_, DmPinHolderEvent::CREATE, DM_OK, content);
-        }
-    }
+    jsonObj[TAG_REPLY] = HandleCreateRequest(pinType, payload);
     jsonObj[TAG_DM_VERSION] = "";
 
     std::string msg = jsonObj.Dump();
@@ -374,6 +361,27 @@ void PinHolder::ProcessCreateMsg(const std::string &message)
         LOGE("[SOFTBUS]SendBytes failed, ret: %{public}d.", ret);
         return;
     }
+}
+
+int32_t PinHolder::HandleCreateRequest(DmPinType pinType, const std::string &payload)
+{
+    if (sinkState_ != SINK_INIT) {
+        return REPLY_FAILED;
+    }
+    if (!IsValidStateTransition(sinkState_, SINK_CREATE) || !IsValidStateTransition(sourceState_, SOURCE_CREATE)) {
+        LOGE("invalid state transition, sink: %{public}d, source: %{public}d.", sinkState_, sourceState_);
+        return REPLY_FAILED;
+    }
+    sinkState_ = SINK_CREATE;
+    sourceState_ = SOURCE_CREATE;
+    listener_->OnPinHolderCreate(processInfo_, remoteDeviceId_, pinType, payload);
+    JsonObject jsonContent;
+    jsonContent[TAG_PIN_TYPE] = pinType;
+    jsonContent[TAG_PAYLOAD] = payload;
+    jsonContent[TAG_REMOTE_DEVICE_ID] = remoteDeviceId_;
+    std::string content = jsonContent.Dump();
+    listener_->OnPinHolderEvent(processInfo_, DmPinHolderEvent::CREATE, DM_OK, content);
+    return REPLY_SUCCESS;
 }
 
 void PinHolder::ProcessCreateRespMsg(const std::string &message)
@@ -530,27 +538,37 @@ void PinHolder::OnDataReceived(int32_t sessionId, std::string message)
     LOGI("msgType: %{public}d.", msgType);
     int32_t sessionSide = GetSessionSide(sessionId);
     if (sessionSide == SESSION_SIDE_SERVER && sessionId != sessionId_) {
-        LOGE("another session opened, close this sessionId: %{public}d.", sessionId);
-        if (session_ == nullptr) {
-            LOGE("session is nullptr, cannot send close msg.");
-            return;
-        }
-        JsonObject jsonObj;
-        jsonObj[TAG_MSG_TYPE] = MSG_TYPE_PIN_CLOSE_SESSION;
-        std::string msg = jsonObj.Dump();
-        int32_t ret = session_->SendData(sessionId, msg);
-        if (ret != DM_OK) {
-            LOGE("[SOFTBUS] SendBytes failed. ret: %{public}d.", ret);
-            if (listener_ != nullptr) {
-                listener_->OnPinHolderEvent(processInfo_, DmPinHolderEvent::CREATE_RESULT, ERR_DM_FAILED, "");
-            }
-        }
+        HandleAnotherSession(sessionId);
         return;
     }
     if (session_ == nullptr) {
         LOGE("session is nullptr, cannot process message.");
         return;
     }
+    DispatchMessage(msgType, message);
+}
+
+void PinHolder::HandleAnotherSession(int32_t sessionId)
+{
+    LOGE("another session opened, close this sessionId: %{public}d.", sessionId);
+    if (session_ == nullptr) {
+        LOGE("session is nullptr, cannot send close msg.");
+        return;
+    }
+    JsonObject jsonObj;
+    jsonObj[TAG_MSG_TYPE] = MSG_TYPE_PIN_CLOSE_SESSION;
+    std::string msg = jsonObj.Dump();
+    int32_t ret = session_->SendData(sessionId, msg);
+    if (ret != DM_OK) {
+        LOGE("[SOFTBUS] SendBytes failed. ret: %{public}d.", ret);
+        if (listener_ != nullptr) {
+            listener_->OnPinHolderEvent(processInfo_, DmPinHolderEvent::CREATE_RESULT, ERR_DM_FAILED, "");
+        }
+    }
+}
+
+void PinHolder::DispatchMessage(int32_t msgType, const std::string &message)
+{
     switch (msgType) {
         case MSG_TYPE_PIN_CLOSE_SESSION:
             ProcessCloseSessionMsg(message);

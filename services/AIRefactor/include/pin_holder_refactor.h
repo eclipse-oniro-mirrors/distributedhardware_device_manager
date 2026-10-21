@@ -57,8 +57,11 @@ public:
 private:
     int32_t CreateGeneratePinHolderMsg();
     int32_t ParseMsgType(const std::string &message);
+    void HandleAnotherSession(int32_t sessionId);
+    void DispatchMessage(int32_t msgType, const std::string &message);
     void ProcessCloseSessionMsg(const std::string &message);
     void ProcessCreateMsg(const std::string &message);
+    int32_t HandleCreateRequest(DmPinType pinType, const std::string &payload);
     void ProcessCreateRespMsg(const std::string &message);
     void ProcessDestroyMsg(const std::string &message);
     void ProcessDestroyResMsg(const std::string &message);
@@ -67,6 +70,8 @@ private:
     void CloseSession(const std::string &name);
     void GetPeerDeviceId(int32_t sessionId, std::string &udidHash);
     int32_t CheckTargetIdVaild(const PeerTargetId &targetId);
+    int32_t SendDestroyPinHolderMsg(DmPinType pinType, const std::string &payload,
+        const PeerTargetId &targetId);
     bool IsValidStateTransition(PinHolderState current, PinHolderState next) const;
     bool IsSessionReady() const;
     bool IsListenerReady() const;
