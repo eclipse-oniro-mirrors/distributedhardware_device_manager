@@ -351,7 +351,6 @@ private:
         int32_t bindLevel, uint64_t peerTokenId);
     void SendDeviceUnBindBroadCast(const std::vector<std::string> &peerUdids, int32_t userId, uint64_t tokenId);
     void SendAppUnBindBroadCast(const std::vector<std::string> &peerUdids, int32_t userId, uint64_t tokenId);
-    int32_t CalculateBroadCastDelayTime();
     void SendAppUnBindBroadCast(const std::vector<std::string> &peerUdids, int32_t userId,
         uint64_t tokenId, uint64_t peerTokenId);
     void SendAppUnInstallBroadCast(const std::vector<std::string> &peerUdids, int32_t userId,
@@ -569,9 +568,6 @@ private:
     std::shared_ptr<DmAccountCommonEventManager> accountCommonEventManager_;
     std::shared_ptr<DmPackageCommonEventManager> packageCommonEventManager_;
     std::shared_ptr<DmScreenCommonEventManager> screenCommonEventManager_;
-    std::mutex broadCastLock_;
-    int64_t SendLastBroadCastTime_ = 0;
-    int64_t lastDelayTime_ = 0;
 #if defined(SUPPORT_BLUETOOTH) || defined(SUPPORT_WIFI)
     ffrt::mutex eventManagerLock_;
     std::shared_ptr<DmPublishCommonEventManager> publishCommonEventManager_;

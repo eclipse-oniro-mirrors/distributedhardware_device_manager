@@ -95,7 +95,6 @@ namespace {
     const int32_t SYNC_FOREGROUND_ACCOUNT_ACCOUNTID_HASH_LEN = 7;
     const int32_t SYNC_FOREGROUND_ACCOUNT_TYPE_OFFSET = 1;
     const int32_t SYNC_FOREGROUND_ACCOUNT_LAST_BATCH_OFFSET = 4;
-    const int32_t SYNC_FOREGROUND_ACCOUNT_BROADCAST_INTERVAL_MS = 5000;
 
     const char * const MSG_TYPE = "TYPE";
     const char * const MSG_VALUE = "VALUE";
