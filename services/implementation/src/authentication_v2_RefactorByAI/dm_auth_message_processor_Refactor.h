@@ -40,28 +40,28 @@ constexpr int32_t DM_ULTRASONIC_REVERSE = 1;
 constexpr uint32_t MAX_SESSION_KEY_LENGTH = 512;
 constexpr uint32_t MAX_MESSAGE_LENGTH = 64 * 1024 * 1024;
 
-const char* TAG_NCM_BIND_TARGET = "ncm_bind_target";
+constexpr const char* TAG_NCM_BIND_TARGET = "ncm_bind_target";
 constexpr const char* TAG_CUSTOM_DESCRIPTION = "CUSTOMDESC";
 
-const char* SERVICEINFO_USER_ID = "userId";
-const char* SERVICEINFO_SERVICE_ID = "serviceId";
-const char* SERVICEINFO_DISPLAY_ID = "displayId";
-const char* SERVICEINFO_PUBLISH_STATE = "publishState";
-const char* SERVICEINFO_DEVICE_ID = "deviceId";
-const char* SERVICEINFO_NETWORK_ID = "networkId";
-const char* SERVICEINFO_SERVICE_OWNER_TOKEN_ID = "serviceOwnerTokenId";
-const char* SERVICEINFO_SERVICE_OWNER_PKG_NAME = "serviceOwnerPkgName";
-const char* SERVICEINFO_SERVICE_REGISTER_TOKEN_ID = "serviceRegisterTokenId";
-const char* SERVICEINFO_SERVICE_TYPE = "serviceType";
-const char* SERVICEINFO_SERVICE_NAME = "serviceName";
-const char* SERVICEINFO_SERVICE_DISPLAY_NAME = "serviceDisplayName";
-const char* SERVICEINFO_SERVICE_CODE = "serviceCode";
-const char* SERVICEINFO_CUSTOM_DATA = "customData";
-const char* SERVICEINFO_DATA_LEN = "dataLen";
-const char* SERVICEINFO_TIME_STAMP = "timeStamp";
-const char* SERVICEINFO_VERSION = "version";
-const char* SERVICEINFO_EXTRA_DATA = "extraData";
-const char* SERVICEINFO_DESCRIPTION = "description";
+constexpr const char* SERVICEINFO_USER_ID = "userId";
+constexpr const char* SERVICEINFO_SERVICE_ID = "serviceId";
+constexpr const char* SERVICEINFO_DISPLAY_ID = "displayId";
+constexpr const char* SERVICEINFO_PUBLISH_STATE = "publishState";
+constexpr const char* SERVICEINFO_DEVICE_ID = "deviceId";
+constexpr const char* SERVICEINFO_NETWORK_ID = "networkId";
+constexpr const char* SERVICEINFO_SERVICE_OWNER_TOKEN_ID = "serviceOwnerTokenId";
+constexpr const char* SERVICEINFO_SERVICE_OWNER_PKG_NAME = "serviceOwnerPkgName";
+constexpr const char* SERVICEINFO_SERVICE_REGISTER_TOKEN_ID = "serviceRegisterTokenId";
+constexpr const char* SERVICEINFO_SERVICE_TYPE = "serviceType";
+constexpr const char* SERVICEINFO_SERVICE_NAME = "serviceName";
+constexpr const char* SERVICEINFO_SERVICE_DISPLAY_NAME = "serviceDisplayName";
+constexpr const char* SERVICEINFO_SERVICE_CODE = "serviceCode";
+constexpr const char* SERVICEINFO_CUSTOM_DATA = "customData";
+constexpr const char* SERVICEINFO_DATA_LEN = "dataLen";
+constexpr const char* SERVICEINFO_TIME_STAMP = "timeStamp";
+constexpr const char* SERVICEINFO_VERSION = "version";
+constexpr const char* SERVICEINFO_EXTRA_DATA = "extraData";
+constexpr const char* SERVICEINFO_DESCRIPTION = "description";
 
 // ---- Shared helpers ----
 // Wipe sensitive string content before release.

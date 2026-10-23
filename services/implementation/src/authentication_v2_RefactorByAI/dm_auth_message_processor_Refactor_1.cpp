@@ -371,6 +371,24 @@ void DmAuthMessageProcessor::SetAccessControlList(std::shared_ptr<DmAuthContext>
     profile.SetDeviceIdType((int32_t)DistributedDeviceProfile::DeviceIdType::UDID);
 }
 
+// Merge deviceType into extraInfo json. Returns false when extraInfo is not a
+// valid json object, and the caller keeps the original extraData.
+static bool MergeDeviceTypeToExtraInfo(const std::string &extraInfo, int32_t deviceType, std::string &extraData)
+{
+    JsonObject extObj;
+    bool isExtValid = true;
+    if (!extraInfo.empty()) {
+        isExtValid = extObj.Parse(extraInfo);
+    }
+    if (!isExtValid || extObj.IsDiscarded()) {
+        LOGE("extraInfo is invalid json, keep original extraData.");
+        return false;
+    }
+    extObj[TAG_DEVICE_TYPE_IN_ACL] = deviceType;
+    extraData = extObj.Dump();
+    return true;
+}
+
 void DmAuthMessageProcessor::SetTransmitAccessControlList(std::shared_ptr<DmAuthContext> context,
     DistributedDeviceProfile::Accesser &accesser, DistributedDeviceProfile::Accessee &accessee)
 {
@@ -383,13 +401,9 @@ void DmAuthMessageProcessor::SetTransmitAccessControlList(std::shared_ptr<DmAuth
     accesser.SetAccesserCredentialIdStr(context->accesser.transmitCredentialId);
     accesser.SetAccesserSessionKeyId(context->accesser.transmitSessionKeyId);
     accesser.SetAccesserSKTimeStamp(context->accesser.transmitSkTimeStamp);
-    JsonObject accesserExtObj;
-    if (!context->accesser.extraInfo.empty()) {
-        accesserExtObj.Parse(context->accesser.extraInfo);
-    }
-    if (!accesserExtObj.IsDiscarded()) {
-        accesserExtObj[TAG_DEVICE_TYPE_IN_ACL] = context->accesser.deviceType;
-        accesser.SetAccesserExtraData(accesserExtObj.Dump());
+    std::string accesserExtraData;
+    if (MergeDeviceTypeToExtraInfo(context->accesser.extraInfo, context->accesser.deviceType, accesserExtraData)) {
+        accesser.SetAccesserExtraData(accesserExtraData);
     }
     accessee.SetAccesseeDeviceId(context->accessee.deviceId);
     accessee.SetAccesseeUserId(context->accessee.userId);
@@ -400,13 +414,9 @@ void DmAuthMessageProcessor::SetTransmitAccessControlList(std::shared_ptr<DmAuth
     accessee.SetAccesseeCredentialIdStr(context->accessee.transmitCredentialId);
     accessee.SetAccesseeSessionKeyId(context->accessee.transmitSessionKeyId);
     accessee.SetAccesseeSKTimeStamp(context->accessee.transmitSkTimeStamp);
-    JsonObject accesseeExtObj;
-    if (!context->accessee.extraInfo.empty()) {
-        accesseeExtObj.Parse(context->accessee.extraInfo);
-    }
-    if (!accesseeExtObj.IsDiscarded()) {
-        accesseeExtObj[TAG_DEVICE_TYPE_IN_ACL] = context->accessee.deviceType;
-        accessee.SetAccesseeExtraData(accesseeExtObj.Dump());
+    std::string accesseeExtraData;
+    if (MergeDeviceTypeToExtraInfo(context->accessee.extraInfo, context->accessee.deviceType, accesseeExtraData)) {
+        accessee.SetAccesseeExtraData(accesseeExtraData);
     }
 }
 
@@ -421,16 +431,9 @@ void DmAuthMessageProcessor::SetLnnAccessControlList(std::shared_ptr<DmAuthConte
     accesser.SetAccesserCredentialIdStr(context->accesser.lnnCredentialId);
     accesser.SetAccesserSessionKeyId(context->accesser.lnnSessionKeyId);
     accesser.SetAccesserSKTimeStamp(context->accesser.lnnSkTimeStamp);
-    JsonObject accesserExtObj;
-    bool isAccesserExtValid = true;
-    if (!context->accesser.extraInfo.empty()) {
-        isAccesserExtValid = accesserExtObj.Parse(context->accesser.extraInfo);
-    }
-    if (isAccesserExtValid && !accesserExtObj.IsDiscarded()) {
-        accesserExtObj[TAG_DEVICE_TYPE_IN_ACL] = context->accesser.deviceType;
-        accesser.SetAccesserExtraData(accesserExtObj.Dump());
-    } else {
-        LOGE("accesser extraInfo is invalid json, keep original extraData.");
+    std::string accesserExtraData;
+    if (MergeDeviceTypeToExtraInfo(context->accesser.extraInfo, context->accesser.deviceType, accesserExtraData)) {
+        accesser.SetAccesserExtraData(accesserExtraData);
     }
 
     accessee.SetAccesseeDeviceId(context->accessee.deviceId);
@@ -441,16 +444,9 @@ void DmAuthMessageProcessor::SetLnnAccessControlList(std::shared_ptr<DmAuthConte
     accessee.SetAccesseeCredentialIdStr(context->accessee.lnnCredentialId);
     accessee.SetAccesseeSessionKeyId(context->accessee.lnnSessionKeyId);
     accessee.SetAccesseeSKTimeStamp(context->accessee.lnnSkTimeStamp);
-    JsonObject accesseeExtObj;
-    bool isAccesseeExtValid = true;
-    if (!context->accessee.extraInfo.empty()) {
-        isAccesseeExtValid = accesseeExtObj.Parse(context->accessee.extraInfo);
-    }
-    if (isAccesseeExtValid && !accesseeExtObj.IsDiscarded()) {
-        accesseeExtObj[TAG_DEVICE_TYPE_IN_ACL] = context->accessee.deviceType;
-        accessee.SetAccesseeExtraData(accesseeExtObj.Dump());
-    } else {
-        LOGE("accessee extraInfo is invalid json, keep original extraData.");
+    std::string accesseeExtraData;
+    if (MergeDeviceTypeToExtraInfo(context->accessee.extraInfo, context->accessee.deviceType, accesseeExtraData)) {
+        accessee.SetAccesseeExtraData(accesseeExtraData);
     }
 }
 
@@ -644,11 +640,9 @@ int32_t DmAuthMessageProcessor::PutAccessControlList(std::shared_ptr<DmAuthConte
     }
 }
 
-int32_t DmAuthMessageProcessor::SetProxyAccess(std::shared_ptr<DmAuthContext> context,
-    DmProxyAuthContext &proxyAuthContext, DistributedDeviceProfile::Accesser &accesser,
-    DistributedDeviceProfile::Accessee &accessee)
+static void SetProxyAccesserInfo(std::shared_ptr<DmAuthContext> context, const DmProxyAuthContext &proxyAuthContext,
+    DistributedDeviceProfile::Accesser &accesser)
 {
-    CHECK_NULL_RETURN(context, ERR_DM_POINT_NULL);
     accesser.SetAccesserTokenId(proxyAuthContext.proxyAccesser.tokenId);
     accesser.SetAccesserBundleName(proxyAuthContext.proxyAccesser.bundleName);
     accesser.SetAccesserCredentialIdStr(proxyAuthContext.proxyAccesser.transmitCredentialId);
@@ -668,7 +662,11 @@ int32_t DmAuthMessageProcessor::SetProxyAccess(std::shared_ptr<DmAuthContext> co
     } else {
         LOGE("accesser extraInfo is invalid json, keep original extraData.");
     }
+}
 
+static void SetProxyAccesseeInfo(std::shared_ptr<DmAuthContext> context, const DmProxyAuthContext &proxyAuthContext,
+    DistributedDeviceProfile::Accessee &accessee)
+{
     accessee.SetAccesseeTokenId(proxyAuthContext.proxyAccessee.tokenId);
     accessee.SetAccesseeBundleName(proxyAuthContext.proxyAccessee.bundleName);
     accessee.SetAccesseeCredentialIdStr(proxyAuthContext.proxyAccessee.transmitCredentialId);
@@ -688,6 +686,51 @@ int32_t DmAuthMessageProcessor::SetProxyAccess(std::shared_ptr<DmAuthContext> co
     } else {
         LOGE("accessee extraInfo is invalid json, keep original extraData.");
     }
+}
+
+int32_t DmAuthMessageProcessor::SetProxyAccess(std::shared_ptr<DmAuthContext> context,
+    DmProxyAuthContext &proxyAuthContext, DistributedDeviceProfile::Accesser &accesser,
+    DistributedDeviceProfile::Accessee &accessee)
+{
+    CHECK_NULL_RETURN(context, ERR_DM_POINT_NULL);
+    SetProxyAccesserInfo(context, proxyAuthContext, accesser);
+    SetProxyAccesseeInfo(context, proxyAuthContext, accessee);
+    return DM_OK;
+}
+
+static int32_t PutSingleServiceSubjectAcl(std::shared_ptr<DmAuthContext> context, DmProxyAuthContext &app,
+    DistributedDeviceProfile::AccessControlProfile &profile, DistributedDeviceProfile::Accesser &accesser,
+    DistributedDeviceProfile::Accessee &accessee)
+{
+    bool hasAcl = false;
+    DistributedDeviceProfile::AccessControlProfile matchProfile =
+        GetSubjectAccessControlProfile(context, app, hasAcl);
+    JsonObject extraData;
+    extraData[ACL_IS_LNN_ACL_KEY] = std::string(ACL_IS_LNN_ACL_VAL_FALSE);
+    if (ShouldWriteAclLifeCycleDays(context)) {
+        extraData[ACL_LIFE_CYCLE_DAYS] = context->aclLifeCycleDays;
+    }
+    profile.SetExtraData(extraData.Dump());
+    profile.SetBindLevel(context->direction == DM_AUTH_SOURCE ? app.proxyAccesser.bindLevel :
+        app.proxyAccessee.bindLevel);
+    profile.SetBindType(context->direction == DM_AUTH_SOURCE ? context->accesser.transmitBindType :
+        context->accessee.transmitBindType);
+    SetSubjectAccessExtraData(context, app, hasAcl, matchProfile);
+    if (hasAcl) {
+        LOGE("has acl.");
+        return DM_OK;
+    }
+    accesser.SetAccesserExtraData(app.proxyAccesser.extraInfo);
+    accessee.SetAccesseeExtraData(app.proxyAccessee.extraInfo);
+    profile.SetAccessee(accessee);
+    profile.SetAccesser(accesser);
+    int32_t ret =
+        DistributedDeviceProfile::DistributedDeviceProfileClient::GetInstance().PutAccessControlProfile(profile);
+    if (ret != DM_OK) {
+        LOGE("failed. %{public}d", ret);
+        return ret;
+    }
+    NotifyServiceStateOnline(context, context->accessee.serviceId);
     return DM_OK;
 }
 
@@ -705,37 +748,11 @@ int32_t DmAuthMessageProcessor::PutServiceAccessControlList(std::shared_ptr<DmAu
             LOGI("continue.");
             continue;
         }
-        bool hasAcl = false;
-        DistributedDeviceProfile::AccessControlProfile matchProfile =
-            GetSubjectAccessControlProfile(context, app, hasAcl);
         SetProxyAccess(context, app, accesser, accessee);
-        JsonObject extraData;
-        std::string isLnnAclFalse = std::string(ACL_IS_LNN_ACL_VAL_FALSE);
-        extraData[ACL_IS_LNN_ACL_KEY] = isLnnAclFalse;
-        if (ShouldWriteAclLifeCycleDays(context)) {
-            extraData[ACL_LIFE_CYCLE_DAYS] = context->aclLifeCycleDays;
-        }
-        profile.SetExtraData(extraData.Dump());
-        profile.SetBindLevel(context->direction == DM_AUTH_SOURCE ? app.proxyAccesser.bindLevel :
-            app.proxyAccessee.bindLevel);
-        profile.SetBindType(context->direction == DM_AUTH_SOURCE ? context->accesser.transmitBindType :
-            context->accessee.transmitBindType);
-        SetSubjectAccessExtraData(context, app, hasAcl, matchProfile);
-        if (hasAcl) {
-            LOGE("has acl.");
-            continue;
-        }
-        accesser.SetAccesserExtraData(app.proxyAccesser.extraInfo);
-        accessee.SetAccesseeExtraData(app.proxyAccessee.extraInfo);
-        profile.SetAccessee(accessee);
-        profile.SetAccesser(accesser);
-        int32_t ret =
-            DistributedDeviceProfile::DistributedDeviceProfileClient::GetInstance().PutAccessControlProfile(profile);
+        int32_t ret = PutSingleServiceSubjectAcl(context, app, profile, accesser, accessee);
         if (ret != DM_OK) {
-            LOGE("failed. %{public}d", ret);
             return ret;
         }
-        NotifyServiceStateOnline(context, context->accessee.serviceId);
     }
     return DM_OK;
 }
