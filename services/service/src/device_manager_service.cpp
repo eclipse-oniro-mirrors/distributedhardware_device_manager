@@ -499,13 +499,12 @@ int32_t DeviceManagerService::GetTrustedDeviceList(const std::string &pkgName, c
     }
     ProcessInfo processInfo;
     processInfo.pkgName = pkgName;
-    int32_t displayId = 0;
-    JsonObject jsonObject(extra);
-    if (!jsonObject.IsDiscarded() && IsInt32(jsonObject, "localDisplayId")) {
-        displayId = jsonObject["localDisplayId"].Get<int32_t>();
-        LOGI("localDisplayId: %{public}d", displayId);
+    int32_t userId = MultipleUserConnector::GetCallerUserIdInCar(extra);
+    if (userId < 0) {
+        LOGE("get caller userId failed");
+        return ERR_DM_FAILED;
     }
-    processInfo.userId = MultipleUserConnector::GetUserIdByDisplayId(displayId);
+    processInfo.userId = userId;
     processInfo.accountId = MultipleUserConnector::GetAccountIdByUserId(processInfo.userId);
     LOGI("pkgName: %{public}s, userId: %{public}d, accountId: %{public}s",
         processInfo.pkgName.c_str(), processInfo.userId, GetAnonyString(processInfo.accountId).c_str());

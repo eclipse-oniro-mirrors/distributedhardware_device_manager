@@ -20,6 +20,7 @@
 #include "dm_log.h"
 #include "dm_constants.h"
 #include "account_info.h"
+#include "app_manager.h"
 #include "ipc_skeleton.h"
 #include "ohos_account_kits.h"
 #ifdef OS_ACCOUNT_PART_EXISTS
@@ -631,6 +632,24 @@ DM_EXPORT std::string MultipleUserConnector::GetAccountIdByUserId(int32_t userId
         return "";
     }
     return accountInfo.uid_;
+}
+
+DM_EXPORT int32_t MultipleUserConnector::GetCallerUserIdInCar(const std::string &displayValueStr)
+{
+    int32_t userId = -1;
+    if (AppManager::GetInstance().IsSystemSA() || AppManager::GetInstance().IsSystemApp()) {
+        int32_t displayId = 0;
+        JsonObject jsonObject(displayValueStr);
+        if (!jsonObject.IsDiscarded() && IsInt32(jsonObject, "localDisplayId")) {
+            displayId = jsonObject["localDisplayId"].Get<int32_t>();
+            LOGI("localDisplayId: %{public}d", displayId);
+        }
+        userId = GetUserIdByDisplayId(displayId);
+        LOGI("userId: %{public}d", userId);
+        return userId;
+    }
+    GetCallerUserId(userId);
+    return userId;
 }
 } // namespace DistributedHardware
 } // namespace OHOS
