@@ -63,6 +63,18 @@ constexpr const char* SERVICEINFO_VERSION = "version";
 constexpr const char* SERVICEINFO_EXTRA_DATA = "extraData";
 constexpr const char* SERVICEINFO_DESCRIPTION = "description";
 
+// Json keys defined in dm_auth_message_processor_Refactor_1.cpp and shared by all parts.
+extern const char* TAG_SERVICE_INFOS;
+extern const char* TAG_ACL_TYPE_LIST;
+extern const char* TAG_CERT_TYPE_LIST;
+extern const char* TAG_IS_SUPPORT_ULTRASONIC;
+extern const char* TAG_ACCESSEE_SERVICE_INFO;
+extern const char* TAG_REG_SERVICE_ID;
+extern const char* TAG_PUBLISH_STATE;
+extern const char* TAG_SERVICE_TYPE;
+extern const char* TAG_SERVICE_NAME;
+extern const char* TAG_SERVICE_DISPLAY_NAME;
+
 // ---- Shared helpers ----
 // Wipe sensitive string content before release.
 inline void ClearSensitiveString(std::string &sensitiveData)
@@ -73,86 +85,11 @@ inline void ClearSensitiveString(std::string &sensitiveData)
     }
 }
 
-inline bool ParseDmAccessToSync(const std::string &jsonString, DmAccess &access, bool isUseDeviceFullName)
-{
-    JsonObject accessjson(jsonString);
-    if (accessjson.IsDiscarded()) {
-        LOGE("ParseDmAccessToSync jsonStr error");
-        return false;
-    }
-    DmAccessToSync srcAccessToSync = accessjson.Get<DmAccessToSync>();
-    access.deviceName = (isUseDeviceFullName ? srcAccessToSync.deviceNameFull : srcAccessToSync.deviceName);
-    access.deviceId = srcAccessToSync.deviceId;
-    access.userId = srcAccessToSync.userId;
-    access.accountId = srcAccessToSync.accountId;
-    access.tokenId = static_cast<int64_t>(srcAccessToSync.tokenId);
-    access.bundleName = srcAccessToSync.bundleName;
-    access.pkgName = srcAccessToSync.pkgName;
-    access.bindLevel = srcAccessToSync.bindLevel;
-    access.sessionKeyId = srcAccessToSync.sessionKeyId;
-    access.skTimeStamp = srcAccessToSync.skTimeStamp;
-    return true;
-}
-
-inline void SaveToDmAccessSync(DmAccessToSync &accessToSync, const std::shared_ptr<DmAuthContext> context,
-    const DmAccess &accessSide)
-{
-    accessToSync.deviceName = accessSide.deviceName;
-    accessToSync.deviceNameFull = context->softbusConnector->GetLocalDeviceName();
-    accessToSync.deviceId = accessSide.deviceId;
-    accessToSync.userId = accessSide.userId;
-    accessToSync.accountId = accessSide.accountId;
-    accessToSync.tokenId = accessSide.tokenId;
-    accessToSync.bundleName = accessSide.bundleName;
-    accessToSync.pkgName = accessSide.pkgName;
-    accessToSync.bindLevel = accessSide.bindLevel;
-}
-
-inline int32_t ParseInfoToDmAccess(const JsonObject &jsonObject, DmAccess &access)
-{
-    // transmit session key is mandatory
-    if (!IsString(jsonObject, TAG_TRANSMIT_SK_ID)) {
-        LOGE("ParseSyncMessage TAG_TRANSMIT_SK_ID error");
-        return ERR_DM_FAILED;
-    }
-    access.transmitSessionKeyId = std::atoi(jsonObject[TAG_TRANSMIT_SK_ID].Get<std::string>().c_str());
-
-    if (!IsInt64(jsonObject, TAG_TRANSMIT_SK_TIMESTAMP)) {
-        LOGE("ParseSyncMessage TAG_TRANSMIT_SK_TIMESTAMP error");
-        return ERR_DM_FAILED;
-    }
-    access.transmitSkTimeStamp = jsonObject[TAG_TRANSMIT_SK_TIMESTAMP].Get<int64_t>();
-
-    if (!IsString(jsonObject, TAG_TRANSMIT_CREDENTIAL_ID)) {
-        LOGE("ParseSyncMessage TAG_TRANSMIT_CREDENTIAL_ID error");
-        return ERR_DM_FAILED;
-    }
-    access.transmitCredentialId = jsonObject[TAG_TRANSMIT_CREDENTIAL_ID].Get<std::string>().c_str();
-
-    if (!IsString(jsonObject, TAG_DMVERSION)) {
-        LOGE("ParseSyncMessage TAG_DMVERSION error");
-        return ERR_DM_FAILED;
-    }
-    access.dmVersion = jsonObject[TAG_DMVERSION].Get<std::string>();
-
-    if (IsInt64(jsonObject, TAG_PROXY_SERVICE_ID)) {
-        access.serviceId = jsonObject[TAG_PROXY_SERVICE_ID].Get<int64_t>();
-    }
-
-    // lnn session key is optional
-    if (IsString(jsonObject, TAG_LNN_SK_ID)) {
-        access.lnnSessionKeyId = std::atoi(jsonObject[TAG_LNN_SK_ID].Get<std::string>().c_str());
-    }
-    if (IsInt64(jsonObject, TAG_LNN_SK_TIMESTAMP)) {
-        access.lnnSkTimeStamp = jsonObject[TAG_LNN_SK_TIMESTAMP].Get<int64_t>();
-    }
-
-    if (IsString(jsonObject, TAG_LNN_CREDENTIAL_ID)) {
-        access.lnnCredentialId = jsonObject[TAG_LNN_CREDENTIAL_ID].Get<std::string>().c_str();
-    }
-
-    return DM_OK;
-}
+// Shared helper functions declared here and defined in dm_auth_message_processor_Refactor_1.cpp.
+bool ParseDmAccessToSync(const std::string &jsonString, DmAccess &access, bool isUseDeviceFullName);
+void SaveToDmAccessSync(DmAccessToSync &accessToSync, const std::shared_ptr<DmAuthContext> context,
+    const DmAccess &accessSide);
+int32_t ParseInfoToDmAccess(const JsonObject &jsonObject, DmAccess &access);
 
 inline bool IsMessageValid(const JsonItemObject &jsonObject)
 {
@@ -167,34 +104,7 @@ inline bool IsMessageValid(const JsonItemObject &jsonObject)
     return true;
 }
 
-inline bool GetPinMatchFlag(const std::string &pkgName, DmAuthType authType)
-{
-    DistributedDeviceProfile::LocalServiceInfo srvInfo;
-    int32_t dpRet = DeviceProfileConnector::GetInstance().GetLocalServiceInfoByBundleNameAndPinExchangeType(
-        pkgName, static_cast<int32_t>(authType), srvInfo);
-    if (dpRet != DM_OK) {
-        LOGE("GetLocalServiceInfoByBundleNameAndPinExchangeType failed, pkgName=%{public}s, ret=%{public}d",
-            pkgName.c_str(), dpRet);
-        return false;
-    }
-    std::string extra = srvInfo.GetExtraInfo();
-    if (extra.empty()) {
-        LOGE("extra.empty()");
-        return false;
-    }
-    JsonObject extraObj;
-    extraObj.Parse(extra);
-    if (extraObj.IsDiscarded()) {
-        LOGE("extraObj.IsDiscarded()");
-        return false;
-    }
-    bool flag = false;
-    if (IsBool(extraObj, PIN_MATCH_FLAG)) {
-        flag = extraObj[PIN_MATCH_FLAG].Get<bool>();
-        return flag;
-    }
-    return false;
-}
+bool GetPinMatchFlag(const std::string &pkgName, DmAuthType authType);
 
 inline std::vector<DmAuthType> stringToVectorAuthType(const std::string &str)
 {
