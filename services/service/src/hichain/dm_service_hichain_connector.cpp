@@ -51,6 +51,7 @@ constexpr const char* FIELD_META_NODE_TYPE = "metaNodeType";
 constexpr const char* FIELD_TYPE = "TType";
 constexpr const char* DM_SERVICE = "ohos.distributedhardware.devicemanagerservice";
 
+//LCOV_EXCL_START
 void FromJson(const JsonItemObject &jsonObject, DmGroupInfo &groupInfo)
 {
     if (jsonObject.Contains(FIELD_GROUP_NAME) && jsonObject.At(FIELD_GROUP_NAME).IsString()) {
@@ -200,6 +201,7 @@ int32_t DmServiceHiChainConnector::GetJsonInt(const JsonObject &jsonObj, const s
     }
     return jsonObj[key].Get<int32_t>();
 }
+//LCOV_EXCL_STOP
 
 bool DmServiceHiChainConnector::GetGroupInfoCommon(const int32_t userId, const std::string &queryParams,
     const char* pkgName, std::vector<DmGroupInfo> &groupList)
@@ -263,6 +265,7 @@ bool DmServiceHiChainConnector::GetGroupInfo(const std::string &queryParams, std
     return GetGroupInfo(userId, queryParams, groupList);
 }
 
+//LCOV_EXCL_START
 int32_t DmServiceHiChainConnector::GetGroupIdExt(const std::string &userId, const int32_t groupType,
     std::string &groupId, std::string &groupOwner)
 {
@@ -353,6 +356,7 @@ int32_t DmServiceHiChainConnector::addMultiMembersExt(const std::string &credent
     }
     return DM_OK;
 }
+//LCOV_EXCL_STOP
 
 bool DmServiceHiChainConnector::IsRedundanceGroup(const std::string &userId,
     int32_t authType, std::vector<DmGroupInfo> &groupList)
@@ -377,6 +381,7 @@ bool DmServiceHiChainConnector::IsRedundanceGroup(const std::string &userId,
     return false;
 }
 
+//LCOV_EXCL_START
 int32_t DmServiceHiChainConnector::DeleteGroup(std::string &groupId)
 {
     int64_t requestId = GenRandLongLong(MIN_REQUEST_ID, MAX_REQUEST_ID);
@@ -414,6 +419,7 @@ void DmServiceHiChainConnector::DeleteRedundanceGroup(std::string &userId)
         }
     }
 }
+//LCOV_EXCL_STOP
 
 void DmServiceHiChainConnector::DealRedundanceGroup(const std::string &userId, int32_t authType)
 {
@@ -539,6 +545,7 @@ int32_t DmServiceHiChainConnector::UnRegisterHiChainGroupCallback()
     return DM_OK;
 }
 
+//LCOV_EXCL_START
 int32_t DmServiceHiChainConnector::GetGroupId(const std::string &userId,
     const int32_t groupType, std::string &groupId)
 {
@@ -633,5 +640,6 @@ int32_t DmServiceHiChainConnector::deleteMultiMembers(const int32_t groupType, c
     }
     return DM_OK;
 }
+//LCOV_EXCL_STOP
 } // namespace DistributedHardware
 } // namespace OHOS

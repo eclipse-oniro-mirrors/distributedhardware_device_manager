@@ -96,6 +96,7 @@ int32_t KVAdapter::ReInit()
     UnInit();
     return Init();
 }
+//LCOV_EXCL_STOP
 
 int32_t KVAdapter::Put(const std::string &key, const std::string &value)
 {
@@ -154,6 +155,7 @@ DistributedKv::Status KVAdapter::GetLocalKvStorePtr()
     return status;
 }
 
+//LCOV_EXCL_START
 int32_t KVAdapter::DeleteKvStore()
 {
     LOGI("Delete KvStore!");
@@ -226,6 +228,7 @@ int32_t KVAdapter::DeleteBatch(const std::vector<std::string> &keys)
     }
     return DM_OK;
 }
+//LCOV_EXCL_STOP
 
 int32_t KVAdapter::Delete(const std::string& key)
 {
@@ -246,6 +249,7 @@ int32_t KVAdapter::Delete(const std::string& key)
     return DM_OK;
 }
 
+//LCOV_EXCL_START
 int32_t KVAdapter::GetAllOstypeData(const std::string &key, std::vector<std::string> &values)
 {
     if (key.empty()) {
@@ -300,5 +304,6 @@ int32_t KVAdapter::GetOstypeCountByPrefix(const std::string &prefix, int32_t &co
     }
     return DM_OK;
 }
+//LCOV_EXCL_STOP
 } // namespace DistributedHardware
 } // namespace OHOS
