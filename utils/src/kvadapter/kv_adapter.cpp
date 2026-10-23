@@ -79,6 +79,7 @@ int32_t KVAdapter::Init()
     return DM_OK;
 }
 
+//LCOV_EXCL_START
 void KVAdapter::UnInit()
 {
     LOGI("KVAdapter UnInit");
