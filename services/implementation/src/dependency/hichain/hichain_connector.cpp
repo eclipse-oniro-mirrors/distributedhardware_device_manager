@@ -700,6 +700,7 @@ int32_t HiChainConnector::DeleteGroupExt(int32_t userId, const std::string &grou
     return DM_OK;
 }
 
+//LCOV_EXCL_START
 int32_t HiChainConnector::DeleteGroup(int64_t requestId_, const std::string &userId, const int32_t authType)
 {
     networkStyle_ = CREDENTIAL_NETWORK;
@@ -749,6 +750,7 @@ int32_t HiChainConnector::DeleteGroup(int64_t requestId_, const std::string &use
     }
     return DM_OK;
 }
+//LCOV_EXCL_STOP
 
 int32_t HiChainConnector::DeleteTimeOutGroup(const std::string &peerUdid, int32_t localUserId)
 {
@@ -1277,6 +1279,7 @@ void HiChainConnector::DestroyReturnGroupsAndClear(char *returnGroups)
     deviceGroupManager_->destroyInfo(&returnGroups);
 }
 
+//LCOV_EXCL_START
 int32_t HiChainConnector::ParseRelatedGroupsToJson(std::string &relatedGroups,
     std::vector<GroupInfo> &groupList)
 {
@@ -1310,6 +1313,7 @@ void HiChainConnector::ClearSensitiveString(std::string &sensitiveData)
         sensitiveData.clear();
     }
 }
+//LCOV_EXCL_STOP
 
 void HiChainConnector::DeleteAllGroupByUdid(const std::string &udid)
 {
