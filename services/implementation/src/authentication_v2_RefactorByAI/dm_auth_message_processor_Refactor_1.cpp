@@ -13,9 +13,11 @@
  * limitations under the License.
  */
 
-#include "dm_auth_message_processor_Refactor.h"
+#include "dm_auth_message_processor.h"
 
 #include <algorithm>
+
+#include "securec.h"
 
 #include "access_control_profile.h"
 #include "distributed_device_profile_client.h"
@@ -35,86 +37,15 @@
 namespace OHOS {
 namespace DistributedHardware {
 
-const char* TAG_LNN_PUBLIC_KEY = "lnnPublicKey";
-const char* TAG_TRANSMIT_PUBLIC_KEY = "transmitPublicKey";
-const char* TAG_LNN_CREDENTIAL_ID = "lnnCredentialId";
-const char* TAG_TRANSMIT_CREDENTIAL_ID = "transmitCredentialId";
-const char* TAG_CONFIRM_OPERATION_V2 = "confirmOperation";
-const char* TAG_AUTH_TYPE_LIST = "authTypeList";
-const char* TAG_CURRENT_AUTH_TYPE_IDX = "currentAuthTypeIdx";
+constexpr uint32_t MAX_SESSION_KEY_LENGTH = 512;
 
-// IS interface input parameter json format string key
-const char* TAG_METHOD = "method";
-const char* TAG_PEER_USER_SPACE_ID = "peerUserSpaceId";
-const char* TAG_SUBJECT = "subject";
-const char* TAG_CRED_TYPE = "credType";
-const char* TAG_KEY_FORMAT = "keyFormat";
-const char* TAG_ALGORITHM_TYPE = "algorithmType";
-const char* TAG_PROOF_TYPE = "proofType";
-const char* TAG_KEY_VALUE = "keyValue";
-const char* TAG_AUTHORIZED_SCOPE = "authorizedScope";
-const char* TAG_AUTHORIZED_APP_LIST = "authorizedAppList";
-const char* TAG_CREDENTIAL_OWNER = "credOwner";
-const char* TAG_SYNC = "syncMessage";
-const char* TAG_ACCESS = "dmAccess";
-const char* TAG_PROXY = "proxy";
-const char* TAG_PROXY_SERVICE_ID = "proxyServiceId";
-const char* TAG_SRC_SUBJECT_PKGNAME = "srcSubjectPkgname";
-const char* TAG_SUBJECT_SERVICEID = "subjectServiceId";
-const char* TAG_ACL = "accessControlTable";
-const char* TAG_ACCESSER = "dmAccesser";
-const char* TAG_ACCESSEE = "dmAccessee";
-const char* TAG_SERVICEINFO = "serviceInfo";
-const char* TAG_USER_CONFIRM_OPT = "userConfirmOpt";
-// The local SK information is synchronized to the remote end to construct acl-accesser/accessee.
-const char* TAG_TRANSMIT_SK_ID = "accessAppSKId";
-const char* TAG_LNN_SK_ID = "accessUserSKId";
-const char* TAG_TRANSMIT_SK_TIMESTAMP = "accessAppSKTimeStamp";
-const char* TAG_LNN_SK_TIMESTAMP = "accessUserSKTimeStamp";
-const char* TAG_USER_ID = "userId";
-const char* TAG_TOKEN_ID = "tokenId";
-const char* TAG_NETWORKID_ID = "networkId";
-const char* TAG_ISSUER = "issuer";
+// Json keys used by this file only and not declared in any public header.
+constexpr const char* TAG_DEVICE_TYPE_IN_ACL = "deviceType";
+constexpr const char* TAG_PKG_NAME = "pkgName";
+constexpr const char* TAG_PROXY_SERVICE_ID = "proxyServiceId";
 
-const char* TAG_DEVICE_VERSION = "deviceVersion";
-const char* TAG_DEVICE_NAME = "deviceName";
-const char* TAG_DEVICE_ID_HASH = "deviceIdHash";
-const char* TAG_ACCOUNT_ID_HASH = "accountIdHash";
-const char* TAG_ACCOUNT_ID = "accountId";
-const char* TAG_TOKEN_ID_HASH = "tokenIdHash";
-const char* TAG_PKG_NAME = "pkgName";
-const char* TAG_ACL_CHECKSUM = "aclCheckSum";
-const char* TAG_COMPRESS_ORI_LEN = "compressOriLen";
-const char* TAG_COMPRESS = "compressMsg";
-const char* TAG_STATE = "state";
-const char* TAG_REASON = "reason";
-const char* TAG_PEER_USER_ID = "peerUserId";
-const char* TAG_PEER_DISPLAY_ID = "peerDisplayId";
-const char* TAG_DEVICE_TYPE_IN_ACL = "deviceType";
-const char* TAG_LOCAL_DISPLAY_ID = "localDisplayId";
-const char* TAG_EXTRA_INFO = "extraInfo";
-const char* TAG_ACL_TYPE_LIST = "aclTypeList";
-const char* TAG_CERT_TYPE_LIST = "certTypeList";
-const char* TAG_SERVICE_CODE = "serviceCode";
-
-const char* TAG_IS_ONLINE = "isOnline";
-const char* TAG_IS_AUTHED = "isAuthed";
-const char* TAG_CREDENTIAL_INFO = "credentialInfo";
-const char* TAG_CERT_INFO = "certInfo";
-const char* TAG_LANGUAGE = "language";
-const char* TAG_ULTRASONIC_SIDE = "ultrasonicSide";
-const char* TAG_REMAINING_FROZEN_TIME = "remainingFrozenTime";
-const char* TAG_IS_SUPPORT_ULTRASONIC = "isSupportUltrasonic";
-const char* TAG_ACCESSEE_SERVICE_INFO = "accesseeServiceInfo";
-const char* TAG_REG_SERVICE_ID = "regServiceId";
-const char* TAG_PUBLISH_STATE = "publishState";
-const char* TAG_SERVICE_TYPE = "serviceType";
-const char* TAG_SERVICE_NAME = "serviceName";
-const char* TAG_SERVICE_DISPLAY_NAME = "serviceDisplayName";
-
-const char* TAG_SERVICE_INFOS = "serviceInfos";
-
-// Shared helper functions declared in dm_auth_message_processor_Refactor.h.
+// Shared helper functions also used by dm_auth_message_processor_Refactor_2.cpp
+// through local forward declarations.
 bool ParseDmAccessToSync(const std::string &jsonString, DmAccess &access, bool isUseDeviceFullName)
 {
     JsonObject accessjson(jsonString);
@@ -136,18 +67,26 @@ bool ParseDmAccessToSync(const std::string &jsonString, DmAccess &access, bool i
     return true;
 }
 
-void SaveToDmAccessSync(DmAccessToSync &accessToSync, const std::shared_ptr<DmAuthContext> context,
-    const DmAccess &accessSide)
+bool IsMessageValid(const JsonItemObject &jsonObject)
 {
-    accessToSync.deviceName = accessSide.deviceName;
-    accessToSync.deviceNameFull = context->softbusConnector->GetLocalDeviceName();
-    accessToSync.deviceId = accessSide.deviceId;
-    accessToSync.userId = accessSide.userId;
-    accessToSync.accountId = accessSide.accountId;
-    accessToSync.tokenId = accessSide.tokenId;
-    accessToSync.bundleName = accessSide.bundleName;
-    accessToSync.pkgName = accessSide.pkgName;
-    accessToSync.bindLevel = accessSide.bindLevel;
+    if (jsonObject.IsDiscarded()) {
+        LOGE("decodeRequestAuth jsonStr error");
+        return false;
+    }
+    if (!jsonObject[TAG_MSG_TYPE].IsNumberInteger()) {
+        LOGE("message type error.");
+        return false;
+    }
+    return true;
+}
+
+// Wipe sensitive string content before release.
+static void ClearSensitiveString(std::string &sensitiveData)
+{
+    if (!sensitiveData.empty()) {
+        (void)memset_s(const_cast<char *>(sensitiveData.data()), sensitiveData.size(), 0, sensitiveData.size());
+        sensitiveData.clear();
+    }
 }
 
 int32_t ParseInfoToDmAccess(const JsonObject &jsonObject, DmAccess &access)
@@ -194,35 +133,6 @@ int32_t ParseInfoToDmAccess(const JsonObject &jsonObject, DmAccess &access)
     }
 
     return DM_OK;
-}
-
-bool GetPinMatchFlag(const std::string &pkgName, DmAuthType authType)
-{
-    DistributedDeviceProfile::LocalServiceInfo srvInfo;
-    int32_t dpRet = DeviceProfileConnector::GetInstance().GetLocalServiceInfoByBundleNameAndPinExchangeType(
-        pkgName, static_cast<int32_t>(authType), srvInfo);
-    if (dpRet != DM_OK) {
-        LOGE("GetLocalServiceInfoByBundleNameAndPinExchangeType failed, pkgName=%{public}s, ret=%{public}d",
-            pkgName.c_str(), dpRet);
-        return false;
-    }
-    std::string extra = srvInfo.GetExtraInfo();
-    if (extra.empty()) {
-        LOGE("extra.empty()");
-        return false;
-    }
-    JsonObject extraObj;
-    extraObj.Parse(extra);
-    if (extraObj.IsDiscarded()) {
-        LOGE("extraObj.IsDiscarded()");
-        return false;
-    }
-    bool flag = false;
-    if (IsBool(extraObj, PIN_MATCH_FLAG)) {
-        flag = extraObj[PIN_MATCH_FLAG].Get<bool>();
-        return flag;
-    }
-    return false;
 }
 
 // Wipe and release the session key heap buffer.
@@ -977,6 +887,46 @@ DmAuthMessageProcessor::~DmAuthMessageProcessor()
         cryptoMgr_->ClearSessionKey();
         cryptoMgr_ = nullptr;
     }
+}
+
+int32_t DmAuthMessageProcessor::ParseMessageNegotiateTransmit(const JsonObject &jsonObject,
+    std::shared_ptr<DmAuthContext> context)
+{
+    if (jsonObject.IsDiscarded() || !jsonObject.Contains(TAG_DATA) || !jsonObject[TAG_DATA].IsString()) {
+        LOGE("Unlegal json string failed");
+        return ERR_DM_FAILED;
+    }
+
+    context->transmitData = jsonObject[TAG_DATA].Get<std::string>();
+
+    switch (context->msgType) {
+        case MSG_TYPE_REQ_CREDENTIAL_AUTH_NEGOTIATE:           // 161
+            context->authStateMachine->TransitionTo(std::make_shared<AuthSinkCredentialAuthNegotiateState>());
+            break;
+        case MSG_TYPE_RESP_CREDENTIAL_AUTH_START:              // 170
+            context->authStateMachine->TransitionTo(std::make_shared<AuthSrcCredentialAuthNegotiateState>());
+            break;
+        case MSG_TYPE_RESP_CREDENTIAL_AUTH_NEGOTIATE:          // 171
+            context->authStateMachine->TransitionTo(std::make_shared<AuthSrcCredentialAuthDoneState>());
+            break;
+        default:
+            return ERR_DM_FAILED;
+    }
+
+    return DM_OK;
+}
+
+int32_t DmAuthMessageProcessor::ParseMessageRespPinAuthNegotiate(const JsonObject &jsonObject,
+    std::shared_ptr<DmAuthContext> context)
+{
+    if (jsonObject.IsDiscarded() || !jsonObject[TAG_DATA].IsString()) {
+        LOGE("decodeRequestAuth jsonStr error");
+        return ERR_DM_FAILED;
+    }
+
+    context->transmitData = jsonObject[TAG_DATA].Get<std::string>();
+    context->authStateMachine->TransitionTo(std::make_shared<AuthSrcPinAuthDoneState>());
+    return DM_OK;
 }
 
 } // namespace DistributedHardware
