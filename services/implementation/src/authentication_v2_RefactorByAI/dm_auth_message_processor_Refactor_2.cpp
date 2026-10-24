@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "dm_auth_message_processor_Refactor.h"
+#include "dm_auth_message_processor.h"
 
 #include "access_control_profile.h"
 #include "distributed_device_profile_client.h"
@@ -30,6 +30,41 @@
 
 namespace OHOS {
 namespace DistributedHardware {
+
+// Json keys used by this file only and not declared in any public header.
+constexpr const char* TAG_DEVICE_TYPE = "DEVICETYPE";
+constexpr const char* TAG_NCM_BIND_TARGET = "ncm_bind_target";
+constexpr const char* TAG_ACL_TYPE_LIST = "aclTypeList";
+constexpr const char* TAG_CERT_TYPE_LIST = "certTypeList";
+constexpr const char* TAG_REMAINING_FROZEN_TIME = "remainingFrozenTime";
+constexpr const char* TAG_SERVICE_INFOS = "serviceInfos";
+constexpr const char* TAG_PKG_NAME = "pkgName";
+constexpr const char* TAG_SRC_SUBJECT_PKGNAME = "srcSubjectPkgname";
+constexpr const char* TAG_SUBJECT_SERVICEID = "subjectServiceId";
+constexpr const char* SERVICEINFO_USER_ID = "userId";
+constexpr const char* SERVICEINFO_SERVICE_ID = "serviceId";
+constexpr const char* SERVICEINFO_DISPLAY_ID = "displayId";
+constexpr const char* SERVICEINFO_PUBLISH_STATE = "publishState";
+constexpr const char* SERVICEINFO_DEVICE_ID = "deviceId";
+constexpr const char* SERVICEINFO_NETWORK_ID = "networkId";
+constexpr const char* SERVICEINFO_SERVICE_OWNER_TOKEN_ID = "serviceOwnerTokenId";
+constexpr const char* SERVICEINFO_SERVICE_OWNER_PKG_NAME = "serviceOwnerPkgName";
+constexpr const char* SERVICEINFO_SERVICE_REGISTER_TOKEN_ID = "serviceRegisterTokenId";
+constexpr const char* SERVICEINFO_SERVICE_TYPE = "serviceType";
+constexpr const char* SERVICEINFO_SERVICE_NAME = "serviceName";
+constexpr const char* SERVICEINFO_SERVICE_DISPLAY_NAME = "serviceDisplayName";
+constexpr const char* SERVICEINFO_SERVICE_CODE = "serviceCode";
+constexpr const char* SERVICEINFO_CUSTOM_DATA = "customData";
+constexpr const char* SERVICEINFO_DATA_LEN = "dataLen";
+constexpr const char* SERVICEINFO_TIME_STAMP = "timeStamp";
+constexpr const char* SERVICEINFO_VERSION = "version";
+constexpr const char* SERVICEINFO_EXTRA_DATA = "extraData";
+constexpr const char* SERVICEINFO_DESCRIPTION = "description";
+
+// Shared helper functions defined in dm_auth_message_processor_Refactor_1.cpp.
+bool ParseDmAccessToSync(const std::string &jsonString, DmAccess &access, bool isUseDeviceFullName);
+int32_t ParseInfoToDmAccess(const JsonObject &jsonObject, DmAccess &access);
+bool IsMessageValid(const JsonItemObject &jsonObject);
 
 namespace {
 void ParseSinkUserConfirmOpt(std::shared_ptr<DmAuthContext> &context, const JsonObject &jsonObject)
@@ -150,46 +185,6 @@ void DmAuthMessageProcessor::DmAuthUltrasonicMessageProcessor()
         &DmAuthMessageProcessor::ParseMessageForwardUltrasonicNegotiate;
     LOGI("leave.");
     return;
-}
-
-int32_t DmAuthMessageProcessor::ParseMessageNegotiateTransmit(const JsonObject &jsonObject,
-    std::shared_ptr<DmAuthContext> context)
-{
-    if (jsonObject.IsDiscarded() || !jsonObject.Contains(TAG_DATA) || !jsonObject[TAG_DATA].IsString()) {
-        LOGE("Unlegal json string failed");
-        return ERR_DM_FAILED;
-    }
-
-    context->transmitData = jsonObject[TAG_DATA].Get<std::string>();
-
-    switch (context->msgType) {
-        case MSG_TYPE_REQ_CREDENTIAL_AUTH_NEGOTIATE:           // 161
-            context->authStateMachine->TransitionTo(std::make_shared<AuthSinkCredentialAuthNegotiateState>());
-            break;
-        case MSG_TYPE_RESP_CREDENTIAL_AUTH_START:              // 170
-            context->authStateMachine->TransitionTo(std::make_shared<AuthSrcCredentialAuthNegotiateState>());
-            break;
-        case MSG_TYPE_RESP_CREDENTIAL_AUTH_NEGOTIATE:          // 171
-            context->authStateMachine->TransitionTo(std::make_shared<AuthSrcCredentialAuthDoneState>());
-            break;
-        default:
-            return ERR_DM_FAILED;
-    }
-
-    return DM_OK;
-}
-
-int32_t DmAuthMessageProcessor::ParseMessageRespPinAuthNegotiate(const JsonObject &jsonObject,
-    std::shared_ptr<DmAuthContext> context)
-{
-    if (jsonObject.IsDiscarded() || !jsonObject[TAG_DATA].IsString()) {
-        LOGE("decodeRequestAuth jsonStr error");
-        return ERR_DM_FAILED;
-    }
-
-    context->transmitData = jsonObject[TAG_DATA].Get<std::string>();
-    context->authStateMachine->TransitionTo(std::make_shared<AuthSrcPinAuthDoneState>());
-    return DM_OK;
 }
 
 int32_t DmAuthMessageProcessor::ParseMessageReqCredExchange(const JsonObject &jsonObject,
