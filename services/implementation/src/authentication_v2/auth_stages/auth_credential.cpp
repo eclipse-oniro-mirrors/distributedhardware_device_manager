@@ -46,6 +46,7 @@ constexpr const char* DELETE_CREDENTIAL_TASK = "DeleteCredentialTask";
 constexpr const char* HEAD_LESS_ACCOUNT_UID = "headlessAccountUid";
 constexpr const char* OHOS_ANONYMOUS_UID = "ohosAnonymousUid";
 const int32_t GENERATE_CERT_TIMEOUT = 300; // 300ms
+constexpr size_t ACCOUNT_ID_TRUNCATE_LEN = 16;
 
 // decrypt process
 int32_t g_authCredentialTransmitDecryptProcess(std::shared_ptr<DmAuthContext> context, DmEventType event)
@@ -451,6 +452,9 @@ std::string AuthCredentialAgreeState::GetLowerUserId(DmAuthCredentialAddMethod m
         return OHOS_ANONYMOUS_UID;
     }
     std::string accountId = remoteAccess.accountId;
+    if (accountId.length() > ACCOUNT_ID_TRUNCATE_LEN) {
+        accountId = accountId.substr(0, ACCOUNT_ID_TRUNCATE_LEN);
+    }
     std::transform(accountId.begin(), accountId.end(), accountId.begin(), ::tolower);
     return accountId;
 }
