@@ -771,10 +771,6 @@ std::unordered_map<std::string, DmAuthForm> DeviceProfileConnector::GetAuthFormM
             continue;
         }
         if (deviceIdMap.find(trustDeviceId) == deviceIdMap.end()) {
-            if (CheckSinkShareType(item, userId, deviceId, trustDeviceId, bindType)) {
-                LOGI("CheckSinkShareType true.");
-                continue;
-            }
             deviceIdMap[trustDeviceId] = static_cast<DmAuthForm>(bindType);
             continue;
         }
@@ -787,9 +783,6 @@ std::unordered_map<std::string, DmAuthForm> DeviceProfileConnector::GetAuthFormM
             deviceIdMap[trustDeviceId] = DmAuthForm::IDENTICAL_ACCOUNT;
             continue;
         } else if (highestBindType == SHARE_TYPE) {
-            if (CheckSinkShareType(item, userId, deviceId, trustDeviceId, DmAuthForm::SHARE)) {
-                continue;
-            }
             deviceIdMap[trustDeviceId] = DmAuthForm::SHARE;
             continue;
         } else if (highestBindType == DEVICE_PEER_TO_PEER_TYPE || highestBindType == APP_PEER_TO_PEER_TYPE ||
@@ -5056,10 +5049,6 @@ std::unordered_map<PeerDevInfo, DmAuthForm, PeerDevInfoHash> DeviceProfileConnec
             peerDevInfo.userId = item.GetAccessee().GetAccesseeUserId();
         }
         if (deviceIdMap.find(peerDevInfo) == deviceIdMap.end()) {
-            if (CheckSinkShareType(item, userId, deviceId, trustDeviceId, bindType)) {
-                LOGI("CheckSinkShareType true.");
-                continue;
-            }
             deviceIdMap[peerDevInfo] = static_cast<DmAuthForm>(bindType);
             continue;
         }
@@ -5082,10 +5071,6 @@ void DeviceProfileConnector::UpdateAuthFormMapByBindType(
     if (highestBindType == IDENTICAL_ACCOUNT_TYPE) {
         deviceIdMap[peerDevInfo] = DmAuthForm::IDENTICAL_ACCOUNT;
     } else if (highestBindType == SHARE_TYPE) {
-        if (CheckSinkShareType(profile, localDevInfo.userId, localDevInfo.deviceId, peerDevInfo.deviceId,
-            DmAuthForm::SHARE)) {
-            return;
-        }
         deviceIdMap[peerDevInfo] = DmAuthForm::SHARE;
     } else if (highestBindType == DEVICE_PEER_TO_PEER_TYPE || highestBindType == APP_PEER_TO_PEER_TYPE ||
         highestBindType == SERVICE_PEER_TO_PEER_TYPE) {

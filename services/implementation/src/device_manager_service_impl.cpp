@@ -883,10 +883,6 @@ void DeviceManagerServiceImpl::SetOnlineProcessInfo(const uint32_t &bindType, Pr
         processInfoVec.assign(processInfoSet.begin(), processInfoSet.end());
         devInfo.authForm = DmAuthForm::ACROSS_ACCOUNT;
     } else if (bindType == SHARE_TYPE) {
-        if (CheckSharePeerSrc(trustDeviceId, requestDeviceId)) {
-            LOGI("ProcessDeviceStateChange authForm is share, peer is src.");
-            return;
-        }
         devInfo.authForm = DmAuthForm::SHARE;
         processInfoVec.push_back(processInfo);
     }
