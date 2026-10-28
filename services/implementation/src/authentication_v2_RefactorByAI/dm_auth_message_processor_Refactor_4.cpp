@@ -141,7 +141,8 @@ static bool IsTokenInProxyJson(const JsonObject &proxyObj, int64_t tokenId)
 }
 
 // Fill the acl checksum of the sync message, return ERR_DM_FAILED when query fails.
-static int32_t FillAclCheckSum(std::shared_ptr<DmAuthContext> &context, JsonObject &syncMsgJson)
+// Named with the g_ prefix to satisfy the G.NAM.03 naming rule for file-scope symbols.
+static int32_t g_fillAclCheckSum(std::shared_ptr<DmAuthContext> &context, JsonObject &syncMsgJson)
 {
     char localDeviceId[DEVICE_UUID_LENGTH] = {0};
     GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
@@ -533,7 +534,7 @@ int32_t DmAuthMessageProcessor::SetSyncMsgJson(std::shared_ptr<DmAuthContext> &c
     syncMsgJson[TAG_ACCESS] = accessJsonObj.Dump();
     syncMsgJson[TAG_PROXY] = ""; // Reserved field, leave blank
     syncMsgJson[TAG_PROXY_SERVICE_ID] = context->accessee.serviceId;
-    if (FillAclCheckSum(context, syncMsgJson) != DM_OK) {
+    if (g_fillAclCheckSum(context, syncMsgJson) != DM_OK) {
         return ERR_DM_FAILED;
     }
     if (context->direction == DmAuthDirection::DM_AUTH_SINK) {
