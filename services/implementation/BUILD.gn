@@ -37,6 +37,7 @@ if (defined(ohos_lite) || !support_jsapi) {
       "include/dependency/hichain",
       "include/dependency/softbus",
       "include/dependency/MSDP",
+      "include/dependency/ivi",
       "include/i18n",
       "${common_path}/include",
       "${common_path}/include/dfx",
@@ -187,6 +188,11 @@ if (defined(ohos_lite) || !support_jsapi) {
       }
       if (car_device_enable) {
         defines += [ "CAR_DEVICE_ENABLE" ]
+      }
+      if (car_device_enable && device_manager_enable_vehicle_power_service) {
+        sources += [ "src/dependency/ivi/ivi_screen_power_helper.cpp" ]
+        defines += [ "VEHICLE_POWER_ENABLE" ]
+        external_deps += [ "automotive_vehicle_power_service:vehiclepowerinnerkit" ]
       }
       subsystem_name = "distributedhardware"
 

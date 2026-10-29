@@ -154,7 +154,7 @@ public:
     void SourceFinish(std::shared_ptr<DmAuthContext> context);
     void SinkFinish(std::shared_ptr<DmAuthContext> context);
     std::string GenerateBindResultContent(std::shared_ptr<DmAuthContext> context);
-    static bool IsScreenLocked();
+    static bool CheckScreenLockAndWakeUp(int32_t userId);
     static int32_t GetTaskTimeout(std::shared_ptr<DmAuthContext> context, const char* taskName, int32_t taskTimeOut);
     static void HandleAuthenticateTimeout(std::shared_ptr<DmAuthContext> context, std::string name);
     static bool IsImportAuthCodeCompatibility(DmAuthType authType);

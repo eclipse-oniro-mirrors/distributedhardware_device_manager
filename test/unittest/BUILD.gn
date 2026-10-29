@@ -106,6 +106,7 @@ group("unittest") {
     ":UTTest_ipc_server_client_proxy",
     ":UTTest_ipc_server_listener",
     ":UTTest_ipc_server_stub",
+    ":UTTest_ivi_screen_power_helper",
     ":UTTest_json_object",
     ":UTTest_json_str_handle",
     ":UTTest_dm_language_manager",
@@ -5151,4 +5152,37 @@ ohos_static_library("device_manager_3rd_test_common") {
   part_name = "device_manager"
 }
 ## Build device_manager_3rd_test_common.a }}}
+
+## UnitTest UTTest_ivi_screen_power_helper {{{
+ohos_unittest("UTTest_ivi_screen_power_helper") {
+  module_out_path = module_out_path
+
+  include_dirs = [
+    "${devicemanager_path}/test/unittest",
+    "${servicesimpl_path}/include/dependency/ivi",
+    "${devicemanager_path}/test/unittest/mock/ivi",
+  ]
+
+  sources = [
+    "${devicemanager_path}/test/unittest/UTTest_ivi_screen_power_helper.cpp",
+    "${servicesimpl_path}/src/dependency/ivi/ivi_screen_power_helper.cpp",
+  ]
+
+  ldflags = [ "-Wl,--allow-multiple-definition" ]
+
+  deps = [
+    ":device_manager_test_common",
+    "${servicesimpl_path}:devicemanagerserviceimpl",
+    "${utils_path}:devicemanagerutilstest",
+  ]
+
+  external_deps = [
+    "ffrt:libffrt",
+    "googletest:gmock",
+    "googletest:gmock_main",
+    "hilog:libhilog",
+    "power_manager:powermgr_client",
+  ]
+}
+## UnitTest UTTest_ivi_screen_power_helper }}}
 }

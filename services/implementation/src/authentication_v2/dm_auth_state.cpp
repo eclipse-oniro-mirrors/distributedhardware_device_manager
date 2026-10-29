@@ -26,6 +26,9 @@
 #if defined(SUPPORT_SCREENLOCK)
 #include "screenlock_manager.h"
 #endif
+#if defined(CAR_DEVICE_ENABLE) && defined(VEHICLE_POWER_ENABLE)
+#include "ivi_screen_power_helper.h"
+#endif
 #include "dm_log.h"
 #include "dm_anonymous.h"
 #include <sys/time.h>
@@ -116,14 +119,31 @@ void DmAuthState::HandleAuthenticateTimeout(std::shared_ptr<DmAuthContext> conte
     LOGI("complete");
 }
 
-bool DmAuthState::IsScreenLocked()
+bool DmAuthState::CheckScreenLockAndWakeUp(int32_t userId)
 {
+#if defined(CAR_DEVICE_ENABLE) && defined(VEHICLE_POWER_ENABLE)
+    int32_t displayId = MultipleUserConnector::GetDisplayIdByUserId(userId);
+    if (displayId < 0) {
+        LOGE("GetDisplayIdByUserId failed, userId: %{public}d, treat as screen locked", userId);
+        return true;
+    }
+    bool isScreenOn = IviScreenPowerHelper::GetInstance().IsScreenOnByDisplayId(displayId);
+    LOGI("userId: %{public}d, displayId: %{public}d, isScreenOn: %{public}d", userId, displayId, isScreenOn);
+    if (!isScreenOn) {
+        int32_t ret = IviScreenPowerHelper::GetInstance().WakeUpByDisplayId(displayId);
+        if (ret != DM_OK) {
+            LOGE("WakeUp fail, displayId: %{public}d, ret: %{public}d", displayId, ret);
+            return true;
+        }
+        LOGI("WakeUp success, displayId: %{public}d", displayId);
+    }
+#endif
     bool isLocked = false;
 #if defined(SUPPORT_SCREENLOCK)
     CHECK_NULL_RETURN(OHOS::ScreenLock::ScreenLockManager::GetInstance(), isLocked);
     isLocked = OHOS::ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked();
 #endif
-    LOGI("isLocked: %{public}d.", isLocked);
+    LOGI("userId: %{public}d, isLocked: %{public}d.", userId, isLocked);
     return isLocked;
 }
 
@@ -216,6 +236,9 @@ void DmAuthState::SinkFinish(std::shared_ptr<DmAuthContext> context)
     context->authUiStateMgr->UpdateUiState(DmUiStateMsg::MSG_CANCEL_CONFIRM_SHOW);
     context->timer->DeleteAll();
     context->authMessageProcessor->CreateAndSendMsg(MSG_TYPE_AUTH_RESP_FINISH, context); // 发送201给source侧
+#if defined(CAR_DEVICE_ENABLE) && defined(VEHICLE_POWER_ENABLE)
+    IviScreenPowerHelper::GetInstance().UnsubscribeScreenState();
+#endif
 }
 
 void DmAuthState::NotifyDeviceOnline(std::shared_ptr<DmAuthContext> context)
