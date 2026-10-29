@@ -65,7 +65,7 @@ void AuthPinAuthStateTest::TearDown()
     context = nullptr;
 }
 
-bool DmAuthState::IsScreenLocked()
+bool DmAuthState::CheckScreenLockAndWakeUp(int32_t userId)
 {
     return false;
 }

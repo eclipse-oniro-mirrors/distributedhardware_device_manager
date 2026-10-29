@@ -444,6 +444,28 @@ DM_EXPORT int32_t MultipleUserConnector::GetUserIdByDisplayId(int32_t displayId)
     return userId;
 }
 
+DM_EXPORT int32_t MultipleUserConnector::GetDisplayIdByUserId(int32_t userId)
+{
+    LOGI("userId %{public}d", userId);
+    int32_t displayId = -1;
+    if (userId <= 0) {
+        LOGE("invalid userId %{public}d", userId);
+        return displayId;
+    }
+#ifdef OS_ACCOUNT_PART_EXISTS
+    uint64_t dispId = 0;
+    int32_t ret = OHOS::AccountSA::OsAccountManager::
+        GetForegroundOsAccountDisplayId(userId, dispId);
+    if (ret != DM_OK) {
+        LOGE("GetForegroundOsAccountDisplayId failed ret %{public}d.", ret);
+        return displayId;
+    }
+    displayId = static_cast<int32_t>(dispId);
+    LOGI("GetForegroundOsAccountDisplayId success, userId %{public}d, displayId %{public}d", userId, displayId);
+#endif // OS_ACCOUNT_PART_EXISTS
+    return displayId;
+}
+
 DM_EXPORT int32_t MultipleUserConnector::GetMainDisplayActiveUserId(void)
 {
 #if (defined(__LITEOS_M__) || defined(LITE_DEVICE))

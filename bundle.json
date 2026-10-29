@@ -18,7 +18,8 @@
             "device_manager_no_interaction_auth",
             "device_manager_feature_product",
             "device_manager_enable_ets_frontend",
-            "device_manager_capability"
+            "device_manager_capability",
+            "device_manager_enable_vehicle_power_service"
         ],
         "adapted_system_type": ["standard", "mini"],
         "rom": "2048KB",

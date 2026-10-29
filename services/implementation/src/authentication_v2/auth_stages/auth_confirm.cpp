@@ -37,6 +37,10 @@
 #include "multiple_user_connector.h"
 #include "dm_constants.h"
 
+#if defined(CAR_DEVICE_ENABLE) && defined(VEHICLE_POWER_ENABLE)
+#include "ivi_screen_power_helper.h"
+#endif
+
 namespace OHOS {
 namespace DistributedHardware {
 
@@ -944,7 +948,7 @@ int32_t AuthSinkConfirmState::ShowConfigDialog(std::shared_ptr<DmAuthContext> co
             LOGE("fail to end dream, err:%{public}d", ret);
             return STOP_BIND;
         }
-    } else if (IsScreenLocked()) {
+    } else if (CheckScreenLockAndWakeUp(context->accessee.userId)) {
         LOGE("screen is locked.");
         context->reason = ERR_DM_BIND_USER_CANCEL;
         CHECK_NULL_RETURN(context->authStateMachine, STOP_BIND);
@@ -1409,6 +1413,18 @@ int32_t AuthSinkConfirmState::Action(std::shared_ptr<DmAuthContext> context)
         context->reason = ret;
         return ret;
     }
+#if defined(CAR_DEVICE_ENABLE) && defined(VEHICLE_POWER_ENABLE)
+    int32_t displayId = MultipleUserConnector::GetDisplayIdByUserId(context->accessee.userId);
+    if (displayId >= 0) {
+        int32_t subRet = IviScreenPowerHelper::GetInstance().SubscribeScreenState(displayId);
+        if (subRet != DM_OK) {
+            LOGW("SubscribeScreenState failed, displayId: %{public}d, ret: %{public}d", displayId, subRet);
+        }
+    } else {
+        LOGE("GetDisplayIdByUserId failed, userId: %{public}d, skip SubscribeScreenState",
+            context->accessee.userId);
+    }
+#endif
     if (IsNeedBind(context)) {
         return ProcessBindAuthorize(context);
     } else {

@@ -76,7 +76,7 @@ void SetUltrasonicPinCode(const std::string &pinCode, bool useV2)
 int32_t AuthSinkStatePinAuthComm::ShowAuthInfoDialog(std::shared_ptr<DmAuthContext> context)
 {
     LOGI("start");
-    if (DmAuthState::IsScreenLocked()) {
+    if (DmAuthState::CheckScreenLockAndWakeUp(context->accessee.userId)) {
         LOGE("screen is locked.");
         context->reason = ERR_DM_BIND_USER_CANCEL;
         context->authStateMachine->NotifyEventFinish(DmEventType::ON_FAIL);
@@ -564,7 +564,7 @@ DmAuthStateType AuthSrcPinInputState::GetStateType()
 int32_t AuthSrcPinInputState::ShowStartAuthDialog(std::shared_ptr<DmAuthContext> context)
 {
     LOGI("start.");
-    if (DmAuthState::IsScreenLocked()) {
+    if (DmAuthState::CheckScreenLockAndWakeUp(context->accesser.userId)) {
         LOGE("AuthSrcPinInputState screen is locked.");
         context->reason = ERR_DM_BIND_USER_CANCEL;
         return STOP_BIND;

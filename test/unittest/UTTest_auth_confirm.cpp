@@ -111,7 +111,7 @@ void AuthConfirmTest::TearDown()
     Mock::VerifyAndClearExpectations(dmHiChainAuthConnectorMock.get());
 }
 
-bool DmAuthState::IsScreenLocked()
+bool DmAuthState::CheckScreenLockAndWakeUp(int32_t userId)
 {
     return false;
 }

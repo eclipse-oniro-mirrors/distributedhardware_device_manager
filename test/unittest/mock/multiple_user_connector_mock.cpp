@@ -54,6 +54,11 @@ int32_t MultipleUserConnector::GetUserIdByDisplayId(int32_t displayId)
     return DmMultipleUserConnector::dmMultipleUserConnector->GetUserIdByDisplayId(displayId);
 }
 
+int32_t MultipleUserConnector::GetDisplayIdByUserId(int32_t userId)
+{
+    return DmMultipleUserConnector::dmMultipleUserConnector->GetDisplayIdByUserId(userId);
+}
+
 int32_t MultipleUserConnector::GetMainDisplayActiveUserId(void)
 {
     return DmMultipleUserConnector::dmMultipleUserConnector->GetMainDisplayActiveUserId();
