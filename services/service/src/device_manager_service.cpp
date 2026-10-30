@@ -630,24 +630,11 @@ int32_t DeviceManagerService::GetDeviceInfo(const std::string &networkId, DmDevi
         return ERR_DM_NO_PERMISSION;
     }
     CHECK_NULL_RETURN(softbusListener_, ERR_DM_POINT_NULL);
-    std::string peerDeviceId = "";
-    SoftbusListener::GetUdidByNetworkId(networkId.c_str(), peerDeviceId);
-    int32_t ret = DM_OK;
-    if (!IsDMServiceImplReady()) {
-        LOGE("instance not init or init failed.");
-        return ERR_DM_NOT_INIT;
-    }
-    char localDeviceId[DEVICE_UUID_LENGTH] = {0};
-    GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
-    std::string localUdid = static_cast<std::string>(localDeviceId);
-    if (localUdid == peerDeviceId) {
-        ret = softbusListener_->GetDeviceInfo(networkId, info);
-        if (ret != DM_OK) {
-            LOGE("Get DeviceInfo By NetworkId failed, ret : %{public}d", ret);
-        }
-        return ret;
-    }
-    return softbusListener_->GetDeviceInfo(networkId, info);
+    int32_t ret = softbusListener_->GetDeviceInfo(networkId, info);
+#if !(defined(__LITEOS_M__) || defined(LITE_DEVICE))
+    ConvertUdidHashToAnoyDeviceId(info);
+#endif
+    return ret;
 }
 
 int32_t DeviceManagerService::GetDeviceNameByNetworkId(const std::string &networkId, std::string &deviceName)
