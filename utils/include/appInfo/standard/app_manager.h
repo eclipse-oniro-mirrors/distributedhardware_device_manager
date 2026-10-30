@@ -48,7 +48,7 @@ public:
     DM_EXPORT int32_t GetBundleNameForSelf(std::string &bundleName);
     DM_EXPORT int32_t GetBundleNameByTokenId(int64_t tokenId, std::string &bundleName);
     DM_EXPORT int32_t GetTokenIdByBundleName(int32_t userId, std::string &bundleName, int64_t &tokenId);
-private:
+    private:
     bool GetBundleManagerProxy(sptr<AppExecFwk::IBundleMgr> &bundleManager);
     std::mutex appIdMapLock_;
     std::map<std::string, std::string> appIdMap_;
