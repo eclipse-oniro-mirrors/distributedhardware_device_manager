@@ -67,6 +67,14 @@ namespace DistributedHardware {
             return (ret);                       \
         }                                       \
     } while (0)
+
+#define CHECK_EMPTY_RETURN(container, ret)                    \
+    do {                                        \
+        if ((container).empty()) {                 \
+            LOGE("container %{public}s is empty", GetAnonyString(container).c_str());    \
+            return ret;                             \
+        }                                       \
+    } while (0)
 } // namespace DistributedHardware
 } // namespace OHOS
 #endif // OHOS_DM_LOG_H

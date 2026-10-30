@@ -140,6 +140,8 @@ enum DMIpcCmdInterfaceCode {
     EXPORT_AUTH_INFO,
     IMPORT_AUTH_INFO,
     ON_AUTH_CODE_INVALID,
+    GET_DEVICE_NAME_BY_NETWORK,
+    GET_DEVICE_TYPE_BY_NETWORK,
     // Add ipc msg here
     IPC_MSG_BUTT
 };
