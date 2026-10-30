@@ -27,6 +27,7 @@
 #include "dm_device_info.h"
 #include "dm_hidumper.h"
 #include "dm_softbus_cache.h"
+#include "dm_3rd_device_cache.h"
 #include "json_object.h"
 #include "parameter.h"
 #include "permission_manager.h"
@@ -647,7 +648,64 @@ int32_t DeviceManagerService::GetDeviceInfo(const std::string &networkId, DmDevi
         }
         return ret;
     }
-    return softbusListener_->GetDeviceInfo(networkId, info);
+    ret = softbusListener_->GetDeviceInfo(networkId, info);
+    if (ret != DM_OK) {
+        return ret;
+    }
+    if (info.networkId[0] == '\0') {
+        // standard device info not found, fallback to 3rd device cache
+        if (Dm3rdDeviceCache::GetInstance().Get3rdDeviceInfo(networkId, info)) {
+            LOGI("get device info from 3rd device cache, networkId %{public}s",
+                GetAnonyString(networkId).c_str());
+        }
+    }
+    return ret;
+}
+
+int32_t DeviceManagerService::Register3rdDeviceInfo(const Dm3rdDeviceInfo &info)
+{
+    LOGI("start.");
+    if (!PermissionManager::GetInstance().CheckAccessServicePermission()) {
+        LOGE("No permission");
+        return ERR_DM_NO_PERMISSION;
+    }
+    if (!AppManager::GetInstance().IsSystemSA() && !AppManager::GetInstance().IsSystemApp()) {
+        LOGE("The caller does not have permission.");
+        return ERR_DM_NO_PERMISSION;
+    }
+    DmDeviceInfo localDeviceInfo;
+    SoftbusCache::GetInstance().GetLocalDeviceInfo(localDeviceInfo);
+    if (info.networkId == std::string(localDeviceInfo.networkId)) {
+        LOGE("networkId conflicts with local device");
+        return ERR_DM_MAP_KEY_ALREADY_EXISTS;
+    }
+    DmDeviceInfo standardDeviceInfo;
+    int32_t ret = SoftbusCache::GetInstance().GetDevInfoByNetworkId(info.networkId, standardDeviceInfo);
+    if (ret == DM_OK && std::string(standardDeviceInfo.networkId) == info.networkId) {
+        LOGE("networkId conflicts with standard networking device");
+        return ERR_DM_MAP_KEY_ALREADY_EXISTS;
+    }
+    uint32_t tokenId = static_cast<uint32_t>(IPCSkeleton::GetCallingTokenID());
+    return Dm3rdDeviceCache::GetInstance().Register3rdDevice(info, tokenId);
+}
+
+int32_t DeviceManagerService::UnRegister3rdDeviceInfo(const std::string &networkId)
+{
+    LOGI("start.");
+    if (networkId.empty()) {
+        LOGE("networkId is empty");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    if (!PermissionManager::GetInstance().CheckAccessServicePermission()) {
+        LOGE("No permission");
+        return ERR_DM_NO_PERMISSION;
+    }
+    if (!AppManager::GetInstance().IsSystemSA() && !AppManager::GetInstance().IsSystemApp()) {
+        LOGE("The caller does not have permission.");
+        return ERR_DM_NO_PERMISSION;
+    }
+    uint32_t tokenId = static_cast<uint32_t>(IPCSkeleton::GetCallingTokenID());
+    return Dm3rdDeviceCache::GetInstance().UnRegister3rdDevice(networkId, tokenId);
 }
 
 int32_t DeviceManagerService::GetDeviceNameByNetworkId(const std::string &networkId, std::string &deviceName)
@@ -1387,6 +1445,9 @@ static std::string GetLocalDeviceUdid()
 void DeviceManagerService::HandleDeviceStatusChange(DmDeviceState devState, DmDeviceInfo &devInfo, const bool isOnline)
 {
     LOGI("start.");
+    if (devState == DEVICE_STATE_ONLINE || devState == DEVICE_INFO_CHANGED) {
+        Dm3rdDeviceCache::GetInstance().OnStandardDeviceOnline(std::string(devInfo.networkId));
+    }
     if (IsDMServiceImplReady()) {
         dmServiceImpl_->HandleDeviceStatusChange(devState, devInfo, isOnline);
     }

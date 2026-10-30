@@ -792,6 +792,49 @@ void IpcModelCodec::DecodeServiceSyncInfo(MessageParcel &parcel, ServiceSyncInfo
     serviceSyncInfo.callerUserId = parcel.ReadInt32();
     serviceSyncInfo.callerTokenId = parcel.ReadUint32();
 }
+
+bool IpcModelCodec::Encode3rdDeviceInfo(const Dm3rdDeviceInfo &info, MessageParcel &parcel)
+{
+    bool bRet = true;
+    bRet = (bRet && parcel.WriteString(info.networkId));
+    bRet = (bRet && parcel.WriteString(info.deviceName));
+    uint32_t mapSize = static_cast<uint32_t>(info.extendParam.size());
+    bRet = (bRet && parcel.WriteUint32(mapSize));
+    for (const auto &item : info.extendParam) {
+        bRet = (bRet && parcel.WriteString(item.first));
+        bRet = (bRet && parcel.WriteString(item.second));
+        if (!bRet) {
+            LOGE("write extend param failed");
+            return false;
+        }
+    }
+    return bRet;
+}
+
+bool IpcModelCodec::Decode3rdDeviceInfo(MessageParcel &parcel, Dm3rdDeviceInfo &info)
+{
+    info.networkId = parcel.ReadString();
+    info.deviceName = parcel.ReadString();
+    uint32_t mapSize = 0;
+    if (!parcel.ReadUint32(mapSize)) {
+        LOGE("read extend param size failed");
+        return false;
+    }
+    if (mapSize > IPC_VECTOR_MAX_SIZE) {
+        LOGE("extend param size is invalid, size = %{public}u", mapSize);
+        return false;
+    }
+    for (uint32_t i = 0; i < mapSize; ++i) {
+        std::string key = parcel.ReadString();
+        std::string value = parcel.ReadString();
+        if (key.empty()) {
+            LOGE("extend param key is empty");
+            return false;
+        }
+        info.extendParam[key] = value;
+    }
+    return true;
+}
 //LCOV_EXCL_STOP
 }  // namespace DistributedHardware
 }  // namespace OHOS

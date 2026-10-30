@@ -786,6 +786,28 @@ struct PeerDevInfoHash {
         return h1 ^ (h2 << HASH_SHIFT_USER_ID) ^ (h3 << HASH_SHIFT_ACCOUNT_ID);
     }
 };
+
+/**
+ * @brief 3rd device Information, registered by ecosystem business via inner kit.
+ */
+typedef struct Dm3rdDeviceInfo {
+    /**
+     * NetworkId of the 3rd device, required, max length 96 bytes.
+     */
+    std::string networkId;
+    /**
+     * Device name of the 3rd device, required, max length 128 bytes.
+     */
+    std::string deviceName;
+    /**
+     * Extend params of the 3rd device, optional.
+     * Key "symbolName" is returned in DmDeviceInfo.extraData as "SYMBOL_NAME";
+     * other keys are flattened into extraData as-is.
+     * Reserved keys are not allowed: OS_TYPE, OS_VERSION, CUSTOM_DATA, SYMBOL_NAME, DEVICE_SOURCE,
+     * CONN_ADDR_TYPE, BR_MAC, BLE_MAC, WIFI_IP, WIFI_PORT.
+     */
+    std::map<std::string, std::string> extendParam;
+} Dm3rdDeviceInfo;
 } // namespace DistributedHardware
 } // namespace OHOS
 #endif // OHOS_DM_DEVICE_INFO_H

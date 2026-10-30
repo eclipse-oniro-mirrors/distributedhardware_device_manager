@@ -2655,5 +2655,34 @@ ON_IPC_CMD(GET_PEER_SERVICEINFO_BY_SERVICEID, MessageParcel &data, MessageParcel
     }
     return DM_OK;
 }
+
+ON_IPC_CMD(REG_3RD_DEVICE_INFO, MessageParcel &data, MessageParcel &reply)
+{
+    Dm3rdDeviceInfo info;
+    if (!IpcModelCodec::Decode3rdDeviceInfo(data, info)) {
+        LOGE("Decode3rdDeviceInfo failed");
+        if (!reply.WriteInt32(ERR_DM_IPC_COPY_FAILED)) {
+            LOGE("write result failed");
+        }
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    int32_t result = DeviceManagerService::GetInstance().Register3rdDeviceInfo(info);
+    if (!reply.WriteInt32(result)) {
+        LOGE("write result failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    return DM_OK;
+}
+
+ON_IPC_CMD(UNREG_3RD_DEVICE_INFO, MessageParcel &data, MessageParcel &reply)
+{
+    std::string networkId = data.ReadString();
+    int32_t result = DeviceManagerService::GetInstance().UnRegister3rdDeviceInfo(networkId);
+    if (!reply.WriteInt32(result)) {
+        LOGE("write result failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    return DM_OK;
+}
 } // namespace DistributedHardware
 } // namespace OHOS

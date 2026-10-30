@@ -154,6 +154,8 @@ enum DMIpcCmdInterfaceCode {
     CHECK_DEVICE_ONLINE,
     GET_DEVICE_NAME_BY_NETWORK,
     GET_DEVICE_TYPE_BY_NETWORK,
+    REG_3RD_DEVICE_INFO,
+    UNREG_3RD_DEVICE_INFO,
     // Add ipc msg here
     IPC_MSG_BUTT
 };

@@ -913,5 +913,17 @@ int32_t DeviceManagerImplFailToSupport::UpdateServiceInfo(int64_t serviceId,
     LOGI("device not support");
     return ERR_DM_DEVICE_NOT_SUPPORT;
 }
+
+int32_t DeviceManagerImplFailToSupport::Register3rdDeviceInfo(const Dm3rdDeviceInfo &info)
+{
+    LOGI("device not support");
+    return ERR_DM_DEVICE_NOT_SUPPORT;
+}
+
+int32_t DeviceManagerImplFailToSupport::UnRegister3rdDeviceInfo(const std::string &networkId)
+{
+    LOGI("device not support");
+    return ERR_DM_DEVICE_NOT_SUPPORT;
+}
 } // namespace DistributedHardware
 } // namespace OHOS
