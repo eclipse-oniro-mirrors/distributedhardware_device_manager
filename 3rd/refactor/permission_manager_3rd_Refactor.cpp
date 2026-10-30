@@ -1,0 +1,159 @@
+/*
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "permission_manager_3rd_Refactor.h"
+
+#include <cstring>
+#include <securec.h>
+
+#include "accesstoken_kit.h"
+#include "access_token.h"
+#include "hap_token_info.h"
+#include "ipc_skeleton.h"
+#include "tokenid_kit.h"
+
+#include "dm_anonymous_3rd.h"
+#include "dm_log_3rd.h"
+#include "dm_error_type_3rd.h"
+
+using namespace OHOS::Security::AccessToken;
+
+namespace OHOS {
+namespace DistributedHardware {
+namespace {
+constexpr const char *DM_SERVICE_ACCESS_PERMISSION = "ohos.permission.ACCESS_SERVICE_DM";
+}
+
+DM_IMPLEMENT_SINGLE_INSTANCE_3RD(PermissionManager3rdRefactor);
+
+bool PermissionManager3rdRefactor::CheckSystemSA()
+{
+    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
+    if (tokenCaller == 0) {
+        LOGE("CheckSystemSA GetCallingTokenID error.");
+        return false;
+    }
+    ATokenTypeEnum tokenTypeFlag = AccessTokenKit::GetTokenTypeFlag(tokenCaller);
+    if (tokenTypeFlag == ATokenTypeEnum::TOKEN_NATIVE) {
+        return true;
+    }
+    return false;
+}
+
+bool PermissionManager3rdRefactor::IsSystemHapToken(uint64_t fullTokenId)
+{
+    if (!OHOS::Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(fullTokenId)) {
+        LOGE("Not system hap.");
+        return false;
+    }
+    return true;
+}
+
+int32_t PermissionManager3rdRefactor::GetProcessNameFromTokenId(
+    uint32_t tokenId, std::string &processName)
+{
+    ATokenTypeEnum tokenTypeFlag = AccessTokenKit::GetTokenTypeFlag(tokenId);
+    if (tokenTypeFlag == ATokenTypeEnum::TOKEN_HAP) {
+        HapTokenInfo tokenInfo {};
+        if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != EOK) {
+            LOGE("GetHapTokenInfo failed.");
+            return ERR_DM_FAILED;
+        }
+        processName = std::move(tokenInfo.bundleName);
+    } else if (tokenTypeFlag == ATokenTypeEnum::TOKEN_NATIVE) {
+        NativeTokenInfo tokenInfo {};
+        if (AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo) != EOK) {
+            LOGE("GetNativeTokenInfo failed.");
+            return ERR_DM_FAILED;
+        }
+        processName = std::move(tokenInfo.processName);
+    } else {
+        LOGE("Unsupported process type.");
+        return ERR_DM_FAILED;
+    }
+    return DM_OK;
+}
+
+int32_t PermissionManager3rdRefactor::GetCallerProcessName(std::string &processName)
+{
+    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
+    if (tokenCaller == 0) {
+        LOGE("GetCallerProcessName GetCallingTokenID error.");
+        return ERR_DM_FAILED;
+    }
+    ATokenTypeEnum tokenTypeFlag = AccessTokenKit::GetTokenTypeFlag(tokenCaller);
+    if (tokenTypeFlag == ATokenTypeEnum::TOKEN_HAP) {
+        HapTokenInfo tokenInfo {};
+        if (AccessTokenKit::GetHapTokenInfo(tokenCaller, tokenInfo) != EOK) {
+            LOGE("GetHapTokenInfo failed.");
+            return ERR_DM_FAILED;
+        }
+        processName = std::move(tokenInfo.bundleName);
+        uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
+        if (!IsSystemHapToken(fullTokenId)) {
+            return ERR_DM_FAILED;
+        }
+    } else if (tokenTypeFlag == ATokenTypeEnum::TOKEN_NATIVE) {
+        NativeTokenInfo tokenInfo {};
+        if (AccessTokenKit::GetNativeTokenInfo(tokenCaller, tokenInfo) != EOK) {
+            LOGE("GetNativeTokenInfo failed.");
+            return ERR_DM_FAILED;
+        }
+        processName = std::move(tokenInfo.processName);
+    } else {
+        LOGE("Unsupported process type.");
+        return ERR_DM_FAILED;
+    }
+    LOGI("Get caller process name success.");
+    return DM_OK;
+}
+
+int32_t PermissionManager3rdRefactor::GetProcessNameByTokenId(
+    uint32_t tokenId, std::string &processName)
+{
+    int32_t ret = GetProcessNameFromTokenId(tokenId, processName);
+    if (ret != DM_OK) {
+        return ret;
+    }
+    LOGI("Get process name by tokenId success.");
+    return DM_OK;
+}
+
+bool PermissionManager3rdRefactor::CheckAccessServicePermission()
+{
+    return VerifyAccessTokenByPermissionName(DM_SERVICE_ACCESS_PERMISSION);
+}
+
+bool PermissionManager3rdRefactor::VerifyAccessTokenByPermissionName(
+    const std::string &permissionName)
+{
+    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
+    if (tokenCaller == 0) {
+        LOGE("GetCallingTokenID error.");
+        return false;
+    }
+    ATokenTypeEnum tokenTypeFlag = AccessTokenKit::GetTokenTypeFlag(tokenCaller);
+    if (tokenTypeFlag != ATokenTypeEnum::TOKEN_HAP &&
+        tokenTypeFlag != ATokenTypeEnum::TOKEN_NATIVE) {
+        return false;
+    }
+    if (AccessTokenKit::VerifyAccessToken(tokenCaller, permissionName) ==
+        PermissionState::PERMISSION_GRANTED) {
+        return true;
+    }
+    return false;
+}
+} // namespace DistributedHardware
+} // namespace OHOS
