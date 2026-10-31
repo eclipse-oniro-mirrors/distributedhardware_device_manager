@@ -999,6 +999,7 @@ int DeviceManagerServiceImpl::OnSessionOpened(int sessionId, int result)
 
 void DeviceManagerServiceImpl::OnSessionClosed(int sessionId)
 {
+    isServerBusy_.store(false);
     SoftbusSession::OnSessionClosed(sessionId);
 }
 
