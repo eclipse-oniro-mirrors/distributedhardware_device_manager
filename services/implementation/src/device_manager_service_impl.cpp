@@ -79,6 +79,7 @@ const int32_t MAX_TRY_STOP_CNT = 5;
 const int32_t DEFAULT_SESSION_ID = -1;
 const int32_t METATOKEN_PINCODE_LENGTH = 14;
 const int32_t METATOKEN_LENGTH = 8;
+const int32_t AUTH_SESSION_SIDE_SERVER = 0;
 constexpr const char* BIND_TARGET_PIN_TIMEOUT_TASK = "devicemanagerTimer:authpininfo";
 constexpr int32_t BIND_TARGET_PIN_TIMEOUT = 600;
 const std::map<std::string, std::string> BUNDLENAME_MAPPING = {
@@ -415,6 +416,7 @@ void DeviceManagerServiceImpl::CleanAuthMgrByLogicalSessionId(uint64_t logicalSe
     CleanSessionMapByLogicalSessionId(logicalSessionId, connDelayCloseTime);
     hiChainAuthConnector_->UnRegisterHiChainAuthCallbackById(logicalSessionId);
     EraseAuthMgr(tokenId);
+    isServerBusy_.store(false);
     return;
 }
 
@@ -943,6 +945,15 @@ std::string DeviceManagerServiceImpl::GetUdidHashByNetworkId(const std::string &
 
 int DeviceManagerServiceImpl::OnSessionOpened(int sessionId, int result)
 {
+    CHECK_NULL_RETURN(softbusConnector_, ERR_DM_POINT_NULL);
+    CHECK_NULL_RETURN(softbusConnector_->GetSoftbusSession(), ERR_DM_POINT_NULL);
+    int32_t sessionSide = GetSessionSide(sessionId);
+    if (sessionSide == AUTH_SESSION_SIDE_SERVER && isServerBusy_.load()) {
+        LOGI("sink is busy, stop bind. sessionId:%{public}d", sessionId);
+        softbusConnector_->GetSoftbusSession()->CloseAuthSession(sessionId);
+        return DM_OK;
+    }
+    isServerBusy_.store(true);
     bool isNeedCloseSession = false;
     if (sessionEnableCvMap_.find(sessionId) != sessionEnableCvMap_.end()) {
         std::lock_guard<ffrt::mutex> lock(sessionEnableMutexMap_[sessionId]);
@@ -988,6 +999,7 @@ int DeviceManagerServiceImpl::OnSessionOpened(int sessionId, int result)
 
 void DeviceManagerServiceImpl::OnSessionClosed(int sessionId)
 {
+    isServerBusy_.store(false);
     SoftbusSession::OnSessionClosed(sessionId);
 }
 
