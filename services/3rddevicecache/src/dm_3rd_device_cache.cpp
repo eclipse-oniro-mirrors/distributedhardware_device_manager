@@ -32,7 +32,6 @@ constexpr int32_t MAX_3RD_EXTEND_PARAM_NUM = 20;
 constexpr size_t MAX_3RD_NETWORK_ID_LEN = 96;
 constexpr size_t MAX_3RD_DEVICE_NAME_LEN = 128;
 constexpr size_t MAX_3RD_EXTEND_PARAM_LEN = 128;
-const std::string SYMBOL_NAME_MAP_KEY = "symbolName";
 } // namespace
 
 DM_IMPLEMENT_SINGLE_INSTANCE(Dm3rdDeviceCache);
@@ -68,9 +67,8 @@ int32_t Dm3rdDeviceCache::CheckInputParam(const Dm3rdDeviceInfo &info) const
 bool Dm3rdDeviceCache::IsReservedKey(const std::string &key) const
 {
     return key == PARAM_KEY_OS_TYPE || key == PARAM_KEY_OS_VERSION || key == PARAM_KEY_CUSTOM_DATA ||
-        key == PARAM_KEY_SYMBOL_NAME || key == PARAM_KEY_DEVICE_SOURCE || key == PARAM_KEY_CONN_ADDR_TYPE ||
-        key == PARAM_KEY_BR_MAC || key == PARAM_KEY_BLE_MAC || key == PARAM_KEY_WIFI_IP ||
-        key == PARAM_KEY_WIFI_PORT;
+        key == PARAM_KEY_DEVICE_SOURCE || key == PARAM_KEY_CONN_ADDR_TYPE || key == PARAM_KEY_BR_MAC ||
+        key == PARAM_KEY_BLE_MAC || key == PARAM_KEY_WIFI_IP || key == PARAM_KEY_WIFI_PORT;
 }
 
 int32_t Dm3rdDeviceCache::Register3rdDevice(const Dm3rdDeviceInfo &info, uint32_t tokenId)
@@ -150,17 +148,10 @@ bool Dm3rdDeviceCache::Get3rdDeviceInfo(const std::string &networkId, DmDeviceIn
         return false;
     }
     JsonObject extraJson;
-    auto symbolIt = entry.extendParam.find(SYMBOL_NAME_MAP_KEY);
-    if (symbolIt != entry.extendParam.end()) {
-        extraJson[PARAM_KEY_SYMBOL_NAME] = symbolIt->second;
-    }
-    extraJson[PARAM_KEY_DEVICE_SOURCE] = DM_3RD_DEVICE_SOURCE;
     for (const auto &item : entry.extendParam) {
-        if (item.first == SYMBOL_NAME_MAP_KEY) {
-            continue;
-        }
         extraJson[item.first] = item.second;
     }
+    extraJson[PARAM_KEY_DEVICE_SOURCE] = DM_3RD_DEVICE_SOURCE;
     info.extraData = ToString(extraJson);
     LOGI("get 3rd device info, networkId %{public}s", GetAnonyString(networkId).c_str());
     return true;

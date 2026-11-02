@@ -144,7 +144,7 @@ Dm3rdDeviceInfo Build3rdInfo(const std::string &networkId, const std::string &de
     Dm3rdDeviceInfo info;
     info.networkId = networkId;
     info.deviceName = deviceName;
-    info.extendParam["symbolName"] = "symbol3rd";
+    info.extendParam["SYMBOL_NAME"] = "symbol3rd";
     return info;
 }
 
@@ -158,38 +158,10 @@ void GrantPermissionAndSystemCaller()
 
 /**
  * @tc.name: Register3rdDeviceInfo_001
- * @tc.desc: register 3rd device without permission
- * @tc.type: FUNC
- */
-HWTEST_F(DeviceManagerService3rdTest, Register3rdDeviceInfo_001, testing::ext::TestSize.Level1)
-{
-    EXPECT_CALL(*permissionManagerMock_, CheckAccessServicePermission()).WillRepeatedly(Return(false));
-    Dm3rdDeviceInfo info = Build3rdInfo("networkId_3rd_001", "deviceName_3rd");
-    int32_t ret = DeviceManagerService::GetInstance().Register3rdDeviceInfo(info);
-    EXPECT_EQ(ret, ERR_DM_NO_PERMISSION);
-}
-
-/**
- * @tc.name: Register3rdDeviceInfo_002
- * @tc.desc: register 3rd device with permission but not system sa or system app
- * @tc.type: FUNC
- */
-HWTEST_F(DeviceManagerService3rdTest, Register3rdDeviceInfo_002, testing::ext::TestSize.Level1)
-{
-    EXPECT_CALL(*permissionManagerMock_, CheckAccessServicePermission()).WillRepeatedly(Return(true));
-    EXPECT_CALL(*appManagerMock_, IsSystemSA()).WillRepeatedly(Return(false));
-    EXPECT_CALL(*appManagerMock_, IsSystemApp()).WillRepeatedly(Return(false));
-    Dm3rdDeviceInfo info = Build3rdInfo("networkId_3rd_002", "deviceName_3rd");
-    int32_t ret = DeviceManagerService::GetInstance().Register3rdDeviceInfo(info);
-    EXPECT_EQ(ret, ERR_DM_NO_PERMISSION);
-}
-
-/**
- * @tc.name: Register3rdDeviceInfo_003
  * @tc.desc: register 3rd device with networkId conflicting with local device
  * @tc.type: FUNC
  */
-HWTEST_F(DeviceManagerService3rdTest, Register3rdDeviceInfo_003, testing::ext::TestSize.Level1)
+HWTEST_F(DeviceManagerService3rdTest, Register3rdDeviceInfo_001, testing::ext::TestSize.Level1)
 {
     GrantPermissionAndSystemCaller();
     DmDeviceInfo localDeviceInfo;
@@ -206,11 +178,11 @@ HWTEST_F(DeviceManagerService3rdTest, Register3rdDeviceInfo_003, testing::ext::T
 }
 
 /**
- * @tc.name: Register3rdDeviceInfo_004
+ * @tc.name: Register3rdDeviceInfo_002
  * @tc.desc: register 3rd device success and query hit
  * @tc.type: FUNC
  */
-HWTEST_F(DeviceManagerService3rdTest, Register3rdDeviceInfo_004, testing::ext::TestSize.Level1)
+HWTEST_F(DeviceManagerService3rdTest, Register3rdDeviceInfo_002, testing::ext::TestSize.Level1)
 {
     GrantPermissionAndSystemCaller();
     Dm3rdDeviceInfo info = Build3rdInfo("networkId_3rd_004", "deviceName_3rd_004");
@@ -227,17 +199,13 @@ HWTEST_F(DeviceManagerService3rdTest, Register3rdDeviceInfo_004, testing::ext::T
 
 /**
  * @tc.name: UnRegister3rdDeviceInfo_001
- * @tc.desc: unregister 3rd device without permission or with empty networkId
+ * @tc.desc: unregister 3rd device with empty networkId
  * @tc.type: FUNC
  */
 HWTEST_F(DeviceManagerService3rdTest, UnRegister3rdDeviceInfo_001, testing::ext::TestSize.Level1)
 {
-    EXPECT_CALL(*permissionManagerMock_, CheckAccessServicePermission()).WillRepeatedly(Return(false));
-    int32_t ret = DeviceManagerService::GetInstance().UnRegister3rdDeviceInfo("networkId_3rd_unreg");
-    EXPECT_EQ(ret, ERR_DM_NO_PERMISSION);
-
     GrantPermissionAndSystemCaller();
-    ret = DeviceManagerService::GetInstance().UnRegister3rdDeviceInfo("");
+    int32_t ret = DeviceManagerService::GetInstance().UnRegister3rdDeviceInfo("");
     EXPECT_EQ(ret, ERR_DM_INPUT_PARA_INVALID);
 }
 

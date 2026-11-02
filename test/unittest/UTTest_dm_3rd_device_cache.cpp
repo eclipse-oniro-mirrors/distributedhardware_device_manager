@@ -40,12 +40,13 @@ Dm3rdDeviceInfo Build3rdDeviceInfo(const std::string &networkId, const std::stri
 
 /**
  * @tc.name: Register3rdDevice_001
- * @tc.desc: register valid 3rd device info success
+ * @tc.desc: register valid 3rd device info success, query hit with extraData
  * @tc.type: FUNC
  */
 HWTEST_F(Dm3rdDeviceCacheTest, Register3rdDevice_001, testing::ext::TestSize.Level1)
 {
     Dm3rdDeviceInfo info = Build3rdDeviceInfo("networkId_001", "deviceName_001");
+    info.extendParam["SYMBOL_NAME"] = "symbol_001";
     int32_t ret = Dm3rdDeviceCache::GetInstance().Register3rdDevice(info, 1);
     EXPECT_EQ(ret, DM_OK);
     DmDeviceInfo deviceInfo;
@@ -53,6 +54,9 @@ HWTEST_F(Dm3rdDeviceCacheTest, Register3rdDevice_001, testing::ext::TestSize.Lev
     EXPECT_TRUE(isFound);
     EXPECT_EQ(std::string(deviceInfo.networkId), info.networkId);
     EXPECT_EQ(std::string(deviceInfo.deviceName), info.deviceName);
+    EXPECT_NE(deviceInfo.extraData.find("\"SYMBOL_NAME\":\"symbol_001\""), std::string::npos);
+    EXPECT_NE(deviceInfo.extraData.find("\"DEVICE_SOURCE\":\"3RD\""), std::string::npos);
+    EXPECT_EQ(std::string(deviceInfo.deviceId), "");
 }
 
 /**
@@ -84,10 +88,6 @@ HWTEST_F(Dm3rdDeviceCacheTest, Register3rdDevice_003, testing::ext::TestSize.Lev
 {
     Dm3rdDeviceInfo info = Build3rdDeviceInfo("networkId_003", "deviceName_003");
     info.extendParam["OS_TYPE"] = "1";
-    EXPECT_EQ(Dm3rdDeviceCache::GetInstance().Register3rdDevice(info, 1), ERR_DM_INPUT_PARA_INVALID);
-
-    info.extendParam.clear();
-    info.extendParam["SYMBOL_NAME"] = "symbol";
     EXPECT_EQ(Dm3rdDeviceCache::GetInstance().Register3rdDevice(info, 1), ERR_DM_INPUT_PARA_INVALID);
 
     info.extendParam.clear();
@@ -182,7 +182,7 @@ HWTEST_F(Dm3rdDeviceCacheTest, UnRegister3rdDevice_001, testing::ext::TestSize.L
 HWTEST_F(Dm3rdDeviceCacheTest, Get3rdDeviceInfo_001, testing::ext::TestSize.Level1)
 {
     Dm3rdDeviceInfo info = Build3rdDeviceInfo("networkId_get_001", "deviceName_get");
-    info.extendParam["symbolName"] = "mySymbol";
+    info.extendParam["SYMBOL_NAME"] = "mySymbol";
     info.extendParam["customKey"] = "customValue";
     EXPECT_EQ(Dm3rdDeviceCache::GetInstance().Register3rdDevice(info, 1), DM_OK);
 

@@ -801,9 +801,11 @@ typedef struct Dm3rdDeviceInfo {
     std::string deviceName;
     /**
      * Extend params of the 3rd device, optional.
-     * Key "symbolName" is returned in DmDeviceInfo.extraData as "SYMBOL_NAME";
-     * other keys are flattened into extraData as-is.
-     * Reserved keys are not allowed: OS_TYPE, OS_VERSION, CUSTOM_DATA, SYMBOL_NAME, DEVICE_SOURCE,
+     * Keys use the same name as DmDeviceInfo.extraData JSON keys (uppercase PARAM_KEY_* style),
+     * e.g. "SYMBOL_NAME"; all keys are flattened into extraData as-is on query.
+     * "DEVICE_SOURCE" is a server-generated key: after Register3rdDeviceInfo, query responses
+     * always carry "DEVICE_SOURCE":"3RD" without external injection.
+     * Reserved keys are not allowed: OS_TYPE, OS_VERSION, CUSTOM_DATA, DEVICE_SOURCE,
      * CONN_ADDR_TYPE, BR_MAC, BLE_MAC, WIFI_IP, WIFI_PORT.
      */
     std::map<std::string, std::string> extendParam;

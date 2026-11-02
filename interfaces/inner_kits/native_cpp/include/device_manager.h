@@ -717,6 +717,8 @@ public:
     /**
      * @brief Register 3rd device info to device manager, memory cache only.
      * @param info 3rd device info, networkId and deviceName are required, extendParam is optional.
+     * extendParam keys use the same name as DmDeviceInfo.extraData JSON keys (e.g. "SYMBOL_NAME"),
+     * flattened into extraData as-is on query.
      * @return Returns 0 if success.
      */
     virtual int32_t Register3rdDeviceInfo(const Dm3rdDeviceInfo &info) { return 0; }
