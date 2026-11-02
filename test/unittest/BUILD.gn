@@ -397,6 +397,7 @@ ohos_unittest("UTTest_ipc_cmd_parser_service") {
     "hilog:libhilog",
     "kv_store:distributeddata_inner",
     "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
   ]
 
   cflags = [
@@ -829,7 +830,6 @@ ohos_unittest("UTTest_device_manager_service") {
     "${servicesimpl_path}:devicemanagerserviceimpl",
     "${softbuscache_parh}:dmdevicecache",
     "${utils_path}:devicemanagerutilstest_mock",
-
   ]
 
   external_deps = [
@@ -852,6 +852,7 @@ ohos_unittest("UTTest_device_manager_service") {
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
     "selinux_adapter:librestorecon",
+    "samgr:samgr_proxy",
   ]
 }
 
@@ -897,6 +898,7 @@ ohos_unittest("UTTest_dm_softbus_cache") {
     "hilog:libhilog",
     "kv_store:distributeddata_inner",
     "selinux_adapter:librestorecon",
+    "samgr:samgr_proxy",
   ]
 }
 
@@ -960,6 +962,7 @@ ohos_unittest("UTTest_device_manager_service_three") {
     "googletest:gmock_main",
     "hilog:libhilog",
     "selinux_adapter:librestorecon",
+    "samgr:samgr_proxy",
   ]
 }
 
@@ -1164,6 +1167,7 @@ ohos_unittest("UTTest_mine_softbus_listener") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "openssl:libcrypto_shared",
+    "samgr:samgr_proxy",
   ]
 }
 
@@ -1219,6 +1223,7 @@ ohos_unittest("UTTest_softbus_connector") {
     "hitrace:hitrace_meter",
     "kv_store:distributeddata_inner",
     "os_account:libaccountkits",
+    "samgr:samgr_proxy",
   ]
 }
 
@@ -1275,6 +1280,7 @@ ohos_unittest("UTTest_softbus_listener") {
     "kv_store:distributeddata_inner",
     "safwk:system_ability_fwk",
     "os_account:libaccountkits",
+    "samgr:samgr_proxy",
   ]
 }
 
@@ -1376,6 +1382,7 @@ ohos_unittest("UTTest_softbus_publish") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "kv_store:distributeddata_inner",
+    "samgr:samgr_proxy",
   ]
 }
 
@@ -1925,6 +1932,7 @@ ohos_unittest("UTTest_ipc_client_stub") {
     "googletest:gmock_main",
     "hilog:libhilog",
     "kv_store:distributeddata_inner",
+    "samgr:samgr_proxy",
   ]
 }
 
@@ -2609,6 +2617,7 @@ ohos_unittest("UTTest_device_manager_service_impl") {
     "kv_store:distributeddata_inner",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
+    "samgr:samgr_proxy",
   ]
 }
 
@@ -2660,6 +2669,7 @@ ohos_unittest("UTTest_device_manager_service_impl_first") {
     "kv_store:distributeddata_inner",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
+    "samgr:samgr_proxy",
   ]
 }
 
@@ -2707,6 +2717,7 @@ ohos_unittest("UTTest_device_manager_service_listener") {
     "googletest:gmock_main",
     "hilog:libhilog",
     "kv_store:distributeddata_inner",
+    "samgr:samgr_proxy",
   ]
 }
 
@@ -2861,6 +2872,7 @@ ohos_unittest("UTTest_auth_response_state") {
     "googletest:gmock",
     "hilog:libhilog",
     "kv_store:distributeddata_inner",
+    "samgr:samgr_proxy",
   ]
 }
 
@@ -4230,6 +4242,7 @@ ohos_unittest("UTTest_auth_negotiate") {
     "kv_store:distributeddata_inner",
     "mbedtls:mbedtls_shared",
     "os_account:os_account_innerkits",
+    "samgr:samgr_proxy",
     "zlib:shared_libz",
   ]
 }
