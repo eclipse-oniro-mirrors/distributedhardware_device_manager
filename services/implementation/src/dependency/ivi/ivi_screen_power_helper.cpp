@@ -20,7 +20,6 @@
 
 #include "dm_error_type.h"
 #include "ffrt.h"
-#include "power_mgr_client.h"
 
 #if defined(CAR_DEVICE_ENABLE) && defined(VEHICLE_POWER_ENABLE)
 #include "ivi_powersrv_manager.h"
