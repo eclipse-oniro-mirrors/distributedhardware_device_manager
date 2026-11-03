@@ -493,52 +493,93 @@ int32_t DeviceManagerService::ShiftLNNGear(const std::string &pkgName, const std
 int32_t DeviceManagerService::GetDeviceInfo(const std::string &networkId, DmDeviceInfo &info)
 {
     LOGI("Begin networkId %{public}s.", GetAnonyString(networkId).c_str());
-    if (!PermissionManager::GetInstance().CheckAccessServicePermission() &&
-        !PermissionManager::GetInstance().CheckDataSyncPermission()) {
-        LOGE("The caller does not have permission to call GetDeviceInfo.");
+    CHECK_EMPTY_RETURN(networkId, ERR_DM_INPUT_PARA_INVALID);
+    if (!PermissionManager::GetInstance().CheckAccessServicePermission()) {
+        LOGE("No permission");
         return ERR_DM_NO_PERMISSION;
     }
-    if (networkId.empty()) {
-        LOGE("Invalid parameter, networkId is empty.");
-        return ERR_DM_INPUT_PARA_INVALID;
+    if (!AppManager::GetInstance().IsSystemSA() && !AppManager::GetInstance().IsSystemApp()) {
+        LOGE("The caller does not have permission.");
+        return ERR_DM_NO_PERMISSION;
+    }
+    CHECK_NULL_RETURN(softbusListener_, ERR_DM_POINT_NULL);
+    int32_t ret = softbusListener_->GetDeviceInfo(networkId, info);
+#if !(defined(__LITEOS_M__) || defined(LITE_DEVICE))
+    ConvertUdidHashToAnoyDeviceId(info);
+#endif
+    return ret;
+}
+
+int32_t DeviceManagerService::GetDeviceNameByNetworkId(const std::string &networkId, std::string &deviceName)
+{
+    LOGI("Begin networkId: %{public}s", GetAnonyString(networkId).c_str());
+    CHECK_EMPTY_RETURN(networkId, ERR_DM_INPUT_PARA_INVALID);
+    if (!PermissionManager::GetInstance().CheckDataSyncPermission()) {
+        LOGE("The caller does not have permission to call GetDeviceNameByNetworkId.");
+        return ERR_DM_NO_PERMISSION;
+    }
+    if (!IsDMServiceImplReady()) {
+        LOGE("instance not init or init failed.");
+        return ERR_DM_NOT_INIT;
     }
     CHECK_NULL_RETURN(softbusListener_, ERR_DM_POINT_NULL);
     std::string peerDeviceId = "";
     SoftbusListener::GetUdidByNetworkId(networkId.c_str(), peerDeviceId);
-    int32_t ret = DM_OK;
-    if (!IsDMServiceImplReady()) {
-        LOGE("GetDeviceInfo failed, instance not init or init failed.");
-        return ERR_DM_NOT_INIT;
-    }
     char localDeviceId[DEVICE_UUID_LENGTH] = {0};
     GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
     std::string localUdid = static_cast<std::string>(localDeviceId);
-    if (localUdid == peerDeviceId) {
-        ret = softbusListener_->GetDeviceInfo(networkId, info);
+    if (localUdid != peerDeviceId && !AppManager::GetInstance().IsSystemSA() &&
+        !AppManager::GetInstance().IsSystemApp()) {
+        int32_t ret = dmServiceImpl_->CheckDeviceInfoPermission(localUdid, peerDeviceId);
         if (ret != DM_OK) {
-            LOGE("Get DeviceInfo By NetworkId failed, ret : %{public}d", ret);
+            LOGE("CheckDeviceInfoPermission failed, ret: %{public}d", ret);
+            return ret;
         }
+    }
+    DmDeviceInfo info;
+    int32_t ret = softbusListener_->GetDeviceInfo(networkId, info);
+    if (ret != DM_OK) {
+        LOGE("GetDeviceInfo failed, ret: %{public}d", ret);
         return ret;
     }
-    if (!AppManager::GetInstance().IsSystemSA()) {
-        int32_t permissionRet = dmServiceImpl_->CheckDeviceInfoPermission(localUdid, peerDeviceId);
-        if (permissionRet != DM_OK) {
-            std::string processName = "";
-            if (PermissionManager::GetInstance().GetCallerProcessName(processName) != DM_OK) {
-                LOGE("Get caller process name failed.");
-                return ret;
-            }
-            if (!PermissionManager::GetInstance().CheckProcessNameValidOnGetDeviceInfo(processName)) {
-                LOGE("The caller: %{public}s is not in white list.", processName.c_str());
-                return ret;
-            }
+    deviceName = std::string(info.deviceName);
+    return DM_OK;
+}
+
+int32_t DeviceManagerService::GetDeviceTypeByNetworkId(const std::string &networkId, int32_t &deviceType)
+{
+    LOGI("Begin networkId: %{public}s", GetAnonyString(networkId).c_str());
+    CHECK_EMPTY_RETURN(networkId, ERR_DM_INPUT_PARA_INVALID);
+    if (!PermissionManager::GetInstance().CheckDataSyncPermission()) {
+        LOGE("The caller does not have permission to call GetDeviceTypeByNetworkId.");
+        return ERR_DM_NO_PERMISSION;
+    }
+    if (!IsDMServiceImplReady()) {
+        LOGE("instance not init or init failed.");
+        return ERR_DM_NOT_INIT;
+    }
+    CHECK_NULL_RETURN(softbusListener_, ERR_DM_POINT_NULL);
+    std::string peerDeviceId = "";
+    SoftbusListener::GetUdidByNetworkId(networkId.c_str(), peerDeviceId);
+    char localDeviceId[DEVICE_UUID_LENGTH] = {0};
+    GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
+    std::string localUdid = static_cast<std::string>(localDeviceId);
+    if (localUdid != peerDeviceId && !AppManager::GetInstance().IsSystemSA() &&
+        !AppManager::GetInstance().IsSystemApp()) {
+        int32_t ret = dmServiceImpl_->CheckDeviceInfoPermission(localUdid, peerDeviceId);
+        if (ret != DM_OK) {
+            LOGE("CheckDeviceInfoPermission failed, ret: %{public}d", ret);
+            return ret;
         }
     }
-    ret = softbusListener_->GetDeviceInfo(networkId, info);
+    DmDeviceInfo info;
+    int32_t ret = softbusListener_->GetDeviceInfo(networkId, info);
     if (ret != DM_OK) {
-        LOGE("Get DeviceInfo By NetworkId failed, ret : %{public}d", ret);
+        LOGE("GetDeviceInfo failed, ret: %{public}d", ret);
+        return ret;
     }
-    return ret;
+    deviceType = static_cast<int32_t>(info.deviceTypeId);
+    return DM_OK;
 }
 
 int32_t DeviceManagerService::GetLocalDeviceInfo(DmDeviceInfo &info)
