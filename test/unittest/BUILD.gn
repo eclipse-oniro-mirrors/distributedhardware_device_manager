@@ -73,6 +73,8 @@ group("unittest") {
     ":UTTest_dm_deviceprofile_connector_second",
     ":UTTest_dm_dfx",
     ":UTTest_dm_import_auth_code",
+    ":UTTest_dm_mini_sdk_abi",
+    ":UTTest_dm_mini_sdk_protocol",
     ":UTTest_dm_pin_holder",
     ":UTTest_dm_publish_common_event",
     ":UTTest_dm_radar_helper_test",
@@ -3519,6 +3521,71 @@ ohos_unittest("UTTest_dm_broadcast_queue") {
 
 ## UnitTest UTTest_dm_broadcast_queue }}}
 
+## UnitTest UTTest_dm_mini_sdk_abi {{{
+ohos_unittest("UTTest_dm_mini_sdk_abi") {
+  module_out_path = module_out_path
+
+  include_dirs = [
+    "${devicemanager_path}/test/unittest",
+    "${ext_path}/mini_sdk/include",
+  ]
+
+  sources = [
+    "${devicemanager_path}/test/unittest/UTTest_dm_mini_sdk_abi.cpp",
+  ]
+
+  deps = [
+    ":device_manager_test_common",
+    "${ext_path}/mini_sdk:libbt_mini_sdk",
+    "${ext_path}/mini_sdk:libpower_mini_sdk",
+    "${ext_path}/mini_sdk:libscreenlock_mini_sdk",
+    "${ext_path}/mini_sdk:libwifi_mini_sdk",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
+}
+## UnitTest UTTest_dm_mini_sdk_abi }}}
+
+ohos_unittest("UTTest_dm_mini_sdk_protocol") {
+  module_out_path = module_out_path
+  include_dirs = [
+    "${ext_path}/mini_sdk/include",
+    "${common_path}/include",
+  ]
+  sources = [
+    "UTTest_dm_mini_sdk_protocol.cpp",
+    "${ext_path}/mini_sdk/src/bt_mini_sdk.cpp",
+    "${ext_path}/mini_sdk/src/power_mini_sdk.cpp",
+    "${ext_path}/mini_sdk/src/screenlock_mini_sdk.cpp",
+    "${ext_path}/mini_sdk/src/wifi_mini_sdk.cpp",
+  ]
+  # Exercise the real adapters and parcel code with only SA lookup substituted.
+  cflags_cc = [
+    "-include",
+    rebase_path("mock/dm_mini_sdk_sa_mock.h", root_build_dir),
+  ]
+  defines = [
+    "HI_LOG_ENABLE",
+    "DH_LOG_TAG=\"dmminisdk_test\"",
+    "LOG_DOMAIN=0xD004110",
+    "SUPPORT_BLUETOOTH",
+    "SUPPORT_WIFI",
+    "SUPPORT_POWER_MANAGER",
+    "SUPPORT_SCREENLOCK",
+  ]
+  # Protocol expectations are independent snapshots; no full SDK dependency is needed.
+  external_deps = [
+    "c_utils:utils",
+    "googletest:gtest_main",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "samgr:samgr_proxy",
+  ]
+}
+
 ## UnitTest UTTest_dm_publish_common_event {{{
 ohos_unittest("UTTest_dm_publish_common_event") {
   module_out_path = module_out_path
@@ -3545,13 +3612,11 @@ ohos_unittest("UTTest_dm_publish_common_event") {
   ]
 
   external_deps = [
-    "bluetooth:btframework",
     "common_event_service:cesfwk_innerkits",
     "c_utils:utils",
     "ffrt:libffrt",
     "hilog:libhilog",
     "samgr:samgr_proxy",
-    "wifi:wifi_sdk",
   ]
 }
 
@@ -3583,13 +3648,11 @@ ohos_unittest("UTTest_dm_screen_common_event") {
   ]
 
   external_deps = [
-    "bluetooth:btframework",
     "common_event_service:cesfwk_innerkits",
     "c_utils:utils",
     "ffrt:libffrt",
     "hilog:libhilog",
     "samgr:samgr_proxy",
-    "wifi:wifi_sdk",
   ]
 }
 
@@ -5198,7 +5261,6 @@ ohos_unittest("UTTest_ivi_screen_power_helper") {
     "googletest:gmock",
     "googletest:gmock_main",
     "hilog:libhilog",
-    "power_manager:powermgr_client",
   ]
 }
 ## UnitTest UTTest_ivi_screen_power_helper }}}
