@@ -164,8 +164,8 @@ TEST_F(DmMiniSdkProtocolTest, BluetoothStatesMatchProtocolContract)
         stub->values = { 0, state };
         EXPECT_TRUE(IsBleEnabled()) << state;
     }
-    for (int32_t state :
-        { 0, BLUETOOTH_STATE_BLE_TURNING_ON, BLUETOOTH_STATE_BLE_TURNING_OFF, -1, UNKNOWN_BLUETOOTH_STATE }) {
+    for (int32_t state : { 0, BLUETOOTH_STATE_BLE_TURNING_ON, BLUETOOTH_STATE_BLE_TURNING_OFF, -1,
+             UNKNOWN_BLUETOOTH_STATE }) {
         stub->values = { 0, state };
         EXPECT_FALSE(IsBleEnabled()) << state;
     }
