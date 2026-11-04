@@ -17,10 +17,15 @@
 
 #include <pthread.h>
 #include <thread>
+#ifdef SUPPORT_BLUETOOTH
+#include "bluetooth_def.h"
+#endif // SUPPORT_BLUETOOTH
 #include "common_event_support.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
-#include "mini_sdk_constants.h"
+#ifdef SUPPORT_WIFI
+#include "wifi_msg.h"
+#endif // SUPPORT_WIFI
 #include "dm_log.h"
 #include "ffrt.h"
 
@@ -200,11 +205,11 @@ void DmPublishEventSubscriber::OnReceiveEvent(const CommonEventData &data)
     {
         std::lock_guard<ffrt::mutex> lock(bluetoothStateMutex_);
         if (receiveEvent == EventFwk::CommonEventSupport::COMMON_EVENT_BLUETOOTH_HOST_STATE_UPDATE &&
-            eventState == MiniSdk::BT_EVENT_STATE_ON) {
-            bluetoothState_ = MiniSdk::BT_EVENT_STATE_ON;
+            eventState == static_cast<int32_t>(Bluetooth::BTStateID::STATE_TURN_ON)) {
+            bluetoothState_ = static_cast<int32_t>(Bluetooth::BTStateID::STATE_TURN_ON);
         } else if (receiveEvent == EventFwk::CommonEventSupport::COMMON_EVENT_BLUETOOTH_HOST_STATE_UPDATE &&
-            eventState == MiniSdk::BT_EVENT_STATE_OFF) {
-            bluetoothState_ = MiniSdk::BT_EVENT_STATE_OFF;
+            eventState == static_cast<int32_t>(Bluetooth::BTStateID::STATE_TURN_OFF)) {
+            bluetoothState_ = static_cast<int32_t>(Bluetooth::BTStateID::STATE_TURN_OFF);
         } else if (receiveEvent == EventFwk::CommonEventSupport::COMMON_EVENT_BLUETOOTH_HOST_STATE_UPDATE) {
             LOGI("bluetooth eventState: %{public}d", eventState);
             return;
@@ -216,11 +221,11 @@ void DmPublishEventSubscriber::OnReceiveEvent(const CommonEventData &data)
     {
         std::lock_guard<ffrt::mutex> lock(wifiStateMutex_);
         if (receiveEvent == EventFwk::CommonEventSupport::COMMON_EVENT_WIFI_POWER_STATE &&
-            eventState == MiniSdk::WIFI_STATE_ENABLED) {
-            wifiState_ = MiniSdk::WIFI_STATE_ENABLED;
+            eventState == static_cast<int32_t>(OHOS::Wifi::WifiState::ENABLED)) {
+            wifiState_ = static_cast<int32_t>(OHOS::Wifi::WifiState::ENABLED);
         } else if (receiveEvent == EventFwk::CommonEventSupport::COMMON_EVENT_WIFI_POWER_STATE &&
-            eventState == MiniSdk::WIFI_STATE_DISABLED) {
-            wifiState_ = MiniSdk::WIFI_STATE_DISABLED;
+            eventState == static_cast<int32_t>(OHOS::Wifi::WifiState::DISABLED)) {
+            wifiState_ = static_cast<int32_t>(OHOS::Wifi::WifiState::DISABLED);
         } else if (receiveEvent == EventFwk::CommonEventSupport::COMMON_EVENT_WIFI_POWER_STATE) {
             LOGI("wifi eventState: %{public}d", eventState);
             return;
