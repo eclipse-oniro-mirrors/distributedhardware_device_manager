@@ -1,0 +1,240 @@
+# Copyright (c) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/distributedhardware/device_manager/device_manager.gni")
+
+# Each mini sdk adapter only depends on ipc and samgr: it talks to the target
+# system ability directly over IPC (same protocol as the official sdk proxy)
+# instead of linking the full third party sdk client library, so no sdk part
+# (bluetooth / wifi / power_manager / screenlock_mgr) is pulled into the
+# device_manager process through these adapters.
+ohos_shared_library("libbt_mini_sdk") {
+  if (!device_manager_capability) {
+    install_enable = false
+  } else {
+    branch_protector_ret = "pac_ret"
+
+    sanitize = {
+      boundary_sanitize = true
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+      integer_overflow = true
+      ubsan = true
+    }
+
+    cflags = [
+      "-fPIC",
+      "-fstack-protector-strong",
+      "-Wall",
+      "-Werror",
+    ]
+
+    ldflags = [
+      "-Wl,-z,relro",
+      "-Wl,-z,now",
+    ]
+
+    include_dirs = [
+      "include",
+      "${common_path}/include",
+    ]
+
+    sources = [ "src/bt_mini_sdk.cpp" ]
+
+    defines = [
+      "HI_LOG_ENABLE",
+      "DH_LOG_TAG=\"dmminisdk\"",
+      "LOG_DOMAIN=0xD004110",
+    ]
+
+    if (support_bluetooth) {
+      defines += [ "SUPPORT_BLUETOOTH" ]
+    }
+
+    external_deps = [
+      "hilog:libhilog",
+      "ipc:ipc_single",
+      "samgr:samgr_proxy",
+    ]
+
+    subsystem_name = "distributedhardware"
+    part_name = "device_manager"
+  }
+}
+
+ohos_shared_library("libwifi_mini_sdk") {
+  if (!device_manager_capability) {
+    install_enable = false
+  } else {
+    branch_protector_ret = "pac_ret"
+
+    sanitize = {
+      boundary_sanitize = true
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+      integer_overflow = true
+      ubsan = true
+    }
+
+    cflags = [
+      "-fPIC",
+      "-fstack-protector-strong",
+      "-Wall",
+      "-Werror",
+    ]
+
+    ldflags = [
+      "-Wl,-z,relro",
+      "-Wl,-z,now",
+    ]
+
+    include_dirs = [
+      "include",
+      "${common_path}/include",
+    ]
+
+    sources = [ "src/wifi_mini_sdk.cpp" ]
+
+    defines = [
+      "HI_LOG_ENABLE",
+      "DH_LOG_TAG=\"dmminisdk\"",
+      "LOG_DOMAIN=0xD004110",
+    ]
+
+    if (support_wifi) {
+      defines += [ "SUPPORT_WIFI" ]
+    }
+
+    external_deps = [
+      "hilog:libhilog",
+      "ipc:ipc_single",
+      "samgr:samgr_proxy",
+    ]
+
+    subsystem_name = "distributedhardware"
+    part_name = "device_manager"
+  }
+}
+
+ohos_shared_library("libpower_mini_sdk") {
+  if (!device_manager_capability) {
+    install_enable = false
+  } else {
+    branch_protector_ret = "pac_ret"
+
+    sanitize = {
+      boundary_sanitize = true
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+      integer_overflow = true
+      ubsan = true
+    }
+
+    cflags = [
+      "-fPIC",
+      "-fstack-protector-strong",
+      "-Wall",
+      "-Werror",
+    ]
+
+    ldflags = [
+      "-Wl,-z,relro",
+      "-Wl,-z,now",
+    ]
+
+    include_dirs = [
+      "include",
+      "${common_path}/include",
+    ]
+
+    sources = [ "src/power_mini_sdk.cpp" ]
+
+    defines = [
+      "HI_LOG_ENABLE",
+      "DH_LOG_TAG=\"dmminisdk\"",
+      "LOG_DOMAIN=0xD004110",
+    ]
+
+    if (support_power_manager) {
+      defines += [ "SUPPORT_POWER_MANAGER" ]
+    }
+
+    external_deps = [
+      "hilog:libhilog",
+      "ipc:ipc_single",
+      "samgr:samgr_proxy",
+    ]
+
+    subsystem_name = "distributedhardware"
+    part_name = "device_manager"
+  }
+}
+
+ohos_shared_library("libscreenlock_mini_sdk") {
+  if (!device_manager_capability) {
+    install_enable = false
+  } else {
+    branch_protector_ret = "pac_ret"
+
+    sanitize = {
+      boundary_sanitize = true
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+      integer_overflow = true
+      ubsan = true
+    }
+
+    cflags = [
+      "-fPIC",
+      "-fstack-protector-strong",
+      "-Wall",
+      "-Werror",
+    ]
+
+    ldflags = [
+      "-Wl,-z,relro",
+      "-Wl,-z,now",
+    ]
+
+    include_dirs = [
+      "include",
+      "${common_path}/include",
+    ]
+
+    sources = [ "src/screenlock_mini_sdk.cpp" ]
+
+    defines = [
+      "HI_LOG_ENABLE",
+      "DH_LOG_TAG=\"dmminisdk\"",
+      "LOG_DOMAIN=0xD004110",
+    ]
+
+    if (support_screenlock) {
+      defines += [ "SUPPORT_SCREENLOCK" ]
+    }
+
+    external_deps = [
+      "hilog:libhilog",
+      "ipc:ipc_single",
+      "samgr:samgr_proxy",
+    ]
+
+    subsystem_name = "distributedhardware"
+    part_name = "device_manager"
+  }
+}

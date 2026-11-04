@@ -73,6 +73,7 @@ group("unittest") {
     ":UTTest_dm_deviceprofile_connector_second",
     ":UTTest_dm_dfx",
     ":UTTest_dm_import_auth_code",
+    ":UTTest_dm_mini_sdk_abi",
     ":UTTest_dm_pin_holder",
     ":UTTest_dm_publish_common_event",
     ":UTTest_dm_radar_helper_test",
@@ -3518,6 +3519,34 @@ ohos_unittest("UTTest_dm_broadcast_queue") {
 }
 
 ## UnitTest UTTest_dm_broadcast_queue }}}
+
+## UnitTest UTTest_dm_mini_sdk_abi {{{
+ohos_unittest("UTTest_dm_mini_sdk_abi") {
+  module_out_path = module_out_path
+
+  include_dirs = [
+    "${devicemanager_path}/test/unittest",
+    "${ext_path}/mini_sdk/include",
+  ]
+
+  sources = [
+    "${devicemanager_path}/test/unittest/UTTest_dm_mini_sdk_abi.cpp",
+  ]
+
+  deps = [
+    ":device_manager_test_common",
+    "${ext_path}/mini_sdk:libbt_mini_sdk",
+    "${ext_path}/mini_sdk:libpower_mini_sdk",
+    "${ext_path}/mini_sdk:libscreenlock_mini_sdk",
+    "${ext_path}/mini_sdk:libwifi_mini_sdk",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
+}
+## UnitTest UTTest_dm_mini_sdk_abi }}}
 
 ## UnitTest UTTest_dm_publish_common_event {{{
 ohos_unittest("UTTest_dm_publish_common_event") {
