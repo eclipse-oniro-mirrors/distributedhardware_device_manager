@@ -713,6 +713,20 @@ public:
         int64_t serviceId) { return 0; }
     virtual int32_t UpdateServiceInfo(int64_t serviceId, const DmRegisterServiceInfo &regServiceInfo) { return 0; }
     virtual bool IsDeviceOnline(const std::string &pkgName) { return false; }
+
+    /**
+     * @brief Register 3rd device info to device manager, memory cache only.
+     * @param info 3rd device info, networkId and deviceName are required, extendParam is optional.
+     * @return Returns 0 if success.
+     */
+    virtual int32_t Register3rdDeviceInfo(const Dm3rdDeviceInfo &info) { return 0; }
+
+    /**
+     * @brief UnRegister 3rd device info, only the registrant tokenId can unregister.
+     * @param networkId 3rd device networkId.
+     * @return Returns 0 if success.
+     */
+    virtual int32_t UnRegister3rdDeviceInfo(const std::string &networkId) { return 0; }
 };
 } // namespace DistributedHardware
 } // namespace OHOS

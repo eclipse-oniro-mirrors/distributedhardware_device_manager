@@ -53,6 +53,7 @@ if (defined(ohos_lite)) {
       "${devicemanager_path}/radar/include",
       "${innerkits_path}/native_cpp/include",
       "${softbuscache_parh}/include",
+      "${thirddevicecache_parh}/include",
       "${utils_path}/include/appInfo/standard",
       "${utils_path}/include/crypto",
       "${utils_path}/include/kvadapter",
@@ -167,6 +168,7 @@ if (defined(ohos_lite)) {
         "${innerkits_path}/native_cpp:devicemanagersdk",
         "${json_path}:devicemanagerjson",
         "${softbuscache_parh}:dmdevicecache",
+        "${thirddevicecache_parh}:dm3rddevicecache",
         "${utils_path}:devicemanagerutils",
       ]
 
@@ -312,6 +314,7 @@ if (defined(ohos_lite)) {
         "${innerkits_path}/native_cpp:devicemanagersdk",
         "${json_path}:devicemanagerjson",
         "${softbuscache_parh}:dmdevicecache",
+        "${thirddevicecache_parh}:dm3rddevicecache",
         "${utils_path}:devicemanagerutils",
       ]
 
@@ -456,6 +459,7 @@ if (defined(ohos_lite)) {
         "${innerkits_path}/native_cpp:devicemanagersdk",
         "${json_path}:devicemanagerjson",
         "${softbuscache_parh}:dmdevicecache",
+        "${thirddevicecache_parh}:dm3rddevicecache",
         "${utils_path}:devicemanagerutils",
       ]
 

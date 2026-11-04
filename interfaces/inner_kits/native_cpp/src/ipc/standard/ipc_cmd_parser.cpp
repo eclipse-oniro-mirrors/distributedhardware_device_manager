@@ -93,6 +93,7 @@
 #include "securec.h"
 #include "ipc_auth_info_req.h"
 #include "ipc_auth_info_rsp.h"
+#include "ipc_reg_3rd_device_req.h"
 #include "ipc_register_service_info_req.h"
 #include "ipc_sync_service_info_req.h"
 #include "ipc_sync_service_info_result_req.h"
@@ -2986,6 +2987,54 @@ ON_IPC_SET_REQUEST(UNBIND_SERVICE_TARGET, std::shared_ptr<IpcReq> pBaseReq, Mess
 ON_IPC_READ_RESPONSE(UNBIND_SERVICE_TARGET, MessageParcel &reply, std::shared_ptr<IpcRsp> pBaseRsp)
 {
     CHECK_NULL_RETURN(pBaseRsp, ERR_DM_FAILED);
+    pBaseRsp->SetErrCode(reply.ReadInt32());
+    return DM_OK;
+}
+
+ON_IPC_SET_REQUEST(REG_3RD_DEVICE_INFO, std::shared_ptr<IpcReq> pBaseReq, MessageParcel &data)
+{
+    if (pBaseReq == nullptr) {
+        LOGE("pBaseReq is null");
+        return ERR_DM_FAILED;
+    }
+    std::shared_ptr<IpcReg3rdDeviceReq> pReq = std::static_pointer_cast<IpcReg3rdDeviceReq>(pBaseReq);
+    if (!IpcModelCodec::Encode3rdDeviceInfo(pReq->Get3rdDeviceInfo(), data)) {
+        LOGE("Encode3rdDeviceInfo failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    return DM_OK;
+}
+
+ON_IPC_READ_RESPONSE(REG_3RD_DEVICE_INFO, MessageParcel &reply, std::shared_ptr<IpcRsp> pBaseRsp)
+{
+    if (pBaseRsp == nullptr) {
+        LOGE("pBaseRsp is null");
+        return ERR_DM_FAILED;
+    }
+    pBaseRsp->SetErrCode(reply.ReadInt32());
+    return DM_OK;
+}
+
+ON_IPC_SET_REQUEST(UNREG_3RD_DEVICE_INFO, std::shared_ptr<IpcReq> pBaseReq, MessageParcel &data)
+{
+    if (pBaseReq == nullptr) {
+        LOGE("pBaseReq is null");
+        return ERR_DM_FAILED;
+    }
+    std::shared_ptr<IpcCommonParamReq> pReq = std::static_pointer_cast<IpcCommonParamReq>(pBaseReq);
+    if (!data.WriteString(pReq->GetFirstParam())) {
+        LOGE("write networkId failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    return DM_OK;
+}
+
+ON_IPC_READ_RESPONSE(UNREG_3RD_DEVICE_INFO, MessageParcel &reply, std::shared_ptr<IpcRsp> pBaseRsp)
+{
+    if (pBaseRsp == nullptr) {
+        LOGE("pBaseRsp is null");
+        return ERR_DM_FAILED;
+    }
     pBaseRsp->SetErrCode(reply.ReadInt32());
     return DM_OK;
 }

@@ -34,6 +34,7 @@ if (defined(ohos_lite)) {
       "services/implementation:devicemanagerserviceimpl",
       "services/service:devicemanagerservice",
       "services/softbuscache:dmdevicecache",
+      "services/3rddevicecache:dm3rddevicecache",
     ]
     if (support_jsapi) {
       deps += [

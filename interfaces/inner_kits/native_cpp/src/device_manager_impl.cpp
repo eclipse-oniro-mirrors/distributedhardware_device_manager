@@ -30,6 +30,7 @@
 #include "ipc_bind_target_req.h"
 #include "ipc_check_access_control.h"
 #include "ipc_common_param_req.h"
+#include "ipc_reg_3rd_device_req.h"
 #include "ipc_create_pin_holder_req.h"
 #include "ipc_destroy_pin_holder_req.h"
 #include "ipc_export_auth_code_rsp.h"
@@ -3882,6 +3883,56 @@ bool DeviceManagerImpl::IsDeviceOnline(const std::string &pkgName)
     bool result = static_cast<bool>(rsp->GetErrCode());
     LOGI("End");
     return result;
+}
+
+int32_t DeviceManagerImpl::Register3rdDeviceInfo(const Dm3rdDeviceInfo &info)
+{
+    if (info.networkId.empty() || info.deviceName.empty()) {
+        LOGE("Invalid parameter, networkId or deviceName is empty");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    LOGI("Start");
+    std::shared_ptr<IpcReg3rdDeviceReq> req = std::make_shared<IpcReg3rdDeviceReq>();
+    std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
+    req->Set3rdDeviceInfo(info);
+    CHECK_NULL_RETURN(ipcClientProxy_, ERR_DM_POINT_NULL);
+    int32_t ret = ipcClientProxy_->SendRequest(REG_3RD_DEVICE_INFO, req, rsp);
+    if (ret != DM_OK) {
+        LOGE("Send Request failed ret: %{public}d", ret);
+        return ERR_DM_IPC_SEND_REQUEST_FAILED;
+    }
+    ret = rsp->GetErrCode();
+    if (ret != DM_OK) {
+        LOGE("Failed with ret %{public}d", ret);
+        return ret;
+    }
+    LOGI("Completed");
+    return DM_OK;
+}
+
+int32_t DeviceManagerImpl::UnRegister3rdDeviceInfo(const std::string &networkId)
+{
+    if (networkId.empty()) {
+        LOGE("Invalid parameter, networkId is empty");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    LOGI("Start");
+    std::shared_ptr<IpcCommonParamReq> req = std::make_shared<IpcCommonParamReq>();
+    std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
+    req->SetFirstParam(networkId);
+    CHECK_NULL_RETURN(ipcClientProxy_, ERR_DM_POINT_NULL);
+    int32_t ret = ipcClientProxy_->SendRequest(UNREG_3RD_DEVICE_INFO, req, rsp);
+    if (ret != DM_OK) {
+        LOGE("Send Request failed ret: %{public}d", ret);
+        return ERR_DM_IPC_SEND_REQUEST_FAILED;
+    }
+    ret = rsp->GetErrCode();
+    if (ret != DM_OK) {
+        LOGE("Failed with ret %{public}d", ret);
+        return ret;
+    }
+    LOGI("Completed");
+    return DM_OK;
 }
 } // namespace DistributedHardware
 } // namespace OHOS

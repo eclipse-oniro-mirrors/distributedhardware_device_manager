@@ -72,6 +72,8 @@ public:
     static bool DecodeDmRegisterServiceState(MessageParcel &parcel, DmRegisterServiceState &dmRegisterServiceState);
     static bool EncodeServiceSyncInfo(const ServiceSyncInfo &serviceSyncInfo, MessageParcel &parcel);
     static void DecodeServiceSyncInfo(MessageParcel &parcel, ServiceSyncInfo &serviceSyncInfo);
+    static bool Encode3rdDeviceInfo(const Dm3rdDeviceInfo &info, MessageParcel &parcel);
+    static bool Decode3rdDeviceInfo(MessageParcel &parcel, Dm3rdDeviceInfo &info);
 };
 } // namespace DistributedHardware
 } // namespace OHOS

@@ -83,6 +83,10 @@ public:
 
     int32_t GetDeviceInfo(const std::string &networkId, DmDeviceInfo &info);
 
+    int32_t Register3rdDeviceInfo(const Dm3rdDeviceInfo &info);
+
+    int32_t UnRegister3rdDeviceInfo(const std::string &networkId);
+
     int32_t GetDeviceNameByNetworkId(const std::string &networkId, std::string &deviceName);
 
     int32_t GetDeviceTypeByNetworkId(const std::string &networkId, int32_t &deviceType);
