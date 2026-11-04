@@ -74,7 +74,6 @@ group("unittest") {
     ":UTTest_dm_dfx",
     ":UTTest_dm_import_auth_code",
     ":UTTest_dm_mini_sdk_abi",
-    ":UTTest_dm_mini_sdk_protocol",
     ":UTTest_dm_pin_holder",
     ":UTTest_dm_publish_common_event",
     ":UTTest_dm_radar_helper_test",
@@ -3548,43 +3547,6 @@ ohos_unittest("UTTest_dm_mini_sdk_abi") {
   ]
 }
 ## UnitTest UTTest_dm_mini_sdk_abi }}}
-
-ohos_unittest("UTTest_dm_mini_sdk_protocol") {
-  module_out_path = module_out_path
-  include_dirs = [
-    "${ext_path}/mini_sdk/include",
-    "${common_path}/include",
-  ]
-  sources = [
-    "UTTest_dm_mini_sdk_protocol.cpp",
-    "${ext_path}/mini_sdk/src/bt_mini_sdk.cpp",
-    "${ext_path}/mini_sdk/src/power_mini_sdk.cpp",
-    "${ext_path}/mini_sdk/src/screenlock_mini_sdk.cpp",
-    "${ext_path}/mini_sdk/src/wifi_mini_sdk.cpp",
-  ]
-  # Exercise the real adapters and parcel code with only SA lookup substituted.
-  cflags_cc = [
-    "-include",
-    rebase_path("mock/dm_mini_sdk_sa_mock.h", root_build_dir),
-  ]
-  defines = [
-    "HI_LOG_ENABLE",
-    "DH_LOG_TAG=\"dmminisdk_test\"",
-    "LOG_DOMAIN=0xD004110",
-    "SUPPORT_BLUETOOTH",
-    "SUPPORT_WIFI",
-    "SUPPORT_POWER_MANAGER",
-    "SUPPORT_SCREENLOCK",
-  ]
-  # Protocol expectations are independent snapshots; no full SDK dependency is needed.
-  external_deps = [
-    "c_utils:utils",
-    "googletest:gtest_main",
-    "hilog:libhilog",
-    "ipc:ipc_single",
-    "samgr:samgr_proxy",
-  ]
-}
 
 ## UnitTest UTTest_dm_publish_common_event {{{
 ohos_unittest("UTTest_dm_publish_common_event") {

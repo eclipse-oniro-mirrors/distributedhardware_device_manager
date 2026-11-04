@@ -16,20 +16,18 @@
 #include "power_mini_sdk.h"
 
 #include "dm_log.h"
-#include "mini_sdk_constants.h"
 #include "mini_sdk_ipc_utils.h"
 
 namespace {
-using OHOS::DistributedHardware::MiniSdk::POWER_ERR_CONNECTION_FAIL;
-#if defined(SUPPORT_POWER_MANAGER)
 constexpr int32_t POWER_MANAGER_SA_ID = 3301; // POWER_MANAGER_SERVICE_ID
 // IPowerMgrIpcCode::COMMAND_IS_SCREEN_ON_IPC / COMMAND_WAKEUP_DEVICE_IPC
 constexpr uint32_t POWER_CMD_IS_SCREEN_ON = 23;
 constexpr uint32_t POWER_CMD_WAKEUP_DEVICE = 17;
-using OHOS::DistributedHardware::MiniSdk::POWER_ERR_OK;
+constexpr int32_t POWER_ERR_OK = 0;
+// PowerErrors::ERR_CONNECTION_FAIL, aligned with PowerMgrClient failure mapping.
+constexpr int32_t POWER_ERR_CONNECTION_FAIL = 4900101;
 const std::u16string POWER_MGR_DESCRIPTOR = u"OHOS.PowerMgr.IPowerMgr";
 const std::u16string WAKEUP_DETAIL = u"end_dream";
-#endif
 }
 
 bool IsScreenOn(void)
