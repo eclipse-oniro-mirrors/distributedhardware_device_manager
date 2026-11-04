@@ -24,8 +24,7 @@
 #include "dm_crypto.h"
 #include "dm_softbus_cache.h"
 #if defined(SUPPORT_SCREENLOCK)
-#include "mini_sdk_loader.h"
-#include "screenlock_mini_sdk.h"
+#include "screenlock_manager.h"
 #endif
 #if defined(CAR_DEVICE_ENABLE) && defined(VEHICLE_POWER_ENABLE)
 #include "ivi_screen_power_helper.h"
@@ -141,7 +140,8 @@ bool DmAuthState::CheckScreenLockAndWakeUp(int32_t userId)
 #endif
     bool isLocked = false;
 #if defined(SUPPORT_SCREENLOCK)
-    isLocked = MiniSdk::Call(LIB_SCREENLOCK_MINI_SDK_NAME, "IsScreenLocked", false);
+    CHECK_NULL_RETURN(OHOS::ScreenLock::ScreenLockManager::GetInstance(), isLocked);
+    isLocked = OHOS::ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked();
 #endif
     LOGI("userId: %{public}d, isLocked: %{public}d.", userId, isLocked);
     return isLocked;

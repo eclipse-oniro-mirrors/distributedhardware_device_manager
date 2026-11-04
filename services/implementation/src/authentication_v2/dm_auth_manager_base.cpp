@@ -19,14 +19,13 @@
 #include "dm_constants.h"
 #include "dm_error_type.h"
 #include "dm_auth_manager_base.h"
-#include "power_mini_sdk.h"
-#include "mini_sdk_constants.h"
-#include "mini_sdk_loader.h"
+#include "power_mgr_client.h"
 #if defined(SUPPORT_SCREENLOCK)
-#include "screenlock_mini_sdk.h"
+#include "screenlock_manager.h"
 #endif
 
 #ifdef OS_ACCOUNT_PART_EXISTS
+#include "os_account_manager.h"
 using namespace OHOS::AccountSA;
 #endif // OS_ACCOUNT_PART_EXISTS
 
@@ -519,19 +518,21 @@ void AuthManagerBase::OnAuthDeviceDataReceived(int32_t sessionId, std::string me
 
 int32_t AuthManagerBase::EndDream()
 {
-    if (!MiniSdk::Call(LIB_POWER_MINI_SDK_NAME, "IsScreenOn", false)) {
+    auto &powerMgrClient = OHOS::PowerMgr::PowerMgrClient::GetInstance();
+    if (!powerMgrClient.IsScreenOn()) {
         LOGW("screen not on");
         return ERR_DM_FAILED;
     }
 #if defined(SUPPORT_SCREENLOCK)
-    if (!MiniSdk::Call(LIB_SCREENLOCK_MINI_SDK_NAME, "IsScreenLocked", false)) {
+    CHECK_NULL_RETURN(OHOS::ScreenLock::ScreenLockManager::GetInstance(), ERR_DM_FAILED);
+    if (!OHOS::ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked()) {
         LOGI("screen not locked");
         return DM_OK;
     }
 #endif
-    int32_t ret = MiniSdk::Call(LIB_POWER_MINI_SDK_NAME, "WakeupDevice",
-        MiniSdk::POWER_ERR_CONNECTION_FAIL, MiniSdk::POWER_WAKEUP_END_DREAM);
-    if (ret != MiniSdk::POWER_ERR_OK) {
+    PowerMgr::PowerErrors ret =
+        powerMgrClient.WakeupDevice(PowerMgr::WakeupDeviceType::WAKEUP_DEVICE_END_DREAM, "end_dream");
+    if (ret != OHOS::PowerMgr::PowerErrors::ERR_OK) {
         LOGE("fail to end dream, err:%{public}d", ret);
         return ERR_DM_FAILED;
     }

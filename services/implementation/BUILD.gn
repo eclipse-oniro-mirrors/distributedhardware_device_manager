@@ -15,10 +15,6 @@ import("//build/ohos.gni")
 
 import("//foundation/distributedhardware/device_manager/device_manager.gni")
 
-config("dm_impl_size_config") {
-  cflags = [ "-Oz" ]
-}
-
 if (defined(ohos_lite) || !support_jsapi) {
   group("devicemanagerserviceimpl") {
     deps = []
@@ -27,7 +23,6 @@ if (defined(ohos_lite) || !support_jsapi) {
   config("devicemanagerserviceimpl_config") {
     include_dirs = [
       "include",
-      "${ext_path}/mini_sdk/include",
       "include/adapter",
       "include/attest",
       "include/authentication",
@@ -80,8 +75,6 @@ if (defined(ohos_lite) || !support_jsapi) {
         integer_overflow = true
         ubsan = true
       }
-
-      configs = [ ":dm_impl_size_config" ]
 
       cflags = [
         "-Werror",
@@ -141,7 +134,6 @@ if (defined(ohos_lite) || !support_jsapi) {
       deps = [
         "${devicemanager_path}/commondependency:devicemanagerdependency",
         "${devicemanager_path}/radar:devicemanagerradar",
-        "${ext_path}/mini_sdk:libpower_mini_sdk",
         "${innerkits_path}/native_cpp:devicemanagersdk",
         "${json_path}:devicemanagerjson",
         "${softbuscache_parh}:dmdevicecache",
@@ -171,6 +163,7 @@ if (defined(ohos_lite) || !support_jsapi) {
         "openssl:libcrypto_shared",
         "os_account:libaccountkits",
         "os_account:os_account_innerkits",
+        "power_manager:powermgr_client",
         "resource_management:resmgr_napi_core",
         "samgr:samgr_proxy",
         "zlib:shared_libz",
@@ -181,7 +174,7 @@ if (defined(ohos_lite) || !support_jsapi) {
 
       if (support_screenlock && device_manager_feature_product == "default") {
         defines += [ "SUPPORT_SCREENLOCK" ]
-        deps += [ "${ext_path}/mini_sdk:libscreenlock_mini_sdk" ]
+        external_deps += [ "screenlock_mgr:screenlock_client" ]
       }
 
       if (device_manager_common) {

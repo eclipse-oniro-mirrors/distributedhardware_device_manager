@@ -17,13 +17,18 @@
 
 #include <mutex>
 
+#ifdef SUPPORT_BLUETOOTH
+#include "bluetooth_def.h"
+#endif // SUPPORT_BLUETOOTH
 #include "dm_constants.h"
 #include "dm_device_info.h"
-#include "mini_sdk_constants.h"
 #include "dm_log.h"
 #include "dm_softbus_cache.h"
 #include "ffrt.h"
 #include "system_ability_definition.h"
+#ifdef SUPPORT_WIFI
+#include "wifi_msg.h"
+#endif // SUPPORT_WIFI
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -52,7 +57,7 @@ void PublishCommonEventCallback(int32_t bluetoothState, int32_t wifiState, int32
         return;
     }
 #ifdef SUPPORT_BLUETOOTH
-    if (bluetoothState == MiniSdk::BT_EVENT_STATE_ON && screenState == DM_SCREEN_ON) {
+    if (bluetoothState == static_cast<int32_t>(Bluetooth::BTStateID::STATE_TURN_ON) && screenState == DM_SCREEN_ON) {
         softbusPublish.StopPublishSoftbusLNN(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
         int32_t ret = softbusPublish.PublishSoftbusLNN();
         if (ret != DM_OK) {
@@ -66,7 +71,7 @@ void PublishCommonEventCallback(int32_t bluetoothState, int32_t wifiState, int32
 #endif // SUPPORT_BLUETOOTH
 
 #ifdef SUPPORT_WIFI
-    if (wifiState == MiniSdk::WIFI_STATE_ENABLED && screenState == DM_SCREEN_ON) {
+    if (wifiState == static_cast<int32_t>(OHOS::Wifi::WifiState::ENABLED) && screenState == DM_SCREEN_ON) {
         softbusPublish.StopPublishSoftbusLNN(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
         int32_t ret = softbusPublish.PublishSoftbusLNN();
         if (ret != DM_OK) {

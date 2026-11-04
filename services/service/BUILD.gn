@@ -30,7 +30,6 @@ if (defined(ohos_lite)) {
   config("devicemanagerservice_config") {
     include_dirs = [
       "include",
-      "${ext_path}/mini_sdk/include",
       "include/advertise",
       "include/devicenamemgr",
       "include/discovery",
@@ -212,17 +211,17 @@ if (defined(ohos_lite)) {
 
       if (support_bluetooth && device_manager_feature_product == "default") {
         defines += [ "SUPPORT_BLUETOOTH" ]
-        deps += [ "${ext_path}/mini_sdk:libbt_mini_sdk" ]
+        external_deps += [ "bluetooth:btframework" ]
       }
 
       if (support_wifi && device_manager_feature_product == "default") {
         defines += [ "SUPPORT_WIFI" ]
-        deps += [ "${ext_path}/mini_sdk:libwifi_mini_sdk" ]
+        external_deps += [ "wifi:wifi_sdk" ]
       }
 
       if (support_power_manager) {
         defines += [ "SUPPORT_POWER_MANAGER" ]
-        deps += [ "${ext_path}/mini_sdk:libpower_mini_sdk" ]
+        external_deps += [ "power_manager:powermgr_client" ]
       }
 
       if (support_memmgr) {
@@ -357,12 +356,12 @@ if (defined(ohos_lite)) {
 
       if (support_bluetooth && device_manager_feature_product == "default") {
         defines += [ "SUPPORT_BLUETOOTH" ]
-        deps += [ "${ext_path}/mini_sdk:libbt_mini_sdk" ]
+        external_deps += [ "bluetooth:btframework" ]
       }
 
       if (support_wifi && device_manager_feature_product == "default") {
         defines += [ "SUPPORT_WIFI" ]
-        deps += [ "${ext_path}/mini_sdk:libwifi_mini_sdk" ]
+        external_deps += [ "wifi:wifi_sdk" ]
       }
 
       if (device_manager_feature_product == "default") {
@@ -371,7 +370,7 @@ if (defined(ohos_lite)) {
 
       if (support_power_manager) {
         defines += [ "SUPPORT_POWER_MANAGER" ]
-        deps += [ "${ext_path}/mini_sdk:libpower_mini_sdk" ]
+        external_deps += [ "power_manager:powermgr_client" ]
       }
 
       if (support_memmgr) {
@@ -501,12 +500,12 @@ if (defined(ohos_lite)) {
 
       if (support_bluetooth && device_manager_feature_product == "default") {
         defines += [ "SUPPORT_BLUETOOTH" ]
-        deps += [ "${ext_path}/mini_sdk:libbt_mini_sdk" ]
+        external_deps += [ "bluetooth:btframework" ]
       }
 
       if (support_wifi && device_manager_feature_product == "default") {
         defines += [ "SUPPORT_WIFI" ]
-        deps += [ "${ext_path}/mini_sdk:libwifi_mini_sdk" ]
+        external_deps += [ "wifi:wifi_sdk" ]
       }
 
       if (device_manager_feature_product == "default") {
@@ -515,7 +514,7 @@ if (defined(ohos_lite)) {
 
       if (support_power_manager) {
         defines += [ "SUPPORT_POWER_MANAGER" ]
-        deps += [ "${ext_path}/mini_sdk:libpower_mini_sdk" ]
+        external_deps += [ "power_manager:powermgr_client" ]
       }
 
       if (support_memmgr) {

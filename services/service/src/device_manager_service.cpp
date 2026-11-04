@@ -48,19 +48,18 @@
 #include "relationship_sync_mgr.h"
 #include "openssl/sha.h"
 #include "system_ability_definition.h"
-#include "mini_sdk_constants.h"
-#include "mini_sdk_loader.h"
 #if defined(SUPPORT_POWER_MANAGER)
-#include "power_mini_sdk.h"
+#include "power_mgr_client.h"
 #endif // SUPPORT_POWER_MANAGER
-#if defined(SUPPORT_BLUETOOTH) || defined(SUPPORT_WIFI)
-#include "softbus_publish.h"
-#endif
 #if defined(SUPPORT_BLUETOOTH)
-#include "bt_mini_sdk.h"
+#include "softbus_publish.h"
+#include "bluetooth_def.h"
+#include "bluetooth_host.h"
 #endif // SUPPORT_BLUETOOTH
 #if defined(SUPPORT_WIFI)
-#include "wifi_mini_sdk.h"
+#include "softbus_publish.h"
+#include "wifi_device.h"
+#include "wifi_msg.h"
 #endif // SUPPORT_WIFI
 #include "ipc_server_stub.h"
 
@@ -338,14 +337,13 @@ DM_EXPORT void DeviceManagerService::SubscribeDataShareCommonEvent()
 static void QueryBluetoothState(const std::shared_ptr<DmPublishEventSubscriber> &publishSubScriber,
     const sptr<ISystemAbilityManager> &samgr)
 {
-    auto remote = samgr->CheckSystemAbility(BLUETOOTH_HOST_SYS_ABILITY_ID);
-    if (remote == nullptr) {
-        publishSubScriber->SetBluetoothState(MiniSdk::BT_EVENT_STATE_OFF);
+    if (samgr->CheckSystemAbility(BLUETOOTH_HOST_SYS_ABILITY_ID) == nullptr) {
+        publishSubScriber->SetBluetoothState(static_cast<int32_t>(Bluetooth::BTStateID::STATE_TURN_OFF));
     } else {
-        if (MiniSdk::Call(LIB_BT_MINI_SDK_NAME, "IsBleEnabled", false)) {
-            publishSubScriber->SetBluetoothState(MiniSdk::BT_EVENT_STATE_ON);
+        if (Bluetooth::BluetoothHost::GetDefaultHost().IsBleEnabled()) {
+            publishSubScriber->SetBluetoothState(static_cast<int32_t>(Bluetooth::BTStateID::STATE_TURN_ON));
         } else {
-            publishSubScriber->SetBluetoothState(MiniSdk::BT_EVENT_STATE_OFF);
+            publishSubScriber->SetBluetoothState(static_cast<int32_t>(Bluetooth::BTStateID::STATE_TURN_OFF));
         }
     }
 }
@@ -356,13 +354,16 @@ static void QueryWifiState(const std::shared_ptr<DmPublishEventSubscriber> &publ
     const sptr<ISystemAbilityManager> &samgr)
 {
     if (samgr->CheckSystemAbility(WIFI_DEVICE_SYS_ABILITY_ID) == nullptr) {
-        publishSubScriber->SetWifiState(MiniSdk::WIFI_STATE_DISABLED);
+        publishSubScriber->SetWifiState(static_cast<int32_t>(OHOS::Wifi::WifiState::DISABLED));
     } else {
-        bool isWifiActive = MiniSdk::Call(LIB_WIFI_MINI_SDK_NAME, "IsWifiActive", false);
+        bool isWifiActive = false;
+        auto wifiMgr = Wifi::WifiDevice::GetInstance(WIFI_DEVICE_ABILITY_ID);
+        CHECK_NULL_VOID(wifiMgr);
+        wifiMgr->IsWifiActive(isWifiActive);
         if (isWifiActive) {
-            publishSubScriber->SetWifiState(MiniSdk::WIFI_STATE_ENABLED);
+            publishSubScriber->SetWifiState(static_cast<int32_t>(OHOS::Wifi::WifiState::ENABLED));
         } else {
-            publishSubScriber->SetWifiState(MiniSdk::WIFI_STATE_DISABLED);
+            publishSubScriber->SetWifiState(static_cast<int32_t>(OHOS::Wifi::WifiState::DISABLED));
         }
     }
 }
@@ -380,7 +381,7 @@ static ScreenState QueryScreenState(const sptr<ISystemAbilityManager> &samgr)
         state = DM_SCREEN_OFF;
 #endif
     } else {
-        if (!MiniSdk::Call(LIB_POWER_MINI_SDK_NAME, "IsScreenOn", false)) {
+        if (!OHOS::PowerMgr::PowerMgrClient::GetInstance().IsScreenOn()) {
             state = DM_SCREEN_OFF;
         }
     }

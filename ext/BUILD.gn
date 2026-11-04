@@ -15,12 +15,7 @@ import("//build/ohos.gni")
 import("//foundation/distributedhardware/device_manager/device_manager.gni")
 
 group("ext_modules") {
-  deps = [
-    "./mini_sdk:libbt_mini_sdk",
-    "./mini_sdk:libpower_mini_sdk",
-    "./mini_sdk:libscreenlock_mini_sdk",
-    "./mini_sdk:libwifi_mini_sdk",
-  ]
+  deps = []
   if (support_jsapi) {
     deps += [ "./pin_auth:devicemanagerext_pin_auth" ]
   }
