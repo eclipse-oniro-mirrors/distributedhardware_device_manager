@@ -16,10 +16,6 @@
 #ifndef OHOS_DM_WIFI_MINI_SDK_H
 #define OHOS_DM_WIFI_MINI_SDK_H
 
-#ifndef __cplusplus
-#include <stdbool.h>
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
