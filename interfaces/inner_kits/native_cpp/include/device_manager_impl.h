@@ -489,6 +489,8 @@ public:
         std::map<DmCommonNotifyEvent, std::set<std::pair<std::string, int64_t>>> &callbackMap);
     virtual int32_t UpdateServiceInfo(int64_t serviceId, const DmRegisterServiceInfo &regServiceInfo) override;
     virtual bool IsDeviceOnline(const std::string &pkgName) override;
+    virtual int32_t Register3rdDeviceInfo(const Dm3rdDeviceInfo &info) override;
+    virtual int32_t UnRegister3rdDeviceInfo(const std::string &networkId) override;
 private:
     DeviceManagerImpl() = default;
     ~DeviceManagerImpl() = default;

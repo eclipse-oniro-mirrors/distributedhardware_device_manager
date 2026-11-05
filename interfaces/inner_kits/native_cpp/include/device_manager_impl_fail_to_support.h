@@ -268,6 +268,8 @@ public:
         const std::map<std::string, std::string> &unbindParam, const std::string &netWorkId,
         int64_t serviceId) override;
     virtual int32_t UpdateServiceInfo(int64_t serviceId, const DmRegisterServiceInfo &regServiceInfo) override;
+    virtual int32_t Register3rdDeviceInfo(const Dm3rdDeviceInfo &info) override;
+    virtual int32_t UnRegister3rdDeviceInfo(const std::string &networkId) override;
 private:
     DeviceManagerImplFailToSupport() = default;
     ~DeviceManagerImplFailToSupport() = default;
