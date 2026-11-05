@@ -5233,8 +5233,8 @@ ohos_unittest("UTTest_ivi_screen_power_helper") {
 ohos_unittest("UTTest_dm_ui_lifecycle") {
   module_out_path = module_out_path
   sources = [
-    "UTTest_dm_ui_lifecycle.cpp",
     "${servicesimpl_path}/src/ability/standard/dm_dialog_client.cpp",
+    "UTTest_dm_ui_lifecycle.cpp",
   ]
   include_dirs = [
     "${servicesimpl_path}/include/ability",
@@ -5253,6 +5253,14 @@ ohos_unittest("UTTest_dm_ui_lifecycle") {
     "-Wl,--wrap=dlclose",
     "-Wl,--wrap=ffrt_alloc_auto_managed_function_storage_base",
     "-Wl,--wrap=ffrt_submit_base",
+
+    # Keep linker wrapper names in the link configuration, not as C++ identifiers.
+    "-Wl,--defsym=__wrap_ffrt_alloc_auto_managed_function_storage_base=WrapFfrtAllocAutoManagedFunctionStorageBase",
+    "-Wl,--defsym=__wrap_ffrt_submit_base=WrapFfrtSubmitBase",
+    "-Wl,--defsym=__wrap_dlopen=WrapDlopen",
+    "-Wl,--defsym=__wrap_dlsym=WrapDlsym",
+    "-Wl,--defsym=__wrap___dlsym_time64=WrapDlsymTime64",
+    "-Wl,--defsym=__wrap_dlclose=WrapDlclose",
   ]
   external_deps = [
     "ability_runtime:ability_connect_callback_stub",

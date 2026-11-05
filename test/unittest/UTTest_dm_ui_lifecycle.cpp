@@ -40,97 +40,108 @@ struct Context {
 constexpr uint64_t CLOSE_TIMEOUT_US = 5000000;
 constexpr int32_t DISCONNECT_ERROR = -2;
 constexpr size_t MAX_DEFERRED_REQUESTS = 16;
-std::atomic<int> opens {0};
-std::atomic<int> closes {0};
-std::atomic<int> destroys {0};
-std::atomic<int> calls {0};
-std::atomic<int> events {0};
-std::atomic<int> inside {0};
-bool failOpen = false;
-bool failApi = false;
-bool deferClose = false;
-bool failResidentApi = false;
-bool failCreate = false;
-int32_t closeResult = 0;
-int32_t disconnectResult = 0;
-uint32_t sessionFlags = DM_UI_CAN_UNLOAD_DIALOG;
-uint32_t sessionVersion = DM_UI_SESSION_API_VERSION;
-bool failSessionSymbol = false;
-std::atomic<int> workCalls {0};
-std::atomic<int> residentCalls {0};
-std::atomic<uint32_t> lastResidentOperation {DM_UI_CONFIRM};
-std::atomic<bool> closeOnResidentShow {false};
-std::mutex taskMutex;
-std::vector<ffrt_function_header_t *> timers;
-std::vector<ffrt_function_header_t *> workQueue;
-std::set<Context *> contexts;
-std::mutex gate;
-std::condition_variable changed;
-bool blockShow = false;
-bool entered = false;
-bool proceed = false;
-bool blockWork = false;
-bool workEntered = false;
-bool workProceed = false;
-std::vector<sptr<AAFwk::IAbilityConnection>> connections;
+constexpr int RELOAD_CYCLES = 5;
+constexpr int TWO_SESSIONS = 2;
+constexpr int THREE_SESSIONS = 3;
+constexpr int SHOW_AND_CLOSE_CALLS = 2;
+constexpr int REPLAY_AND_NEXT_SHOW_CALLS = 3;
+constexpr char EMPTY_JSON[] = "{}";
+constexpr size_t EMPTY_JSON_SIZE = sizeof(EMPTY_JSON) - 1;
+constexpr char TEST_PIN[] = "123456";
+constexpr size_t TEST_PIN_SIZE = sizeof(TEST_PIN) - 1;
+constexpr char TEST_PAYLOAD[] = "synthetic";
+constexpr size_t TEST_PAYLOAD_SIZE = sizeof(TEST_PAYLOAD) - 1;
+std::atomic<int> g_opens{ 0 };
+std::atomic<int> g_closes{ 0 };
+std::atomic<int> g_destroys{ 0 };
+std::atomic<int> g_calls{ 0 };
+std::atomic<int> g_events{ 0 };
+std::atomic<int> g_inside{ 0 };
+bool g_failOpen = false;
+bool g_failApi = false;
+bool g_deferClose = false;
+bool g_failResidentApi = false;
+bool g_failCreate = false;
+int32_t g_closeResult = 0;
+int32_t g_disconnectResult = 0;
+uint32_t g_sessionFlags = DM_UI_CAN_UNLOAD_DIALOG;
+uint32_t g_sessionVersion = DM_UI_SESSION_API_VERSION;
+bool g_failSessionSymbol = false;
+std::atomic<int> g_workCalls{ 0 };
+std::atomic<int> g_residentCalls{ 0 };
+std::atomic<uint32_t> g_lastResidentOperation{ DM_UI_CONFIRM };
+std::atomic<bool> g_closeOnResidentShow{ false };
+std::mutex g_taskMutex;
+std::vector<ffrt_function_header_t *> g_timers;
+std::vector<ffrt_function_header_t *> g_workQueue;
+std::set<Context *> g_contexts;
+std::mutex g_gate;
+std::condition_variable g_changed;
+bool g_blockShow = false;
+bool g_entered = false;
+bool g_proceed = false;
+bool g_blockWork = false;
+bool g_workEntered = false;
+bool g_workProceed = false;
+std::vector<sptr<AAFwk::IAbilityConnection>> g_connections;
 
 void *Create(const DmUiSessionHost *host, void *connection)
 {
     EXPECT_EQ(host->size, sizeof(DmUiSessionHost));
     EXPECT_NE(host->submit, nullptr);
-    connections.emplace_back(static_cast<AAFwk::IAbilityConnection *>(connection));
-    if (failCreate) {
+    g_connections.emplace_back(static_cast<AAFwk::IAbilityConnection *>(connection));
+    if (g_failCreate) {
         return nullptr;
     }
-    auto context = new Context {*host, connections.back()};
-    contexts.insert(context);
+    auto context = new Context{ *host, g_connections.back() };
+    g_contexts.insert(context);
     return context;
 }
 void RunConnectionWork(void *)
 {
-    ++inside;
-    ++workCalls;
+    ++g_inside;
+    ++g_workCalls;
     {
-        std::unique_lock<std::mutex> lock(gate);
-        if (blockWork) {
-            workEntered = true;
-            changed.notify_all();
-            changed.wait(lock, [] { return workProceed; });
+        std::unique_lock<std::mutex> lock(g_gate);
+        if (g_blockWork) {
+            g_workEntered = true;
+            g_changed.notify_all();
+            g_changed.wait(lock, [] { return g_workProceed; });
         }
     }
-    --inside;
+    --g_inside;
 }
 
 int32_t Invoke(void *value, uint32_t operation, const char *, size_t)
 {
-    ++inside;
-    ++calls;
+    ++g_inside;
+    ++g_calls;
     if (operation == DM_UI_CONFIRM) {
-        std::unique_lock<std::mutex> lock(gate);
-        if (blockShow) {
-            entered = true;
-            changed.notify_all();
-            changed.wait(lock, [] { return proceed; });
+        std::unique_lock<std::mutex> lock(g_gate);
+        if (g_blockShow) {
+            g_entered = true;
+            g_changed.notify_all();
+            g_changed.wait(lock, [] { return g_proceed; });
         }
     }
     if (operation == DM_UI_PIN) {
         auto context = static_cast<Context *>(value);
         EXPECT_EQ(context->host.submit(context->host.generation, RunConnectionWork, value), 0);
     }
-    if (operation == DM_UI_CLOSE && !deferClose && closeResult == 0) {
+    if (operation == DM_UI_CLOSE && !g_deferClose && g_closeResult == 0) {
         static_cast<Context *>(value)->connection->OnAbilityDisconnectDone(
-            AppExecFwk::ElementName(), disconnectResult);
+            AppExecFwk::ElementName(), g_disconnectResult);
     }
-    --inside;
-    return operation == DM_UI_CLOSE ? closeResult : 0;
+    --g_inside;
+    return operation == DM_UI_CLOSE ? g_closeResult : 0;
 }
 void Connected(void *, void *, int32_t)
 {
-    ++events;
+    ++g_events;
 }
 void Disconnected(void *value, int32_t result)
 {
-    ++events;
+    ++g_events;
     auto context = static_cast<Context *>(value);
     if (result == 0 || result == DM_UI_TARGET_TERMINATED) {
         context->host.retire(context->host.generation);
@@ -138,39 +149,45 @@ void Disconnected(void *value, int32_t result)
 }
 void Destroy(void *context)
 {
-    EXPECT_EQ(inside.load(), 0);
-    ++destroys;
-    contexts.erase(static_cast<Context *>(context));
+    EXPECT_EQ(g_inside.load(), 0);
+    ++g_destroys;
+    g_contexts.erase(static_cast<Context *>(context));
     delete static_cast<Context *>(context);
 }
-DmUiSessionApi api { DM_UI_SESSION_API_VERSION, sizeof(DmUiSessionApi), DM_UI_CAN_UNLOAD_DIALOG,
-    Create, Invoke, Connected, Disconnected, Destroy };
+DmUiSessionApi g_api{ DM_UI_SESSION_API_VERSION,
+    sizeof(DmUiSessionApi),
+    DM_UI_CAN_UNLOAD_DIALOG,
+    Create,
+    Invoke,
+    Connected,
+    Disconnected,
+    Destroy };
 const DmUiSessionApi *GetApi()
 {
-    api.flags = sessionFlags;
-    api.version = sessionVersion;
-    return failApi ? nullptr : &api;
+    g_api.flags = g_sessionFlags;
+    g_api.version = g_sessionVersion;
+    return g_failApi ? nullptr : &g_api;
 }
 int32_t ResidentInvoke(uint32_t operation, const char *, size_t)
 {
-    EXPECT_EQ(inside.load(), 0);
-    ++residentCalls;
-    lastResidentOperation.store(operation);
-    if (operation == DM_UI_CONFIRM && closeOnResidentShow.exchange(false)) {
+    EXPECT_EQ(g_inside.load(), 0);
+    ++g_residentCalls;
+    g_lastResidentOperation.store(operation);
+    if (operation == DM_UI_CONFIRM && g_closeOnResidentShow.exchange(false)) {
         EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
     }
     return 0;
 }
-const DmUiApi residentApi { DM_UI_API_VERSION, sizeof(DmUiApi), ResidentInvoke };
+const DmUiApi g_residentApi{ DM_UI_API_VERSION, sizeof(DmUiApi), ResidentInvoke };
 const DmUiApi *GetResidentApi()
 {
-    return failResidentApi ? nullptr : &residentApi;
+    return g_failResidentApi ? nullptr : &g_residentApi;
 }
 void RunTasks(std::vector<ffrt_function_header_t *> &queue, bool execute)
 {
     std::vector<ffrt_function_header_t *> tasks;
     {
-        std::lock_guard<std::mutex> lock(taskMutex);
+        std::lock_guard<std::mutex> lock(g_taskMutex);
         tasks.swap(queue);
     }
     for (auto task : tasks) {
@@ -183,371 +200,390 @@ void RunTasks(std::vector<ffrt_function_header_t *> &queue, bool execute)
 }
 void RunTimers(bool execute = true)
 {
-    RunTasks(timers, execute);
+    RunTasks(g_timers, execute);
 }
 void RunWork()
 {
-    RunTasks(workQueue, true);
+    RunTasks(g_workQueue, true);
 }
 class DmUiLifecycle : public testing::Test {
 public:
     void SetUp() override
     {
         ASSERT_TRUE(ResetUiStateForTest());
-        opens = closes = destroys = calls = events = inside = residentCalls = 0;
-        failOpen = failApi = failResidentApi = failCreate = deferClose = false;
-        closeResult = disconnectResult = 0;
-        closeOnResidentShow = false;
-        sessionFlags = DM_UI_CAN_UNLOAD_DIALOG;
-        sessionVersion = DM_UI_SESSION_API_VERSION;
-        failSessionSymbol = false;
-        workCalls = 0;
-        blockWork = workEntered = workProceed = false;
-        blockShow = entered = proceed = false;
+        g_opens = g_closes = g_destroys = g_calls = g_events = g_inside = g_residentCalls = 0;
+        g_failOpen = g_failApi = g_failResidentApi = g_failCreate = g_deferClose = false;
+        g_closeResult = g_disconnectResult = 0;
+        g_closeOnResidentShow = false;
+        g_sessionFlags = DM_UI_CAN_UNLOAD_DIALOG;
+        g_sessionVersion = DM_UI_SESSION_API_VERSION;
+        g_failSessionSymbol = false;
+        g_workCalls = 0;
+        g_blockWork = g_workEntered = g_workProceed = false;
+        g_blockShow = g_entered = g_proceed = false;
     }
     void TearDown() override
     {
         RunWork();
         RunTimers(false);
         EXPECT_TRUE(ResetUiStateForTest());
-        connections.clear();
+        g_connections.clear();
         // The fixture, not the production recovery path, reclaims retained mock sessions.
-        for (auto context : contexts) {
+        for (auto context : g_contexts) {
             delete context;
         }
-        contexts.clear();
+        g_contexts.clear();
     }
 };
 }
-extern "C" void *__wrap_ffrt_alloc_auto_managed_function_storage_base(ffrt_function_kind_t)
+extern "C" void *WrapFfrtAllocAutoManagedFunctionStorageBase(ffrt_function_kind_t)
 {
     return std::calloc(1, ffrt_auto_managed_function_storage_size);
 }
-extern "C" void __wrap_ffrt_submit_base(ffrt_function_header_t *task, const ffrt_deps_t *, const ffrt_deps_t *,
-    const ffrt_task_attr_t *attr)
+extern "C" void WrapFfrtSubmitBase(
+    ffrt_function_header_t *task, const ffrt_deps_t *, const ffrt_deps_t *, const ffrt_task_attr_t *attr)
 {
     auto delay = ffrt_task_attr_get_delay(attr);
     EXPECT_TRUE(delay == 0 || delay == CLOSE_TIMEOUT_US);
-    std::lock_guard<std::mutex> lock(taskMutex);
-    (delay == 0 ? workQueue : timers).push_back(task);
+    std::lock_guard<std::mutex> lock(g_taskMutex);
+    (delay == 0 ? g_workQueue : g_timers).push_back(task);
 }
-extern "C" void *__wrap_dlopen(const char *name, int)
+extern "C" void *WrapDlopen(const char *name, int)
 {
     EXPECT_STREQ(name, "libdm_ui.z.so");
-    ++opens;
-    return failOpen ? nullptr : &opens;
+    ++g_opens;
+    return g_failOpen ? nullptr : &g_opens;
 }
-extern "C" void *__wrap_dlsym(void *, const char *name)
+extern "C" void *WrapDlsym(void *, const char *name)
 {
     if (std::strcmp(name, "DmGetUiApiV1") == 0) {
         return reinterpret_cast<void *>(GetResidentApi);
     }
     EXPECT_STREQ(name, "DmGetUiSessionApiV2");
-    return failSessionSymbol ? nullptr : reinterpret_cast<void *>(GetApi);
+    return g_failSessionSymbol ? nullptr : reinterpret_cast<void *>(GetApi);
 }
-extern "C" void *__wrap___dlsym_time64(void *handle, const char *name)
+extern "C" void *WrapDlsymTime64(void *handle, const char *name)
 {
-    return __wrap_dlsym(handle, name);
+    return WrapDlsym(handle, name);
 }
-extern "C" int __wrap_dlclose(void *)
+extern "C" int WrapDlclose(void *)
 {
-    EXPECT_EQ(inside.load(), 0);
-    ++closes;
+    EXPECT_EQ(g_inside.load(), 0);
+    ++g_closes;
     return 0;
 }
 
-TEST_F(DmUiLifecycle, ReleaseAndReloadWithLateAndConcurrentCallbacks)
+namespace {
+void VerifyInitializationAndReload()
 {
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(opens.load(), 0);
+    EXPECT_EQ(g_opens.load(), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE + 1, nullptr, 0), -1);
-    EXPECT_EQ(opens.load(), 0);
+    EXPECT_EQ(g_opens.load(), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, nullptr, 1), -1);
-    failOpen = true;
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), -1);
-    failOpen = false;
-    failApi = true;
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), -1);
-    EXPECT_EQ(closes.load(), 1);
-    failApi = false;
-    for (int cycle = 0; cycle < 5; ++cycle) {
-        int before = closes.load();
-        ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    g_failOpen = true;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
+    g_failOpen = false;
+    g_failApi = true;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
+    EXPECT_EQ(g_closes.load(), 1);
+    g_failApi = false;
+    for (int cycle = 0; cycle < RELOAD_CYCLES; ++cycle) {
+        int before = g_closes.load();
+        ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
         EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-        EXPECT_EQ(closes.load(), before + 1);
-        int callbacks = events.load();
-        connections.back()->OnAbilityConnectDone(AppExecFwk::ElementName(), nullptr, 0);
-        connections.back()->OnAbilityDisconnectDone(AppExecFwk::ElementName(), 0);
-        EXPECT_EQ(events.load(), callbacks); // Old generations cannot call unloaded code.
+        EXPECT_EQ(g_closes.load(), before + 1);
+        int callbacks = g_events.load();
+        g_connections.back()->OnAbilityConnectDone(AppExecFwk::ElementName(), nullptr, 0);
+        g_connections.back()->OnAbilityDisconnectDone(AppExecFwk::ElementName(), 0);
+        EXPECT_EQ(g_events.load(), callbacks); // Old generations cannot call unloaded code.
     }
-    EXPECT_EQ(destroys.load(), 5);
+    EXPECT_EQ(g_destroys.load(), RELOAD_CYCLES);
+}
 
+void VerifyShowQueuedDuringClose()
+{
     // The next show is accepted into the host queue while the old close completes.
-    deferClose = true;
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    auto closingConnection = connections.back();
+    g_deferClose = true;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    auto closingConnection = g_connections.back();
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    int dispatched = calls.load();
-    int before = closes.load();
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    EXPECT_EQ(calls.load(), dispatched);
+    int dispatched = g_calls.load();
+    int before = g_closes.load();
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    EXPECT_EQ(g_calls.load(), dispatched);
     closingConnection->OnAbilityDisconnectDone(AppExecFwk::ElementName(), 0);
-    EXPECT_EQ(closes.load(), before + 1);
-    EXPECT_EQ(calls.load(), dispatched + 1);
-    deferClose = false;
+    EXPECT_EQ(g_closes.load(), before + 1);
+    EXPECT_EQ(g_calls.load(), dispatched + 1);
+    g_deferClose = false;
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
+}
 
+void VerifyRetirementWaitsForActiveCall()
+{
     // A callback requests retirement while another module call is still running.
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     {
-        std::lock_guard<std::mutex> lock(gate);
-        blockShow = true;
-        entered = false;
-        proceed = false;
+        std::lock_guard<std::mutex> lock(g_gate);
+        g_blockShow = true;
+        g_entered = false;
+        g_proceed = false;
     }
-    std::thread active([] { ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0); });
+    std::thread active([] { ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0); });
     {
-        std::unique_lock<std::mutex> lock(gate);
-        changed.wait(lock, [] { return entered; });
+        std::unique_lock<std::mutex> lock(g_gate);
+        g_changed.wait(lock, [] { return g_entered; });
     }
-    before = closes.load();
+    int before = g_closes.load();
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(closes.load(), before);
+    EXPECT_EQ(g_closes.load(), before);
     {
-        std::lock_guard<std::mutex> lock(gate);
-        proceed = true;
-        blockShow = false;
-        changed.notify_all();
+        std::lock_guard<std::mutex> lock(g_gate);
+        g_proceed = true;
+        g_blockShow = false;
+        g_changed.notify_all();
     }
     active.join();
-    EXPECT_EQ(closes.load(), before + 1);
+    EXPECT_EQ(g_closes.load(), before + 1);
+}
 
+void VerifyClientReleaseAndPinWork()
+{
     // A UI client registered for cancellation still releases native resources.
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    before = closes.load();
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    int before = g_closes.load();
     DmDialogClient::GetInstance().ReleaseConfirmSession();
-    EXPECT_EQ(closes.load(), before + 1);
+    EXPECT_EQ(g_closes.load(), before + 1);
 
     // PIN work is owned by the host and releases the module after closing.
-    EXPECT_EQ(InvokeDmUi(DM_UI_PIN, "123456", 6), 0);
+    EXPECT_EQ(InvokeDmUi(DM_UI_PIN, TEST_PIN, TEST_PIN_SIZE), 0);
     RunWork();
-    before = closes.load();
+    before = g_closes.load();
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(closes.load(), before + 1);
+    EXPECT_EQ(g_closes.load(), before + 1);
     DmDialogClient::GetInstance().ReleaseConfirmSession();
-    EXPECT_EQ(closes.load(), before + 1);
-    EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE + 1, "{}", 2), -1);
+    EXPECT_EQ(g_closes.load(), before + 1);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE + 1, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(closes.load(), before + 1);
+    EXPECT_EQ(g_closes.load(), before + 1);
+}
+} // namespace
+
+TEST_F(DmUiLifecycle, ReleaseAndReloadWithLateAndConcurrentCallbacks)
+{
+    ASSERT_NO_FATAL_FAILURE(VerifyInitializationAndReload());
+    ASSERT_NO_FATAL_FAILURE(VerifyShowQueuedDuringClose());
+    ASSERT_NO_FATAL_FAILURE(VerifyRetirementWaitsForActiveCall());
+    ASSERT_NO_FATAL_FAILURE(VerifyClientReleaseAndPinWork());
 }
 
 TEST_F(DmUiLifecycle, CloseFailureUsesResidentBackendWithoutDestroyOrUnload)
 {
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    closeResult = DISCONNECT_ERROR;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    g_closeResult = DISCONNECT_ERROR;
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), DISCONNECT_ERROR);
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    EXPECT_EQ(residentCalls.load(), 1);
-    EXPECT_EQ(destroys.load(), 0);
-    EXPECT_EQ(closes.load(), 0);
-    EXPECT_EQ(contexts.size(), 1U);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    EXPECT_EQ(g_residentCalls.load(), 1);
+    EXPECT_EQ(g_destroys.load(), 0);
+    EXPECT_EQ(g_closes.load(), 0);
+    EXPECT_EQ(g_contexts.size(), 1U);
     for (size_t index = 0; index < MAX_DEFERRED_REQUESTS; ++index) {
-        EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+        EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
         EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
     }
-    EXPECT_EQ(contexts.size(), 1U);
-    EXPECT_EQ(opens.load(), 1);
+    EXPECT_EQ(g_contexts.size(), 1U);
+    EXPECT_EQ(g_opens.load(), 1);
 }
 
 TEST_F(DmUiLifecycle, MissingDisconnectCallbackReplaysPendingOnTimeout)
 {
-    deferClose = true;
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    g_deferClose = true;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    EXPECT_EQ(residentCalls.load(), 0);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    EXPECT_EQ(g_residentCalls.load(), 0);
     RunTimers();
-    EXPECT_EQ(residentCalls.load(), 1);
-    EXPECT_EQ(closes.load(), 0);
-    EXPECT_EQ(destroys.load(), 0);
+    EXPECT_EQ(g_residentCalls.load(), 1);
+    EXPECT_EQ(g_closes.load(), 0);
+    EXPECT_EQ(g_destroys.load(), 0);
 }
 
 TEST_F(DmUiLifecycle, FailedDisconnectCallbackRecoversImmediately)
 {
-    disconnectResult = DISCONNECT_ERROR;
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    g_disconnectResult = DISCONNECT_ERROR;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    EXPECT_EQ(residentCalls.load(), 1);
-    EXPECT_EQ(closes.load(), 0);
-    EXPECT_EQ(destroys.load(), 0);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    EXPECT_EQ(g_residentCalls.load(), 1);
+    EXPECT_EQ(g_closes.load(), 0);
+    EXPECT_EQ(g_destroys.load(), 0);
 }
 
 TEST_F(DmUiLifecycle, StaleWatchdogCannotRecoverNewGeneration)
 {
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    ASSERT_EQ(closes.load(), 1);
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    auto currentConnection = connections.back();
+    ASSERT_EQ(g_closes.load(), 1);
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    auto currentConnection = g_connections.back();
     std::vector<ffrt_function_header_t *> staleTimers;
     {
-        std::lock_guard<std::mutex> lock(taskMutex);
-        staleTimers.swap(timers);
+        std::lock_guard<std::mutex> lock(g_taskMutex);
+        staleTimers.swap(g_timers);
     }
     EXPECT_EQ(staleTimers.size(), 1U);
-    deferClose = true;
+    g_deferClose = true;
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
     // The stale timeout must not recover a successor that is also closing.
     RunTasks(staleTimers, true);
     currentConnection->OnAbilityDisconnectDone(AppExecFwk::ElementName(), 0);
-    EXPECT_EQ(closes.load(), 2);
-    EXPECT_EQ(destroys.load(), 2);
+    EXPECT_EQ(g_closes.load(), TWO_SESSIONS);
+    EXPECT_EQ(g_destroys.load(), TWO_SESSIONS);
     RunTimers();
-    deferClose = false;
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    EXPECT_EQ(residentCalls.load(), 0);
+    g_deferClose = false;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    EXPECT_EQ(g_residentCalls.load(), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(closes.load(), 3);
+    EXPECT_EQ(g_closes.load(), THREE_SESSIONS);
 }
 
 TEST_F(DmUiLifecycle, RepeatedCloseCancelsDeferredDisplay)
 {
-    deferClose = true;
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    g_deferClose = true;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     DmDialogClient::GetInstance().ReleaseConfirmSession();
     RunTimers();
-    EXPECT_EQ(residentCalls.load(), 0);
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    EXPECT_EQ(residentCalls.load(), 1);
+    EXPECT_EQ(g_residentCalls.load(), 0);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    EXPECT_EQ(g_residentCalls.load(), 1);
 }
 
 TEST_F(DmUiLifecycle, QueueCapacityIsBoundedAndRecoveryDrainsIt)
 {
-    deferClose = true;
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    g_deferClose = true;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
     for (size_t index = 0; index < MAX_DEFERRED_REQUESTS; ++index) {
-        EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+        EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     }
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), -1);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
     RunTimers();
-    EXPECT_EQ(residentCalls.load(), static_cast<int>(MAX_DEFERRED_REQUESTS));
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    EXPECT_EQ(g_residentCalls.load(), static_cast<int>(MAX_DEFERRED_REQUESTS));
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
 }
 
 TEST_F(DmUiLifecycle, RecoveryWaitsForExecutingModuleCall)
 {
-    deferClose = true;
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    g_deferClose = true;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     {
-        std::lock_guard<std::mutex> lock(gate);
-        blockShow = true;
+        std::lock_guard<std::mutex> lock(g_gate);
+        g_blockShow = true;
     }
-    std::thread running([] { EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0); });
+    std::thread running([] { EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0); });
     {
-        std::unique_lock<std::mutex> lock(gate);
-        changed.wait(lock, [] { return entered; });
+        std::unique_lock<std::mutex> lock(g_gate);
+        g_changed.wait(lock, [] { return g_entered; });
     }
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     RunTimers();
-    EXPECT_EQ(residentCalls.load(), 0);
-    EXPECT_EQ(closes.load(), 0);
+    EXPECT_EQ(g_residentCalls.load(), 0);
+    EXPECT_EQ(g_closes.load(), 0);
     {
-        std::lock_guard<std::mutex> lock(gate);
-        blockShow = false;
-        proceed = true;
-        changed.notify_all();
+        std::lock_guard<std::mutex> lock(g_gate);
+        g_blockShow = false;
+        g_proceed = true;
+        g_changed.notify_all();
     }
     running.join();
-    EXPECT_EQ(residentCalls.load(), 1);
-    EXPECT_EQ(destroys.load(), 0);
+    EXPECT_EQ(g_residentCalls.load(), 1);
+    EXPECT_EQ(g_destroys.load(), 0);
 }
 
 TEST_F(DmUiLifecycle, LateCallbackCannotUnloadResidentBackend)
 {
-    deferClose = true;
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    auto old = connections.back();
+    g_deferClose = true;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    auto old = g_connections.back();
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
     RunTimers();
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     old->OnAbilityDisconnectDone(AppExecFwk::ElementName(), 0);
-    int before = events.load();
+    int before = g_events.load();
     old->OnAbilityConnectDone(AppExecFwk::ElementName(), nullptr, 0);
-    EXPECT_EQ(events.load(), before);
-    EXPECT_EQ(closes.load(), 0);
-    EXPECT_EQ(destroys.load(), 0);
+    EXPECT_EQ(g_events.load(), before);
+    EXPECT_EQ(g_closes.load(), 0);
+    EXPECT_EQ(g_destroys.load(), 0);
     DmDialogClient::GetInstance().ReleaseConfirmSession();
-    EXPECT_EQ(lastResidentOperation.load(), DM_UI_CLOSE);
-    int callsBeforeInvalid = residentCalls.load();
-    EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE + 1, "{}", 2), -1);
-    EXPECT_EQ(residentCalls.load(), callsBeforeInvalid);
+    EXPECT_EQ(g_lastResidentOperation.load(), DM_UI_CLOSE);
+    int callsBeforeInvalid = g_residentCalls.load();
+    EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE + 1, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
+    EXPECT_EQ(g_residentCalls.load(), callsBeforeInvalid);
 }
 
 TEST_F(DmUiLifecycle, RegisteredUiCloseFailureAlsoRecovers)
 {
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    closeResult = DISCONNECT_ERROR;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    g_closeResult = DISCONNECT_ERROR;
     DmDialogClient::GetInstance().ReleaseConfirmSession();
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    EXPECT_EQ(residentCalls.load(), 1);
-    EXPECT_EQ(destroys.load(), 0);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    EXPECT_EQ(g_residentCalls.load(), 1);
+    EXPECT_EQ(g_destroys.load(), 0);
 }
 
 TEST_F(DmUiLifecycle, MissingResidentApiAndCreateFailureCanRetry)
 {
-    failResidentApi = true;
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), -1);
-    failResidentApi = false;
-    failCreate = true;
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), -1);
-    failCreate = false;
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    g_failResidentApi = true;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
+    g_failResidentApi = false;
+    g_failCreate = true;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
+    g_failCreate = false;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(destroys.load(), 1);
+    EXPECT_EQ(g_destroys.load(), 1);
 }
 
 TEST_F(DmUiLifecycle, MissingUnloadCapabilityIsRejectedAndCanRetry)
 {
-    sessionFlags = 0;
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), -1);
-    EXPECT_EQ(opens.load(), 1);
-    EXPECT_EQ(closes.load(), 1);
-    EXPECT_EQ(destroys.load(), 0);
-    EXPECT_EQ(calls.load(), 0);
-    EXPECT_TRUE(contexts.empty());
-    sessionFlags = DM_UI_CAN_UNLOAD_DIALOG;
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    g_sessionFlags = 0;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
+    EXPECT_EQ(g_opens.load(), 1);
+    EXPECT_EQ(g_closes.load(), 1);
+    EXPECT_EQ(g_destroys.load(), 0);
+    EXPECT_EQ(g_calls.load(), 0);
+    EXPECT_TRUE(g_contexts.empty());
+    g_sessionFlags = DM_UI_CAN_UNLOAD_DIALOG;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(destroys.load(), 1);
-    EXPECT_EQ(closes.load(), 2);
+    EXPECT_EQ(g_destroys.load(), 1);
+    EXPECT_EQ(g_closes.load(), TWO_SESSIONS);
     RunTimers();
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    EXPECT_EQ(opens.load(), 3);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    EXPECT_EQ(g_opens.load(), THREE_SESSIONS);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(destroys.load(), 2);
-    EXPECT_EQ(closes.load(), 3);
-    EXPECT_EQ(residentCalls.load(), 0);
+    EXPECT_EQ(g_destroys.load(), TWO_SESSIONS);
+    EXPECT_EQ(g_closes.load(), THREE_SESSIONS);
+    EXPECT_EQ(g_residentCalls.load(), 0);
 }
 
 namespace {
 void VerifySuccessfulDisconnectBeforeDrain(bool acknowledgeBeforeTimeout)
 {
-    deferClose = true;
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    auto connection = connections.back();
+    g_deferClose = true;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    auto connection = g_connections.back();
     {
-        std::lock_guard<std::mutex> lock(gate);
-        blockShow = true;
+        std::lock_guard<std::mutex> lock(g_gate);
+        g_blockShow = true;
     }
-    std::thread running([] { EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0); });
+    std::thread running([] { EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0); });
     {
-        std::unique_lock<std::mutex> lock(gate);
-        changed.wait(lock, [] { return entered; });
+        std::unique_lock<std::mutex> lock(g_gate);
+        g_changed.wait(lock, [] { return g_entered; });
     }
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
     if (acknowledgeBeforeTimeout) {
@@ -557,37 +593,37 @@ void VerifySuccessfulDisconnectBeforeDrain(bool acknowledgeBeforeTimeout)
         RunTimers();
         connection->OnAbilityDisconnectDone(AppExecFwk::ElementName(), 0);
     }
-    EXPECT_EQ(destroys.load(), 0);
-    EXPECT_EQ(closes.load(), 0);
+    EXPECT_EQ(g_destroys.load(), 0);
+    EXPECT_EQ(g_closes.load(), 0);
     {
-        std::lock_guard<std::mutex> lock(gate);
-        blockShow = false;
-        proceed = true;
-        changed.notify_all();
+        std::lock_guard<std::mutex> lock(g_gate);
+        g_blockShow = false;
+        g_proceed = true;
+        g_changed.notify_all();
     }
     running.join();
-    EXPECT_EQ(destroys.load(), 1);
-    EXPECT_EQ(closes.load(), 1);
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    EXPECT_EQ(residentCalls.load(), 0);
-    deferClose = false;
+    EXPECT_EQ(g_destroys.load(), 1);
+    EXPECT_EQ(g_closes.load(), 1);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    EXPECT_EQ(g_residentCalls.load(), 0);
+    g_deferClose = false;
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(closes.load(), 2);
+    EXPECT_EQ(g_closes.load(), TWO_SESSIONS);
 }
 
 TEST_F(DmUiLifecycle, TargetTerminationReleasesWithoutExplicitClose)
 {
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    auto old = connections.back();
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    auto old = g_connections.back();
     old->OnAbilityDisconnectDone(AppExecFwk::ElementName(), DM_UI_TARGET_TERMINATED);
-    EXPECT_EQ(destroys.load(), 1);
-    EXPECT_EQ(closes.load(), 1);
-    EXPECT_EQ(residentCalls.load(), 0);
-    EXPECT_EQ(InvokeDmUi(DM_UI_INPUT, "{}", 2), 0);
+    EXPECT_EQ(g_destroys.load(), 1);
+    EXPECT_EQ(g_closes.load(), 1);
+    EXPECT_EQ(g_residentCalls.load(), 0);
+    EXPECT_EQ(InvokeDmUi(DM_UI_INPUT, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     old->OnAbilityDisconnectDone(AppExecFwk::ElementName(), DM_UI_TARGET_TERMINATED);
-    EXPECT_EQ(destroys.load(), 1);
+    EXPECT_EQ(g_destroys.load(), 1);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(destroys.load(), 2);
+    EXPECT_EQ(g_destroys.load(), TWO_SESSIONS);
 }
 
 } // namespace
@@ -604,152 +640,152 @@ TEST_F(DmUiLifecycle, SuccessfulDisconnectCancelsRecoveryBeforeLastCallReturns)
 
 TEST_F(DmUiLifecycle, CloseDuringReplayCancelsRemainingRequests)
 {
-    deferClose = true;
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    g_deferClose = true;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    constexpr size_t REQUESTS_TO_CANCEL = 3;
-    for (size_t index = 0; index < REQUESTS_TO_CANCEL; ++index) {
-        EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    constexpr size_t requestsToCancel = 3;
+    for (size_t index = 0; index < requestsToCancel; ++index) {
+        EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     }
-    closeOnResidentShow = true;
+    g_closeOnResidentShow = true;
     RunTimers();
     // The first show and its reentrant close run; later, stale shows are cancelled.
-    EXPECT_EQ(residentCalls.load(), 2);
-    EXPECT_EQ(lastResidentOperation.load(), DM_UI_CLOSE);
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    EXPECT_EQ(residentCalls.load(), 3);
-    EXPECT_EQ(closes.load(), 0);
+    EXPECT_EQ(g_residentCalls.load(), SHOW_AND_CLOSE_CALLS);
+    EXPECT_EQ(g_lastResidentOperation.load(), DM_UI_CLOSE);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    EXPECT_EQ(g_residentCalls.load(), REPLAY_AND_NEXT_SHOW_CALLS);
+    EXPECT_EQ(g_closes.load(), 0);
 }
 
 TEST_F(DmUiLifecycle, AllDialogTypesReleaseAndReload)
 {
-    constexpr uint32_t OPERATIONS[] = { DM_UI_CONFIRM, DM_UI_SERVICE_CONFIRM, DM_UI_PIN, DM_UI_INPUT };
+    constexpr uint32_t operations[] = { DM_UI_CONFIRM, DM_UI_SERVICE_CONFIRM, DM_UI_PIN, DM_UI_INPUT };
     int expected = 0;
-    for (uint32_t operation : OPERATIONS) {
-        EXPECT_EQ(InvokeDmUi(operation, "synthetic", 9), 0);
+    for (uint32_t operation : operations) {
+        EXPECT_EQ(InvokeDmUi(operation, TEST_PAYLOAD, TEST_PAYLOAD_SIZE), 0);
         RunWork();
         DmDialogClient::GetInstance().ReleaseSession(operation);
-        EXPECT_EQ(closes.load(), ++expected);
-        EXPECT_EQ(destroys.load(), expected);
+        EXPECT_EQ(g_closes.load(), ++expected);
+        EXPECT_EQ(g_destroys.load(), expected);
     }
-    EXPECT_EQ(workCalls.load(), 1);
+    EXPECT_EQ(g_workCalls.load(), 1);
 }
 
 TEST_F(DmUiLifecycle, QueuedPinWorkKeepsLeaseUntilCancelledTaskReturns)
 {
-    ASSERT_EQ(InvokeDmUi(DM_UI_PIN, "123456", 6), 0);
-    EXPECT_EQ(workCalls.load(), 0);
+    ASSERT_EQ(InvokeDmUi(DM_UI_PIN, TEST_PIN, TEST_PIN_SIZE), 0);
+    EXPECT_EQ(g_workCalls.load(), 0);
     DmDialogClient::GetInstance().ReleaseSession(DM_UI_PIN);
-    EXPECT_EQ(destroys.load(), 0);
-    EXPECT_EQ(closes.load(), 0);
+    EXPECT_EQ(g_destroys.load(), 0);
+    EXPECT_EQ(g_closes.load(), 0);
     RunWork();
-    EXPECT_EQ(workCalls.load(), 0);
-    EXPECT_EQ(destroys.load(), 1);
-    EXPECT_EQ(closes.load(), 1);
+    EXPECT_EQ(g_workCalls.load(), 0);
+    EXPECT_EQ(g_destroys.load(), 1);
+    EXPECT_EQ(g_closes.load(), 1);
 }
 
 TEST_F(DmUiLifecycle, ExecutingPinWorkPreventsUnload)
 {
-    blockWork = true;
-    ASSERT_EQ(InvokeDmUi(DM_UI_PIN, "123456", 6), 0);
+    g_blockWork = true;
+    ASSERT_EQ(InvokeDmUi(DM_UI_PIN, TEST_PIN, TEST_PIN_SIZE), 0);
     std::thread running([] { RunWork(); });
     {
-        std::unique_lock<std::mutex> lock(gate);
-        changed.wait(lock, [] { return workEntered; });
+        std::unique_lock<std::mutex> lock(g_gate);
+        g_changed.wait(lock, [] { return g_workEntered; });
     }
     DmDialogClient::GetInstance().ReleaseSession(DM_UI_PIN);
-    EXPECT_EQ(destroys.load(), 0);
-    EXPECT_EQ(closes.load(), 0);
+    EXPECT_EQ(g_destroys.load(), 0);
+    EXPECT_EQ(g_closes.load(), 0);
     RunTimers();
     {
-        std::lock_guard<std::mutex> lock(gate);
-        workProceed = true;
-        changed.notify_all();
+        std::lock_guard<std::mutex> lock(g_gate);
+        g_workProceed = true;
+        g_changed.notify_all();
     }
     running.join();
-    EXPECT_EQ(workCalls.load(), 1);
-    EXPECT_EQ(destroys.load(), 1);
-    EXPECT_EQ(closes.load(), 1);
-    EXPECT_EQ(residentCalls.load(), 0);
+    EXPECT_EQ(g_workCalls.load(), 1);
+    EXPECT_EQ(g_destroys.load(), 1);
+    EXPECT_EQ(g_closes.load(), 1);
+    EXPECT_EQ(g_residentCalls.load(), 0);
 }
 
 TEST_F(DmUiLifecycle, DifferentDialogCancellationCannotCloseCurrentDialog)
 {
-    ASSERT_EQ(InvokeDmUi(DM_UI_INPUT, "synthetic", 9), 0);
-    int dispatched = calls.load();
+    ASSERT_EQ(InvokeDmUi(DM_UI_INPUT, TEST_PAYLOAD, TEST_PAYLOAD_SIZE), 0);
+    int dispatched = g_calls.load();
     DmDialogClient::GetInstance().ReleaseConfirmSession();
     DmDialogClient::GetInstance().ReleaseSession(DM_UI_PIN);
-    EXPECT_EQ(calls.load(), dispatched);
-    EXPECT_EQ(closes.load(), 0);
+    EXPECT_EQ(g_calls.load(), dispatched);
+    EXPECT_EQ(g_closes.load(), 0);
     DmDialogClient::GetInstance().ReleaseSession(DM_UI_INPUT);
-    EXPECT_EQ(closes.load(), 1);
-    ASSERT_EQ(InvokeDmUi(DM_UI_SERVICE_CONFIRM, "{}", 2), 0);
+    EXPECT_EQ(g_closes.load(), 1);
+    ASSERT_EQ(InvokeDmUi(DM_UI_SERVICE_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     DmDialogClient::GetInstance().ReleaseConfirmSession();
-    EXPECT_EQ(closes.load(), 2);
+    EXPECT_EQ(g_closes.load(), TWO_SESSIONS);
 }
 
 TEST_F(DmUiLifecycle, TypedCancelPreservesOtherQueuedDialogs)
 {
-    deferClose = true;
-    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
-    auto connection = connections.back();
+    g_deferClose = true;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    auto connection = g_connections.back();
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    int dispatched = calls.load();
-    EXPECT_EQ(InvokeDmUi(DM_UI_INPUT, "synthetic", 9), 0);
-    EXPECT_EQ(InvokeDmUi(DM_UI_SERVICE_CONFIRM, "{}", 2), 0);
+    int dispatched = g_calls.load();
+    EXPECT_EQ(InvokeDmUi(DM_UI_INPUT, TEST_PAYLOAD, TEST_PAYLOAD_SIZE), 0);
+    EXPECT_EQ(InvokeDmUi(DM_UI_SERVICE_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     DmDialogClient::GetInstance().ReleaseConfirmSession();
     connection->OnAbilityDisconnectDone(AppExecFwk::ElementName(), 0);
-    EXPECT_EQ(calls.load(), dispatched + 1);
+    EXPECT_EQ(g_calls.load(), dispatched + 1);
     DmDialogClient::GetInstance().ReleaseConfirmSession();
-    EXPECT_EQ(calls.load(), dispatched + 1);
-    deferClose = false;
+    EXPECT_EQ(g_calls.load(), dispatched + 1);
+    g_deferClose = false;
     DmDialogClient::GetInstance().ReleaseSession(DM_UI_INPUT);
-    EXPECT_EQ(closes.load(), 2);
+    EXPECT_EQ(g_closes.load(), TWO_SESSIONS);
 }
 
 TEST_F(DmUiLifecycle, SupersededPinWorkDoesNotConnectAfterInput)
 {
-    ASSERT_EQ(InvokeDmUi(DM_UI_PIN, "123456", 6), 0);
-    ASSERT_EQ(InvokeDmUi(DM_UI_INPUT, "synthetic", 9), 0);
+    ASSERT_EQ(InvokeDmUi(DM_UI_PIN, TEST_PIN, TEST_PIN_SIZE), 0);
+    ASSERT_EQ(InvokeDmUi(DM_UI_INPUT, TEST_PAYLOAD, TEST_PAYLOAD_SIZE), 0);
     DmDialogClient::GetInstance().ReleaseSession(DM_UI_PIN);
     RunWork();
-    EXPECT_EQ(workCalls.load(), 0);
-    EXPECT_EQ(closes.load(), 0);
+    EXPECT_EQ(g_workCalls.load(), 0);
+    EXPECT_EQ(g_closes.load(), 0);
     DmDialogClient::GetInstance().ReleaseSession(DM_UI_INPUT);
-    EXPECT_EQ(closes.load(), 1);
+    EXPECT_EQ(g_closes.load(), 1);
 }
 
 TEST_F(DmUiLifecycle, PinWorkDrainsBeforeFailureRecovery)
 {
-    ASSERT_EQ(InvokeDmUi(DM_UI_PIN, "123456", 6), 0);
-    closeResult = DISCONNECT_ERROR;
+    ASSERT_EQ(InvokeDmUi(DM_UI_PIN, TEST_PIN, TEST_PIN_SIZE), 0);
+    g_closeResult = DISCONNECT_ERROR;
     DmDialogClient::GetInstance().ReleaseSession(DM_UI_PIN);
-    EXPECT_EQ(InvokeDmUi(DM_UI_INPUT, "synthetic", 9), 0);
-    EXPECT_EQ(residentCalls.load(), 0);
+    EXPECT_EQ(InvokeDmUi(DM_UI_INPUT, TEST_PAYLOAD, TEST_PAYLOAD_SIZE), 0);
+    EXPECT_EQ(g_residentCalls.load(), 0);
     RunWork();
-    EXPECT_EQ(workCalls.load(), 0);
-    EXPECT_EQ(residentCalls.load(), 1);
-    EXPECT_EQ(lastResidentOperation.load(), DM_UI_INPUT);
-    EXPECT_EQ(closes.load(), 0);
+    EXPECT_EQ(g_workCalls.load(), 0);
+    EXPECT_EQ(g_residentCalls.load(), 1);
+    EXPECT_EQ(g_lastResidentOperation.load(), DM_UI_INPUT);
+    EXPECT_EQ(g_closes.load(), 0);
     DmDialogClient::GetInstance().ReleaseSession(DM_UI_PIN);
-    EXPECT_EQ(residentCalls.load(), 1);
+    EXPECT_EQ(g_residentCalls.load(), 1);
     DmDialogClient::GetInstance().ReleaseSession(DM_UI_INPUT);
-    EXPECT_EQ(residentCalls.load(), 2);
-    EXPECT_EQ(lastResidentOperation.load(), DM_UI_CLOSE);
+    EXPECT_EQ(g_residentCalls.load(), SHOW_AND_CLOSE_CALLS);
+    EXPECT_EQ(g_lastResidentOperation.load(), DM_UI_CLOSE);
 }
 
 TEST_F(DmUiLifecycle, MissingV2SymbolAndOldApiVersionAreRejected)
 {
-    failSessionSymbol = true;
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), -1);
-    failSessionSymbol = false;
-    constexpr uint32_t OLD_SESSION_VERSION = 1;
-    sessionVersion = OLD_SESSION_VERSION;
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), -1);
-    EXPECT_EQ(calls.load(), 0);
-    EXPECT_EQ(destroys.load(), 0);
-    sessionVersion = DM_UI_SESSION_API_VERSION;
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, "{}", 2), 0);
+    g_failSessionSymbol = true;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
+    g_failSessionSymbol = false;
+    constexpr uint32_t oldSessionVersion = 1;
+    g_sessionVersion = oldSessionVersion;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
+    EXPECT_EQ(g_calls.load(), 0);
+    EXPECT_EQ(g_destroys.load(), 0);
+    g_sessionVersion = DM_UI_SESSION_API_VERSION;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(destroys.load(), 1);
+    EXPECT_EQ(g_destroys.load(), 1);
 }

@@ -51,7 +51,7 @@ struct UiState {
     bool recoveryRequested = false;
     // Retain both the uncertain session and its module until process exit.
     bool residentMode = false;
-    std::array<uint64_t, DM_UI_CLOSE> cancelEpoch {};
+    std::array<uint64_t, DM_UI_CLOSE> cancelEpoch{};
     uint32_t currentOperation = DM_UI_CLOSE;
     std::deque<UiRequest> pending;
 };
@@ -93,8 +93,10 @@ void CancelPending(UiState &state, uint32_t operation)
     }
     uint32_t group = CancelGroup(operation);
     ++state.cancelEpoch[group];
-    state.pending.erase(std::remove_if(state.pending.begin(), state.pending.end(),
-        [group](const UiRequest &request) { return CancelGroup(request.operation) == group; }), state.pending.end());
+    state.pending.erase(std::remove_if(state.pending.begin(),
+                            state.pending.end(),
+                            [group](const UiRequest &request) { return CancelGroup(request.operation) == group; }),
+        state.pending.end());
 }
 
 int32_t SubmitSessionWork(uint64_t generation, void (*work)(void *), void *context)
@@ -113,18 +115,21 @@ int32_t SubmitSessionWork(uint64_t generation, void (*work)(void *), void *conte
     }
     // Both the task body and its destructor stay in the resident host. A module
     // function pointer is called only while this queued/running lease is held.
-    ffrt::submit([generation, epoch, work, context]() {
-        UiCallGuard call;
-        auto &state = State();
-        {
-            std::lock_guard<std::mutex> lock(state.mutex);
-            if (generation != state.generation || context != state.context || state.closing || state.retired ||
-                state.residentMode || state.currentOperation != DM_UI_PIN || epoch != state.cancelEpoch[DM_UI_PIN]) {
-                return;
+    ffrt::submit(
+        [generation, epoch, work, context]() {
+            UiCallGuard call;
+            auto &state = State();
+            {
+                std::lock_guard<std::mutex> lock(state.mutex);
+                if (generation != state.generation || context != state.context || state.closing || state.retired ||
+                    state.residentMode || state.currentOperation != DM_UI_PIN ||
+                    epoch != state.cancelEpoch[DM_UI_PIN]) {
+                    return;
+                }
             }
-        }
-        work(context);
-    }, ffrt::task_attr().name("DmUiSessionWork"));
+            work(context);
+        },
+        ffrt::task_attr().name("DmUiSessionWork"));
     return 0;
 }
 
@@ -153,8 +158,7 @@ void WatchClose(uint64_t generation)
 class UiConnection final : public AAFwk::AbilityConnectionStub {
 public:
     explicit UiConnection(uint64_t generation) : generation_(generation) {}
-    void OnAbilityConnectDone(const AppExecFwk::ElementName &, const sptr<IRemoteObject> &remote,
-        int result) override
+    void OnAbilityConnectDone(const AppExecFwk::ElementName &, const sptr<IRemoteObject> &remote, int result) override
     {
         DeliverConnection(generation_, remote.GetRefPtr(), result, true);
     }
@@ -162,6 +166,7 @@ public:
     {
         DeliverConnection(generation_, nullptr, result, false);
     }
+
 private:
     uint64_t generation_;
 };
@@ -179,15 +184,28 @@ void RequestRetirement(uint64_t generation)
 bool ValidApi(const DmUiSessionApi *api)
 {
     return api != nullptr && api->version == DM_UI_SESSION_API_VERSION && api->size == sizeof(DmUiSessionApi) &&
-        (api->flags & DM_UI_CAN_UNLOAD_DIALOG) != 0 &&
-        api->create != nullptr && api->invoke != nullptr && api->connected != nullptr &&
-        api->disconnected != nullptr && api->destroy != nullptr;
+        (api->flags & DM_UI_CAN_UNLOAD_DIALOG) != 0 && api->create != nullptr && api->invoke != nullptr &&
+        api->connected != nullptr && api->disconnected != nullptr && api->destroy != nullptr;
 }
 
 bool ValidResidentApi(const DmUiApi *api)
 {
     return api != nullptr && api->version == DM_UI_API_VERSION && api->size == sizeof(DmUiApi) &&
         api->invoke != nullptr;
+}
+
+void LoadUiModule(void *&handle, const DmUiSessionApi *&api, const DmUiApi *&residentApi)
+{
+    if (handle != nullptr) {
+        return;
+    }
+    handle = dlopen("libdm_ui.z.so", RTLD_NOW | RTLD_LOCAL);
+    if (handle != nullptr) {
+        auto getter = reinterpret_cast<DmGetUiSessionApi>(dlsym(handle, "DmGetUiSessionApiV2"));
+        api = getter == nullptr ? nullptr : getter();
+        auto residentGetter = reinterpret_cast<DmGetUiApi>(dlsym(handle, "DmGetUiApiV1"));
+        residentApi = residentGetter == nullptr ? nullptr : residentGetter();
+    }
 }
 
 // Called with the host lock held; dlopen, module creation and destruction execute without it.
@@ -204,21 +222,13 @@ bool EnsureContext(std::unique_lock<std::mutex> &lock)
     const DmUiApi *residentApi = state.residentApi;
     uint64_t generation = ++state.generation;
     lock.unlock();
-    if (handle == nullptr) {
-        handle = dlopen("libdm_ui.z.so", RTLD_NOW | RTLD_LOCAL);
-        if (handle != nullptr) {
-            auto getter = reinterpret_cast<DmGetUiSessionApi>(dlsym(handle, "DmGetUiSessionApiV2"));
-            api = getter == nullptr ? nullptr : getter();
-            auto residentGetter = reinterpret_cast<DmGetUiApi>(dlsym(handle, "DmGetUiApiV1"));
-            residentApi = residentGetter == nullptr ? nullptr : residentGetter();
-        }
-    }
+    LoadUiModule(handle, api, residentApi);
     sptr<AAFwk::IAbilityConnection> connection;
     void *context = nullptr;
     if (ValidApi(api) && ValidResidentApi(residentApi)) {
         connection = sptr<AAFwk::IAbilityConnection>(new (std::nothrow) UiConnection(generation));
         if (connection != nullptr) {
-            DmUiSessionHost host { sizeof(DmUiSessionHost), generation, RequestRetirement, SubmitSessionWork };
+            DmUiSessionHost host{ sizeof(DmUiSessionHost), generation, RequestRetirement, SubmitSessionWork };
             context = api->create(&host, connection.GetRefPtr());
         }
     }
@@ -328,45 +338,26 @@ void DeliverConnection(uint64_t generation, IRemoteObject *remote, int32_t resul
     }
     // Both the module callback and any module-owned temporaries have returned.
 }
-int32_t InvokeUiRequest(uint32_t operation, const char *data, size_t size, bool deferred, uint64_t cancelEpoch)
+// The caller holds the host lock; each helper releases it only after acquiring a call lease.
+int32_t InvokeResidentRequest(std::unique_lock<std::mutex> &lock, uint32_t operation, const char *data, size_t size)
 {
-    if (operation > DM_UI_CLOSE || (data == nullptr && size != 0)) {
-        return -1;
-    }
     auto &state = State();
-    std::unique_lock<std::mutex> lock(state.mutex);
-    state.changed.wait(lock, [&state] { return !state.transitioning; });
-    if (deferred && (operation >= DM_UI_CLOSE || cancelEpoch != state.cancelEpoch[CancelGroup(operation)])) {
-        return 0;
+    if (operation < DM_UI_CLOSE) {
+        state.currentOperation = operation;
     }
-    if (operation == DM_UI_CLOSE) {
-        CancelPending(state, DM_UI_CLOSE);
-    }
-    if (state.residentMode) {
-        if (operation < DM_UI_CLOSE) {
-            state.currentOperation = operation;
-        }
-        ++state.active;
-        auto api = state.residentApi;
-        lock.unlock();
-        UiCallGuard call;
-        return api->invoke(operation, data, size);
-    }
-    if (operation == DM_UI_CLOSE && state.context == nullptr) {
-        return 0;
-    }
-    if ((state.closing || state.retired) && operation != DM_UI_CLOSE) {
-        if (state.pending.size() >= MAX_PENDING_UI_REQUESTS) {
-            LOGE("UI close is pending; deferred request capacity reached");
-            return -1;
-        }
-        state.pending.push_back({ operation, std::string(data == nullptr ? "" : data, size),
-            state.cancelEpoch[CancelGroup(operation)] });
-        return 0;
-    }
+    ++state.active;
+    auto api = state.residentApi;
+    lock.unlock();
+    UiCallGuard call;
+    return api->invoke(operation, data, size);
+}
+
+int32_t InvokeSessionRequest(std::unique_lock<std::mutex> &lock, uint32_t operation, const char *data, size_t size)
+{
     if (!EnsureContext(lock)) {
         return -1;
     }
+    auto &state = State();
     if (operation < DM_UI_CLOSE) {
         state.currentOperation = operation;
     }
@@ -388,6 +379,38 @@ int32_t InvokeUiRequest(uint32_t operation, const char *data, size_t size, bool 
         RequestRecovery(generation);
     }
     return result;
+}
+
+int32_t InvokeUiRequest(uint32_t operation, const char *data, size_t size, bool deferred, uint64_t cancelEpoch)
+{
+    if (operation > DM_UI_CLOSE || (data == nullptr && size != 0)) {
+        return -1;
+    }
+    auto &state = State();
+    std::unique_lock<std::mutex> lock(state.mutex);
+    state.changed.wait(lock, [&state] { return !state.transitioning; });
+    if (deferred && (operation >= DM_UI_CLOSE || cancelEpoch != state.cancelEpoch[CancelGroup(operation)])) {
+        return 0;
+    }
+    if (operation == DM_UI_CLOSE) {
+        CancelPending(state, DM_UI_CLOSE);
+    }
+    if (state.residentMode) {
+        return InvokeResidentRequest(lock, operation, data, size);
+    }
+    if (operation == DM_UI_CLOSE && state.context == nullptr) {
+        return 0;
+    }
+    if ((state.closing || state.retired) && operation != DM_UI_CLOSE) {
+        if (state.pending.size() >= MAX_PENDING_UI_REQUESTS) {
+            LOGE("UI close is pending; deferred request capacity reached");
+            return -1;
+        }
+        state.pending.push_back(
+            { operation, std::string(data == nullptr ? "" : data, size), state.cancelEpoch[CancelGroup(operation)] });
+        return 0;
+    }
+    return InvokeSessionRequest(lock, operation, data, size);
 }
 } // namespace
 
