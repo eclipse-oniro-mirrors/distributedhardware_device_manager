@@ -28,7 +28,7 @@
 #include "dm_auth_state.h"
 #include "dm_auth_state_machine.h"
 #include "dm_crypto.h"
-#include "dm_dialog_manager.h"
+#include "dm_dialog_client.h"
 #include "dm_language_manager.h"
 #include "dm_log.h"
 #include "dm_negotiate_process.h"
@@ -901,7 +901,7 @@ int32_t AuthSinkConfirmState::ShowServiceBindConfigDialog(std::shared_ptr<DmAuth
     }
     CreateServiceBindProxyData(context, jsonObj);
     const std::string params = jsonObj.Dump();
-    DmDialogManager::GetInstance().ShowServiceBindConfirmDialog(params);
+    DmDialogClient::GetInstance().ShowServiceBindConfirmDialog(params);
 
     LOGI("end");
     return DM_OK;
@@ -918,7 +918,7 @@ int32_t AuthSinkConfirmState::ShowDeviceBindConfigDialog(std::shared_ptr<DmAuthC
     GetBundleLabel(context);
     CreateProxyData(context, jsonObj);
     const std::string params = jsonObj.Dump();
-    DmDialogManager::GetInstance().ShowConfirmDialog(params);
+    DmDialogClient::GetInstance().ShowConfirmDialog(params);
 
     LOGI("end");
     return DM_OK;

@@ -22,7 +22,7 @@
 #include "dm_auth_state.h"
 #include "dm_auth_state_machine.h"
 #include "dm_crypto.h"
-#include "dm_dialog_manager.h"
+#include "dm_dialog_client.h"
 #include "dm_log.h"
 #include "dm_negotiate_process.h"
 #include "dm_random.h"
@@ -83,7 +83,7 @@ int32_t AuthSinkStatePinAuthComm::ShowAuthInfoDialog(std::shared_ptr<DmAuthConte
         return STOP_BIND;
     }
 
-    DmDialogManager::GetInstance().ShowPinDialog(context->pinCode);
+    DmDialogClient::GetInstance().ShowPinDialog(context->pinCode);
     std::string pinCodeHash = GetAnonyString(Crypto::Sha256(context->pinCode));
     LOGI("pinCodeHash: %{public}s", pinCodeHash.c_str());
     context->timer->StartTimer(std::string(SESSION_HEARTBEAT_TIMEOUT_TASK),
@@ -574,7 +574,7 @@ int32_t AuthSrcPinInputState::ShowStartAuthDialog(std::shared_ptr<DmAuthContext>
         static_cast<int32_t>(STATUS_DM_SHOW_PIN_INPUT_UI), DM_OK);
     context->listener->OnBindResult(context->processInfo, context->peerTargetId,
         DM_OK, static_cast<int32_t>(STATUS_DM_SHOW_PIN_INPUT_UI), "");
-    DmDialogManager::GetInstance().ShowInputDialog(context->accessee.deviceName);
+    DmDialogClient::GetInstance().ShowInputDialog(context->accessee.deviceName);
     LOGI("end.");
     return DM_OK;
 }

@@ -613,7 +613,6 @@ private:
     std::shared_ptr<DmAuthResponseContext> authResponseContext_;
     std::shared_ptr<AuthMessageProcessor> authMessageProcessor_;
     std::shared_ptr<DmTimer> timer_;
-    std::shared_ptr<DmAbilityManager> dmAbilityMgr_;
     std::shared_ptr<HiChainAuthConnector> hiChainAuthConnector_;
     bool isCryptoSupport_ = false;
     bool isFinishOfLocal_ = true;

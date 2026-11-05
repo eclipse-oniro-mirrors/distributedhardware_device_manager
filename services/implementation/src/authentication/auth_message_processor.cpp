@@ -14,6 +14,7 @@
  */
 
 #include "auth_message_processor.h"
+#include "dm_ui_constants.h"
 
 #include "dm_auth_manager.h"
 #include "dm_anonymous.h"
@@ -24,14 +25,14 @@ namespace OHOS {
 namespace DistributedHardware {
 const char* TAG_NET_ID = "NETID";
 const char* TAG_TARGET = "TARGET";
-const char* TAG_APP_OPERATION = "APPOPERATION";
+const char* TAG_APP_OPERATION = DmUiConstants::TAG_APP_OPERATION;
 const char* TAG_APP_NAME = "APPNAME";
 const char* TAG_APP_DESCRIPTION = "APPDESC";
 const char* TAG_GROUPIDS = "GROUPIDLIST";
-const char* TAG_CUSTOM_DESCRIPTION = "CUSTOMDESC";
+const char* TAG_CUSTOM_DESCRIPTION = DmUiConstants::TAG_CUSTOM_DESCRIPTION;
 const char* TAG_DEVICE_TYPE = "DEVICETYPE";
-const char* TAG_REQUESTER = "REQUESTER";
-const char* TAG_LOCAL_DEVICE_TYPE = "LOCALDEVICETYPE";
+const char* TAG_REQUESTER = DmUiConstants::TAG_REQUESTER;
+const char* TAG_LOCAL_DEVICE_TYPE = DmUiConstants::TAG_LOCAL_DEVICE_TYPE;
 const char* TAG_INDEX = "INDEX";
 const char* TAG_SLICE_NUM = "SLICE";
 const char* TAG_IS_AUTH_CODE_READY = "IS_AUTH_CODE_READY";

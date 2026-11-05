@@ -14,23 +14,61 @@
  */
 
 #include "dm_dialog_manager_mock.h"
+#include "dm_dialog_client.h"
+#include "dm_ui_api.h"
 
 namespace OHOS {
 namespace DistributedHardware {
 
-void DmDialogManager::ShowConfirmDialog(const std::string param)
+void DmDialogClient::ShowConfirmDialog(const std::string param)
 {
     DmDialogManagerMock::dmDialogManagerMock->ShowConfirmDialog(param);
 }
 
-void DmDialogManager::ShowPinDialog(const std::string param)
+void DmDialogClient::ShowPinDialog(const std::string param)
 {
     DmDialogManagerMock::dmDialogManagerMock->ShowPinDialog(param);
 }
 
-void DmDialogManager::ShowInputDialog(const std::string param)
+void DmDialogClient::ShowInputDialog(const std::string param)
 {
     DmDialogManagerMock::dmDialogManagerMock->ShowInputDialog(param);
+}
+void DmDialogClient::ShowServiceBindConfirmDialog(const std::string param)
+{
+    if (DmDialogManagerMock::dmDialogManagerMock != nullptr) {
+        DmDialogManagerMock::dmDialogManagerMock->ShowServiceBindConfirmDialog(param);
+    }
+}
+
+void DmDialogClient::CloseDialog()
+{
+    if (DmDialogManagerMock::dmDialogManagerMock != nullptr) {
+        DmDialogManagerMock::dmDialogManagerMock->CloseDialog();
+    }
+}
+
+void DmDialogClient::ReleaseConfirmSession()
+{
+    if (DmDialogManagerMock::dmDialogManagerMock != nullptr) {
+        DmDialogManagerMock::dmDialogManagerMock->ReleaseConfirmSession();
+    }
+}
+
+void DmDialogClient::ReleaseSession(uint32_t operation)
+{
+    if (DmDialogManagerMock::dmDialogManagerMock != nullptr) {
+        DmDialogManagerMock::dmDialogManagerMock->ReleaseSession(operation);
+    }
+}
+
+int32_t InvokeDmUi(uint32_t operation, const char *data, size_t size)
+{
+    if (operation > DM_UI_CLOSE || (data == nullptr && size != 0)) {
+        return -1;
+    }
+    // Fully isolate the loader entry for the supported dialog operations.
+    return 0;
 }
 } // namespace DistributedHardware
 } // namespace OHOS

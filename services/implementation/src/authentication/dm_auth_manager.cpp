@@ -32,7 +32,7 @@
 #include "dm_anonymous.h"
 #include "dm_constants.h"
 #include "dm_crypto.h"
-#include "dm_dialog_manager.h"
+#include "dm_dialog_client.h"
 #include "dm_language_manager.h"
 #include "dm_log.h"
 #include "dm_radar_helper.h"
@@ -1908,7 +1908,7 @@ void DmAuthManager::ShowConfigDialog()
     std::string localUdid = static_cast<std::string>(localDeviceId);
     DeviceProfileConnector::GetInstance().SyncAclByBindType(authResponseContext_->peerBundleName,
         authResponseContext_->bindType, localUdid, remoteDeviceId_);
-    DmDialogManager::GetInstance().ShowConfirmDialog(params);
+    DmDialogClient::GetInstance().ShowConfirmDialog(params);
     struct RadarInfo info = {
         .funcName = "ShowConfigDialog",
         .stageRes = static_cast<int32_t>(StageRes::STAGE_IDLE),
@@ -1946,7 +1946,7 @@ void DmAuthManager::ShowAuthInfoDialog(bool authDeviceError)
         LOGE("ReportAuthPullPinBox failed");
     }
     pincodeDialogEverShown_ = true;
-    DmDialogManager::GetInstance().ShowPinDialog(authResponseContext_->code);
+    DmDialogClient::GetInstance().ShowPinDialog(authResponseContext_->code);
 }
 
 //LCOV_EXCL_START
@@ -1990,7 +1990,7 @@ void DmAuthManager::ShowStartAuthDialog()
     }
 
     pincodeDialogEverShown_ = true;
-    DmDialogManager::GetInstance().ShowInputDialog(authResponseContext_->targetDeviceName);
+    DmDialogClient::GetInstance().ShowInputDialog(authResponseContext_->targetDeviceName);
 }
 //LCOV_EXCL_STOP
 

@@ -38,10 +38,6 @@ enum UiAction {
     USER_OPERATION_TYPE_ALLOW_AUTH_ALWAYS = 6,
 };
 
-class DmAbilityManager {
-public:
-    AbilityStatus StartAbility(const std::string &params);
-};
 } // namespace DistributedHardware
 } // namespace OHOS
 #endif

@@ -28,6 +28,7 @@
 #endif
 
 #include "dm_single_instance.h"
+#include "dm_ui_api.h"
 #include "json_object.h"
 
 namespace OHOS {
@@ -35,12 +36,15 @@ namespace DistributedHardware {
 class DmDialogManager {
     DM_DECLARE_SINGLE_INSTANCE_BASE(DmDialogManager);
 public:
+    static DmDialogManager *CreateSession(const DmUiSessionHost &host, void *connection);
+    static void DestroySession(DmDialogManager *session);
     void ConnectExtension();
     void ShowConfirmDialog(const std::string param);
     void ShowServiceBindConfirmDialog(const std::string param);
     void ShowPinDialog(const std::string param);
     void ShowInputDialog(const std::string param);
     void CloseDialog();
+    int32_t CloseSession();
     void OnAbilityConnectDone(
         const AppExecFwk::ElementName& element, const sptr<IRemoteObject>& remoteObject, int resultCode);
     void OnAbilityDisconnectDone(const AppExecFwk::ElementName& element, int resultCode);
@@ -49,6 +53,9 @@ private:
     ~DmDialogManager();
     void SendMsgRequest(const sptr<IRemoteObject>& remoteObject);
     void ConfigLocalInfo(JsonObject& jsonObject);
+    void ConnectSessionExtension();
+    int32_t DisconnectSession();
+    void RetireSession();
     class DialogAbilityConnection : public OHOS::AAFwk::AbilityConnectionStub {
     public:
         void OnAbilityConnectDone(
@@ -77,6 +84,10 @@ private:
     sptr<IRemoteObject> g_remoteObject = nullptr;
     std::atomic<bool> isConnectSystemUI_{false};
     std::atomic<bool> isCloseDialog_{false};
+    bool managedSession_ = false;
+    bool sessionClosing_ = false;
+    bool sessionRequested_ = false;
+    DmUiSessionHost sessionHost_ {};
 };
 } // namespace DistributedHardware
 } // namespace OHOS
