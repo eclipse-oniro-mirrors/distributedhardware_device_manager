@@ -94,8 +94,8 @@ void CancelPending(UiState &state, uint32_t operation)
     uint32_t group = CancelGroup(operation);
     ++state.cancelEpoch[group];
     state.pending.erase(std::remove_if(state.pending.begin(),
-                            state.pending.end(),
-                            [group](const UiRequest &request) { return CancelGroup(request.operation) == group; }),
+        state.pending.end(),
+        [group](const UiRequest &request) { return CancelGroup(request.operation) == group; }),
         state.pending.end());
 }
 
