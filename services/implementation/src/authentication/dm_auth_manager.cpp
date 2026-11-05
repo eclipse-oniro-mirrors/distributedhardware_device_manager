@@ -21,7 +21,8 @@
 
 #include "iservice_registry.h"
 #if defined(SUPPORT_SCREENLOCK)
-#include "screenlock_manager.h"
+#include "mini_sdk_loader.h"
+#include "screenlock_mini_sdk.h"
 #endif
 
 #include "app_manager.h"
@@ -3151,8 +3152,7 @@ bool DmAuthManager::IsScreenLocked()
 {
     bool isLocked = false;
 #if defined(SUPPORT_SCREENLOCK)
-    CHECK_NULL_RETURN(OHOS::ScreenLock::ScreenLockManager::GetInstance(), isLocked);
-    isLocked = OHOS::ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked();
+    isLocked = MiniSdk::Call(LIB_SCREENLOCK_MINI_SDK_NAME, "IsScreenLocked", false);
 #endif
     LOGI("isLocked: %{public}d.", isLocked);
     return isLocked;

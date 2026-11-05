@@ -30,7 +30,8 @@ namespace MiniSdk {
 /*
  * Internal helpers shared by the mini sdk adapters. Each adapter talks to its
  * target system ability directly over IPC without linking the full third
- * party sdk client library, so only ipc and samgr are needed as dependencies.
+ * party sdk client library. The adapters depend on ipc and samgr, and directly
+ * on c_utils for the Parcel and RefBase symbols used by these helpers.
  */
 
 // Probe whether the target system ability has been published and get its remote object.
@@ -41,6 +42,16 @@ inline sptr<IRemoteObject> GetSaRemote(int32_t saId)
         return nullptr;
     }
     return samgr->CheckSystemAbility(saId);
+}
+
+// Match clients that wait for the service through GetSystemAbility instead of only probing it.
+inline sptr<IRemoteObject> GetSaRemoteWithWait(int32_t saId)
+{
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (samgr == nullptr) {
+        return nullptr;
+    }
+    return samgr->GetSystemAbility(saId, "");
 }
 
 // Write the target interface descriptor, the same token check as the official proxy.

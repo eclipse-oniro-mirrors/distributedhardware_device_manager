@@ -14,8 +14,9 @@
 import("//build/ohos.gni")
 import("//foundation/distributedhardware/device_manager/device_manager.gni")
 
-# Each mini sdk adapter only depends on ipc and samgr: it talks to the target
-# system ability directly over IPC (same protocol as the official sdk proxy)
+# Each mini sdk adapter uses c_utils, hilog, ipc and samgr. c_utils provides
+# Parcel and RefBase symbols and must be a direct dependency. The adapter talks
+# to the target system ability over IPC (same protocol as the official sdk proxy)
 # instead of linking the full third party sdk client library, so no sdk part
 # (bluetooth / wifi / power_manager / screenlock_mgr) is pulled into the
 # device_manager process through these adapters.
@@ -64,6 +65,7 @@ ohos_shared_library("libbt_mini_sdk") {
     }
 
     external_deps = [
+      "c_utils:utils",
       "hilog:libhilog",
       "ipc:ipc_single",
       "samgr:samgr_proxy",
@@ -119,6 +121,7 @@ ohos_shared_library("libwifi_mini_sdk") {
     }
 
     external_deps = [
+      "c_utils:utils",
       "hilog:libhilog",
       "ipc:ipc_single",
       "samgr:samgr_proxy",
@@ -174,6 +177,7 @@ ohos_shared_library("libpower_mini_sdk") {
     }
 
     external_deps = [
+      "c_utils:utils",
       "hilog:libhilog",
       "ipc:ipc_single",
       "samgr:samgr_proxy",
@@ -229,6 +233,7 @@ ohos_shared_library("libscreenlock_mini_sdk") {
     }
 
     external_deps = [
+      "c_utils:utils",
       "hilog:libhilog",
       "ipc:ipc_single",
       "samgr:samgr_proxy",

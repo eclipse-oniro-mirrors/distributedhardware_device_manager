@@ -15,7 +15,6 @@
 
 #include "UTTest_dm_screen_common_event.h"
 
-#include "bluetooth_def.h"
 #include "common_event_support.h"
 #include "dm_constants.h"
 #include "dm_screen_common_event.h"

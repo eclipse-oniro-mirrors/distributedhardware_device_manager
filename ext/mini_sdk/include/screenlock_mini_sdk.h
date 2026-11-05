@@ -27,10 +27,10 @@ extern "C" {
  * screenlock SA directly over IPC (same protocol as the official proxy)
  * without linking the full screenlock sdk client library.
  * Returns true only when the screenlock SA is ready and the screen
- * is locked; degrades to false when the screenlock part is cut or the
- * SA is not available. The mini sdk is a device_manager private
- * dependency (inner api), only the device_manager component is allowed
- * to load it.
+ * is locked; uses the official client's GetSystemAbility lookup and returns
+ * false when the screenlock part is cut, the lookup fails or the reply is
+ * invalid. The mini sdk is a device_manager private dependency (inner api),
+ * only the device_manager component is allowed to load it.
  */
 bool IsScreenLocked(void);
 

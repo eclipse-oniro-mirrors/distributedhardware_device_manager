@@ -13,15 +13,14 @@
  * limitations under the License.
  */
 
+#include "mini_sdk_constants.h"
 #include "UTTest_dm_publish_common_event.h"
 
-#include "bluetooth_def.h"
 #include "common_event_support.h"
 #include "dm_constants.h"
 #include "dm_publish_common_event.h"
 #include "matching_skills.h"
 #include "system_ability_definition.h"
-#include "wifi_msg.h"
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -100,10 +99,10 @@ HWTEST_F(DmPublishCommonEventManagerTest, OnReceiveEvent_001, testing::ext::Test
 
     want.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_BLUETOOTH_HOST_STATE_UPDATE);
     data.SetWant(want);
-    data.SetCode(static_cast<int32_t>(Bluetooth::BTStateID::STATE_TURN_ON));
+    data.SetCode(MiniSdk::BT_EVENT_STATE_ON);
     publshCommonEventManager->subscriber_->OnReceiveEvent(data);
 
-    data.SetCode(static_cast<int32_t>(Bluetooth::BTStateID::STATE_TURN_OFF));
+    data.SetCode(MiniSdk::BT_EVENT_STATE_OFF);
     publshCommonEventManager->subscriber_->OnReceiveEvent(data);
     
     data.SetCode(-1);
@@ -111,10 +110,10 @@ HWTEST_F(DmPublishCommonEventManagerTest, OnReceiveEvent_001, testing::ext::Test
 
     want.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_WIFI_POWER_STATE);
     data.SetWant(want);
-    data.SetCode(static_cast<int32_t>(OHOS::Wifi::WifiState::ENABLED));
+    data.SetCode(MiniSdk::WIFI_STATE_ENABLED);
     publshCommonEventManager->subscriber_->OnReceiveEvent(data);
 
-    data.SetCode(static_cast<int32_t>(OHOS::Wifi::WifiState::DISABLED));
+    data.SetCode(MiniSdk::WIFI_STATE_DISABLED);
     publshCommonEventManager->subscriber_->OnReceiveEvent(data);
 
     EXPECT_NE(publshCommonEventManager->subscriber_->GetSubscriberEventNameVec(), changeEventVec);
