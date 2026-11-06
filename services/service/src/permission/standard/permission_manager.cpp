@@ -45,6 +45,7 @@ constexpr const static char* SYSTEM_SA_WHITE_LIST[] = {
     "ohos.storage.distributedfile.daemon",
     "audio_manager_service",
     "hmos.collaborationfwk.deviceDetect",
+    "ohos.companiondeviceauth",
 };
 constexpr int32_t SYSTEM_SA_WHITE_LIST_NUM = std::size(SYSTEM_SA_WHITE_LIST);
 
