@@ -1066,7 +1066,7 @@ int DeviceManagerServiceImpl::OnSessionOpened(int sessionId, int result)
     };
     if (!DmRadarHelper::GetInstance().ReportAuthSessionOpenCb(info)) {
         LOGE("ReportAuthSessionOpenCb failed");
-    }     
+    }
     if (isNeedCloseSession) {
         CleanSessionMap(sessionId, 0);
         return DM_OK;
