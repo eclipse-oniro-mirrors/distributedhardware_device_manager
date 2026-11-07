@@ -602,13 +602,6 @@ void VerifySuccessfulDisconnectBeforeDrain(bool acknowledgeBeforeTimeout)
         g_changed.notify_all();
     }
     running.join();
-    EXPECT_EQ(g_destroys.load(), 1);
-    EXPECT_EQ(g_closes.load(), 1);
-    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
-    EXPECT_EQ(g_residentCalls.load(), 0);
-    g_deferClose = false;
-    EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
-    EXPECT_EQ(g_closes.load(), TWO_SESSIONS);
 }
 
 TEST_F(DmUiLifecycle, TargetTerminationReleasesWithoutExplicitClose)
@@ -630,12 +623,26 @@ TEST_F(DmUiLifecycle, TargetTerminationReleasesWithoutExplicitClose)
 
 TEST_F(DmUiLifecycle, SuccessfulDisconnectBeforeTimeoutKeepsReleasePath)
 {
-    VerifySuccessfulDisconnectBeforeDrain(true);
+    ASSERT_NO_FATAL_FAILURE(VerifySuccessfulDisconnectBeforeDrain(true));
+    EXPECT_EQ(g_destroys.load(), 1);
+    EXPECT_EQ(g_closes.load(), 1);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    EXPECT_EQ(g_residentCalls.load(), 0);
+    g_deferClose = false;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
+    EXPECT_EQ(g_closes.load(), TWO_SESSIONS);
 }
 
 TEST_F(DmUiLifecycle, SuccessfulDisconnectCancelsRecoveryBeforeLastCallReturns)
 {
-    VerifySuccessfulDisconnectBeforeDrain(false);
+    ASSERT_NO_FATAL_FAILURE(VerifySuccessfulDisconnectBeforeDrain(false));
+    EXPECT_EQ(g_destroys.load(), 1);
+    EXPECT_EQ(g_closes.load(), 1);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    EXPECT_EQ(g_residentCalls.load(), 0);
+    g_deferClose = false;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
+    EXPECT_EQ(g_closes.load(), TWO_SESSIONS);
 }
 
 TEST_F(DmUiLifecycle, CloseDuringReplayCancelsRemainingRequests)
