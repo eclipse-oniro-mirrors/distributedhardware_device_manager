@@ -74,6 +74,8 @@ constexpr const char* NO_NEED_JOIN_LNN = "1";
 constexpr const char* TAG_SERVICE_ID = "serviceId";
 constexpr const char* NOTIFY_CLEAN_EVENT_TASK = "CleanAuthMgrByLogicalSessionIdTask";
 constexpr const char* CLOSE_AUTH_SESSION_TASK = "CloseAuthSessionTask";
+constexpr const char* SERVER_BUSY_GUARD_TASK = "ServerBusyGuardTask";
+constexpr int32_t SERVER_BUSY_GUARD_DELAY_US = 150 * 1000 * 1000;
 // currently, we just support one bind session in one device at same time
 constexpr size_t MAX_NEW_PROC_SESSION_COUNT_TEMP = 1;
 const int32_t USLEEP_TIME_US_550000 = 550000; // 550ms
@@ -345,6 +347,7 @@ void DeviceManagerServiceImpl::CleanSessionMap(std::shared_ptr<Session> session,
 void DeviceManagerServiceImpl::CleanSessionMap(int sessionId, int32_t connDelayCloseTime)
 {
     LOGI("In sessionId:%{public}d.", sessionId);
+    ClearServerBusySession(sessionId);
     CHECK_NULL_VOID(softbusConnector_);
     CHECK_NULL_VOID(softbusConnector_->GetSoftbusSession());
     std::string peerUdid = "";
@@ -378,6 +381,58 @@ void DeviceManagerServiceImpl::CleanSessionMap(int sessionId, int32_t connDelayC
             sessionEnableMutexMap_.erase(sessionId);
         }
     }
+}
+
+void DeviceManagerServiceImpl::ClearServerBusySession(int32_t sessionId)
+{
+    int32_t expected = sessionId;
+    if (!serverBusySessionId_.compare_exchange_strong(expected, DEFAULT_SESSION_ID)) {
+        return;
+    }
+    LOGI("server busy released, sessionId:%{public}d", sessionId);
+}
+
+bool DeviceManagerServiceImpl::IsSessionMarkedStop(int32_t sessionId)
+{
+    if (sessionEnableCvMap_.find(sessionId) == sessionEnableCvMap_.end()) {
+        return false;
+    }
+    std::lock_guard<ffrt::mutex> lock(sessionEnableMutexMap_[sessionId]);
+    return sessionStopMap_.find(sessionId) != sessionStopMap_.end() && sessionStopMap_[sessionId];
+}
+
+bool DeviceManagerServiceImpl::RejectServerSessionIfBusy(int32_t sessionId, int32_t result)
+{
+    int32_t sessionSide = GetSessionSide(sessionId);
+    if (sessionSide != AUTH_SESSION_SIDE_SERVER || result != DM_OK || IsSessionMarkedStop(sessionId)) {
+        return false;
+    }
+    int32_t expected = DEFAULT_SESSION_ID;
+    if (serverBusySessionId_.compare_exchange_strong(expected, sessionId)) {
+        SubmitServerBusyGuardTask(sessionId);
+        return false;
+    }
+    if (expected == sessionId) {
+        return false;
+    }
+    LOGI("sink is busy, stop bind. sessionId:%{public}d, busySessionId:%{public}d", sessionId, expected);
+    softbusConnector_->GetSoftbusSession()->CloseAuthSession(sessionId);
+    return true;
+}
+
+void DeviceManagerServiceImpl::SubmitServerBusyGuardTask(int32_t sessionId)
+{
+    auto guardTask = [this, sessionId]() {
+        if (serverBusySessionId_.load() != sessionId) {
+            return;
+        }
+        LOGI("server busy guard timeout, sessionId:%{public}d", sessionId);
+        ClearServerBusySession(sessionId);
+        if (softbusConnector_ != nullptr && softbusConnector_->GetSoftbusSession() != nullptr) {
+            softbusConnector_->GetSoftbusSession()->CloseAuthSession(sessionId);
+        }
+    };
+    ffrt::submit(guardTask, ffrt::task_attr().name(SERVER_BUSY_GUARD_TASK).delay(SERVER_BUSY_GUARD_DELAY_US));
 }
 
 void DeviceManagerServiceImpl::CleanSessionMapByLogicalSessionId(uint64_t logicalSessionId, int32_t connDelayCloseTime)
@@ -422,7 +477,15 @@ void DeviceManagerServiceImpl::CleanAuthMgrByLogicalSessionId(uint64_t logicalSe
     CleanSessionMapByLogicalSessionId(logicalSessionId, connDelayCloseTime);
     hiChainAuthConnector_->UnRegisterHiChainAuthCallbackById(logicalSessionId);
     EraseAuthMgr(tokenId);
-    isServerBusy_.store(false);
+    int32_t busySessionId = serverBusySessionId_.load();
+    if (busySessionId != DEFAULT_SESSION_ID) {
+        std::lock_guard<ffrt::mutex> lock(mapMutex_);
+        auto it = sessionsMap_.find(busySessionId);
+        if (it != sessionsMap_.end() && it->second != nullptr &&
+            it->second->logicalSessionSet_.find(logicalSessionId) != it->second->logicalSessionSet_.end()) {
+            ClearServerBusySession(busySessionId);
+        }
+    }
     return;
 }
 
@@ -613,6 +676,7 @@ void DeviceManagerServiceImpl::ReleaseMaps()
         std::lock_guard<ffrt::mutex> sessionIdLock(logicalSessionId2SessionIdMapMtx_);
         logicalSessionId2SessionIdMap_.clear();
     }
+    serverBusySessionId_.store(DEFAULT_SESSION_ID);
 }
 
 void DeviceManagerServiceImpl::Release()
@@ -961,33 +1025,36 @@ std::string DeviceManagerServiceImpl::GetUdidHashByNetworkId(const std::string &
     return softbusConnector_->GetDeviceUdidHashByUdid(peerUdid);
 }
 
+bool DeviceManagerServiceImpl::UpdateSessionEnableStatus(int32_t sessionId, int32_t result)
+{
+    bool isNeedCloseSession = false;
+    if (sessionEnableCvMap_.find(sessionId) == sessionEnableCvMap_.end()) {
+        return isNeedCloseSession;
+    }
+    std::lock_guard<ffrt::mutex> lock(sessionEnableMutexMap_[sessionId]);
+    if (result == 0) {
+        LOGI("successful, sessionId: %{public}d", sessionId);
+        if (sessionStopMap_.find(sessionId) != sessionStopMap_.end() && sessionStopMap_[sessionId]) {
+            isNeedCloseSession = true;
+        } else {
+            sessionEnableMap_[sessionId] = true;
+        }
+    } else {
+        LOGE("sessionId: %{public}d, res: %{public}d", sessionId, result);
+    }
+    sessionEnableCvReadyMap_[sessionId] = true;
+    sessionEnableCvMap_[sessionId].notify_all();
+    return isNeedCloseSession;
+}
+
 int DeviceManagerServiceImpl::OnSessionOpened(int sessionId, int result)
 {
     CHECK_NULL_RETURN(softbusConnector_, ERR_DM_POINT_NULL);
     CHECK_NULL_RETURN(softbusConnector_->GetSoftbusSession(), ERR_DM_POINT_NULL);
-    int32_t sessionSide = GetSessionSide(sessionId);
-    if (sessionSide == AUTH_SESSION_SIDE_SERVER && isServerBusy_.load()) {
-        LOGI("sink is busy, stop bind. sessionId:%{public}d", sessionId);
-        softbusConnector_->GetSoftbusSession()->CloseAuthSession(sessionId);
+    if (RejectServerSessionIfBusy(sessionId, result)) {
         return DM_OK;
     }
-    isServerBusy_.store(true);
-    bool isNeedCloseSession = false;
-    if (sessionEnableCvMap_.find(sessionId) != sessionEnableCvMap_.end()) {
-        std::lock_guard<ffrt::mutex> lock(sessionEnableMutexMap_[sessionId]);
-        if (result == 0) {
-            LOGI("successful, sessionId: %{public}d", sessionId);
-            if (sessionStopMap_.find(sessionId) != sessionStopMap_.end() && sessionStopMap_[sessionId]) {
-                isNeedCloseSession = true;
-            } else {
-                sessionEnableMap_[sessionId] = true;
-            }
-        } else {
-            LOGE("sessionId: %{public}d, res: %{public}d", sessionId, result);
-        }
-        sessionEnableCvReadyMap_[sessionId] = true;
-        sessionEnableCvMap_[sessionId].notify_all();
-    }
+    bool isNeedCloseSession = UpdateSessionEnableStatus(sessionId, result);
     std::string peerUdid = "";
     softbusConnector_->GetSoftbusSession()->GetPeerDeviceId(sessionId, peerUdid);
     struct RadarInfo info = {
@@ -1017,6 +1084,7 @@ int DeviceManagerServiceImpl::OnSessionOpened(int sessionId, int result)
 
 void DeviceManagerServiceImpl::OnSessionClosed(int sessionId)
 {
+    ClearServerBusySession(sessionId);
     SoftbusSession::OnSessionClosed(sessionId);
 }
 
