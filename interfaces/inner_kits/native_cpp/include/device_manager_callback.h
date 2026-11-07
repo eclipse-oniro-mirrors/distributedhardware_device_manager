@@ -230,6 +230,15 @@ public:
     }
     virtual void OnSyncServiceInfoResult(int32_t result, const std::string &content) = 0;
 };
+
+class ServiceTrustedPeerStateCallback {
+public:
+    virtual ~ServiceTrustedPeerStateCallback()
+    {
+    }
+    virtual void OnServiceTrustedPeerOnline(const AuthInfo &authInfo, const DmServiceTrustedPeer &peer) = 0;
+    virtual void OnServiceTrustedPeerOffline(const DmServiceTrustedPeer &peer) = 0;
+};
 } // namespace DistributedHardware
 } // namespace OHOS
 #endif // OHOS_DM_CALLBACK_H

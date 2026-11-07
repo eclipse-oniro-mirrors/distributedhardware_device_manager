@@ -390,7 +390,9 @@ typedef enum {
     UN_REG_AUTH_CODE_INVALID = 10,
     REG_SERVICE_STATE = 11,
     UN_REG_SERVICE_STATE = 12,
-    MAX = 13,
+    REG_SVR_TRUSTED_PEER_STATE = 13,
+    UN_REG_SVR_TRUSTED_PEER_STATE = 14,
+    MAX = 15,
 } DmCommonNotifyEvent;
 
 DM_EXPORT extern const char* DEVICE_TYPE_UNKNOWN_STRING;
@@ -812,6 +814,20 @@ typedef struct Dm3rdDeviceInfo {
      */
     std::map<std::string, std::string> extendParam;
 } Dm3rdDeviceInfo;
+
+struct AuthInfo {
+    uint32_t bindType = 0;
+    uint32_t bindLevel = 0;
+    int64_t localServiceId = -1;
+};
+
+struct DmServiceTrustedPeer {
+    std::string peerUdid;
+    std::string peerDeviceName;
+    int32_t bindType = 0;
+    bool isOnline = false;
+    std::string peerNetworkId;
+};
 } // namespace DistributedHardware
 } // namespace OHOS
 #endif // OHOS_DM_DEVICE_INFO_H

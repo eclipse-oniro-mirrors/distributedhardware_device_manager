@@ -92,6 +92,8 @@
 #include "ipc_auth_info_req.h"
 #include "ipc_auth_info_rsp.h"
 #include "ipc_register_service_info_req.h"
+#include "ipc_unbind_svr_tar_by_udid_req.h"
+#include "ipc_get_service_trusted_peers_rsp.h"
 #include "ipc_sync_service_callback_req.h"
 #include "ipc_sync_service_info_req.h"
 #include "ipc_sync_service_info_result_req.h"
@@ -133,6 +135,8 @@ const int32_t SYSTEM_CORE = 2;
 const int32_t USLEEP_TIME_US_100000 = 100000; // 100ms
 constexpr int32_t SERVICE_INIT_MAX_NUM = 20;
 constexpr int32_t DM_STRING_LENGTH_MAX = 1024;
+constexpr int32_t DM_PEER_UDID_MAX_LENGTH = 128;
+constexpr size_t DM_UNBIND_PARAM_MAX_SIZE = 16;
 
 DeviceManagerImpl &DeviceManagerImpl::GetInstance()
 {
@@ -3932,6 +3936,117 @@ int32_t DeviceManagerImpl::UnRegister3rdDeviceInfo(const std::string &networkId)
         return ret;
     }
     LOGI("Completed");
+    return DM_OK;
+}
+
+int32_t DeviceManagerImpl::UnbindSvrTarByUdidOnSvrPublisher(const std::string &pkgName, const std::string &peerUdid,
+    int64_t serviceId, const std::map<std::string, std::string> &unbindParam)
+{
+    LOGI("start.");
+    if (pkgName.empty() || peerUdid.empty() || serviceId <= 0) {
+        LOGE("Invalid para, pkgName or peerUdid is empty or serviceId is invaild.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    if (peerUdid.length() > DM_PEER_UDID_MAX_LENGTH) {
+        LOGE("Invalid para, peerUdid length is too long.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    if (unbindParam.size() >= DM_UNBIND_PARAM_MAX_SIZE) {
+        LOGE("Invalid para, unbindParam size is too large.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    std::string unbindParamStr = ConvertMapToJsonString(unbindParam);
+    std::shared_ptr<IpcUnbindSvrTarByUdidReq> req = std::make_shared<IpcUnbindSvrTarByUdidReq>();
+    std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
+    req->SetPkgName(pkgName);
+    req->SetPeerUdid(peerUdid);
+    req->SetServiceId(serviceId);
+    req->SetUnbindParam(unbindParamStr);
+    CHECK_NULL_RETURN(ipcClientProxy_, ERR_DM_POINT_NULL);
+    int32_t ret = ipcClientProxy_->SendRequest(UNBIND_SVR_TAR_BY_UDID_ON_SVR_PUBLISHER, req, rsp);
+    if (ret != DM_OK) {
+        LOGE("Send Request failed ret: %{public}d", ret);
+        return ERR_DM_IPC_SEND_REQUEST_FAILED;
+    }
+    ret = rsp->GetErrCode();
+    if (ret != DM_OK) {
+        LOGE("Failed with ret %{public}d", ret);
+        return ret;
+    }
+    LOGI("Completed");
+    return DM_OK;
+}
+
+int32_t DeviceManagerImpl::GetServiceTrustedPeersOnSvrPublisher(const std::string &pkgName, int64_t serviceId,
+    std::vector<DmServiceTrustedPeer> &peers)
+{
+    LOGI("Start");
+    if (pkgName.empty() || serviceId < 0) {
+        LOGE("Invalid parameter, pkgName is empty or serviceId is Invalid.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    std::shared_ptr<IpcUnbindSvrTarByUdidReq> req = std::make_shared<IpcUnbindSvrTarByUdidReq>();
+    std::shared_ptr<IpcGetServiceTrustedPeersRsp> rsp = std::make_shared<IpcGetServiceTrustedPeersRsp>();
+    req->SetPkgName(pkgName);
+    req->SetServiceId(serviceId);
+    CHECK_NULL_RETURN(ipcClientProxy_, ERR_DM_POINT_NULL);
+    int32_t ret = ipcClientProxy_->SendRequest(GET_SERVICE_TRUSTED_PEERS_ON_SVR_PUBLISHER, req, rsp);
+    if (ret != DM_OK) {
+        LOGE("SendRequest failed, ret: %{public}d", ret);
+        return ERR_DM_IPC_SEND_REQUEST_FAILED;
+    }
+    ret = rsp->GetErrCode();
+    if (ret != DM_OK) {
+        LOGE("ret: %{public}d", ret);
+        return ret;
+    }
+    peers = rsp->GetServiceTrustedPeers();
+    LOGI("success, peers size %{public}zu", peers.size());
+    return DM_OK;
+}
+
+int32_t DeviceManagerImpl::RegSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId,
+    std::shared_ptr<ServiceTrustedPeerStateCallback> callback)
+{
+    LOGI("start.");
+    if (pkgName.empty() || serviceId < 0 || callback == nullptr) {
+        LOGE("input pkgName, serviceId or callback is invalid.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    int32_t ret = DeviceManagerNotify::GetInstance().RegisterSvrTrustedPeerStateCallback(pkgName, serviceId, callback);
+    if (ret != DM_OK) {
+        LOGE("Notify register error %{public}d", ret);
+        return ret;
+    }
+    ret = SyncCallbackToServiceForServiceInfo(DmCommonNotifyEvent::REG_SVR_TRUSTED_PEER_STATE, pkgName, serviceId);
+    if (ret != DM_OK) {
+        LOGE("register callback failed: %{public}d", ret);
+        DeviceManagerNotify::GetInstance().UnRegisterSvrTrustedPeerStateCallback(pkgName, serviceId);
+        return ret;
+    }
+    LOGI("success.");
+    return DM_OK;
+}
+
+int32_t DeviceManagerImpl::UnregSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId)
+{
+    LOGD("start.");
+    if (pkgName.empty() || serviceId < 0) {
+        LOGE("input pkgName or serviceId is invalid.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    int32_t ret = SyncCallbackToServiceForServiceInfo(DmCommonNotifyEvent::UN_REG_SVR_TRUSTED_PEER_STATE, pkgName,
+        serviceId);
+    if (ret != DM_OK) {
+        LOGE("unregister callback failed: %{public}d", ret);
+        return ret;
+    }
+    ret = DeviceManagerNotify::GetInstance().UnRegisterSvrTrustedPeerStateCallback(pkgName, serviceId);
+    if (ret != DM_OK) {
+        LOGE("Notify unregister error %{public}d", ret);
+        return ret;
+    }
+    LOGI("success.");
     return DM_OK;
 }
 } // namespace DistributedHardware

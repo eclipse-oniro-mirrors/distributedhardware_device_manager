@@ -727,6 +727,15 @@ public:
      * @return Returns 0 if success.
      */
     virtual int32_t UnRegister3rdDeviceInfo(const std::string &networkId) { return 0; }
+
+    virtual int32_t UnbindSvrTarByUdidOnSvrPublisher(const std::string &pkgName, const std::string &peerUdid,
+        int64_t serviceId, const std::map<std::string, std::string> &unbindParam) { return 0; }
+    virtual int32_t GetServiceTrustedPeersOnSvrPublisher(const std::string &pkgName, int64_t serviceId,
+        std::vector<DmServiceTrustedPeer> &peers) { return 0; }
+    virtual int32_t RegSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId,
+        std::shared_ptr<ServiceTrustedPeerStateCallback> callback) { return 0; }
+    virtual int32_t UnregSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName,
+        int64_t serviceId) { return 0; }
 };
 } // namespace DistributedHardware
 } // namespace OHOS

@@ -96,6 +96,9 @@ public:
     int32_t RegisterServiceStateCallback(const std::string &pkgName, int64_t serviceId,
         std::shared_ptr<ServiceInfoStateCallback> callback);
     int32_t UnRegisterServiceStateCallback(const std::string &pkgName, int64_t serviceId);
+    int32_t RegisterSvrTrustedPeerStateCallback(const std::string &pkgName, int64_t serviceId,
+        std::shared_ptr<ServiceTrustedPeerStateCallback> callback);
+    int32_t UnRegisterSvrTrustedPeerStateCallback(const std::string &pkgName, int64_t serviceId);
 
     void RegisterServicePublishCallback(int64_t serviceId, std::shared_ptr<ServicePublishCallback> callback);
     void UnRegisterServicePublishCallback(int64_t serviceId);
@@ -134,6 +137,10 @@ public:
         const DmServiceInfo &dmServiceInfo);
     static void ServiceInfoChange(const std::shared_ptr<ServiceInfoStateCallback> &callback,
         const DmServiceInfo &dmServiceInfo);
+    static void ServiceTrustedPeerOnline(const std::shared_ptr<ServiceTrustedPeerStateCallback> &callback,
+        const AuthInfo &authInfo, const DmServiceTrustedPeer &peer);
+    static void ServiceTrustedPeerOffline(const std::shared_ptr<ServiceTrustedPeerStateCallback> &callback,
+        const DmServiceTrustedPeer &peer);
 public:
     void OnRemoteDied();
     void OnDeviceOnline(const std::string &pkgName, const DmDeviceInfo &deviceInfo);
@@ -180,6 +187,10 @@ public:
     void OnServiceChange(const DmRegisterServiceState &registerServiceState, const DmServiceInfo &serviceInfo);
     void OnSyncServiceInfoResult(const ServiceSyncInfo &serviceSyncInfo,
         int32_t result, const std::string &content);
+    void OnServiceTrustedPeerOnline(const std::string &pkgName, int64_t serviceId,
+        const AuthInfo &authInfo, const DmServiceTrustedPeer &peer);
+    void OnServiceTrustedPeerOffline(const std::string &pkgName, int64_t serviceId,
+        const DmServiceTrustedPeer &peer);
     void GetServiceCallBack(
         std::map<DmCommonNotifyEvent, std::set<std::pair<std::string, int64_t>>> &serviceCallbackMap);
 
@@ -208,6 +219,8 @@ private:
     std::map<std::string,
         std::map<std::string, std::shared_ptr<SetRemoteDeviceNameCallback>>> setRemoteDeviceNameCallback_;
     std::map<std::pair<std::string, int64_t>, std::shared_ptr<ServiceInfoStateCallback>> serviceStateCallback_;
+    std::map<std::pair<std::string, int64_t>,
+        std::shared_ptr<ServiceTrustedPeerStateCallback>> svrTrustedPeerStateCallback_;
     std::map<std::string, std::shared_ptr<LeaveLNNCallback>> leaveLnnCallback_;
     std::map<std::string, std::shared_ptr<AuthCodeInvalidCallback>> authCodeInvalidCallback_;
     std::map<std::pair<std::string, int64_t>, std::shared_ptr<ServicePublishCallback>> servicePublishCallbacks_;

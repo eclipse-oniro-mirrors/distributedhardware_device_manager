@@ -37,7 +37,8 @@ int32_t IpcServerListener::SendRequest(int32_t cmdCode, std::shared_ptr<IpcReq> 
         return ERR_DM_INPUT_PARA_INVALID;
     }
 #ifdef CAR_DEVICE_ENABLE
-    LOGE("CAR_DEVICE_ENABLE, processInfo.pkgName:%{public}s", processInfo.pkgName.c_str());
+    LOGI("car userId: %{public}d, pkgName: %{public}s, tokenId: %{public}s", processInfo.userId,
+        processInfo.pkgName.c_str(), std::to_string(processInfo.tokenId).c_str());
     sptr<IpcRemoteBroker> listener = IpcServerStub::GetInstance().GetListenerByProcessInfo(processInfo);
 #else
     sptr<IpcRemoteBroker> listener = IpcServerStub::GetInstance().GetDmListener(processInfo);

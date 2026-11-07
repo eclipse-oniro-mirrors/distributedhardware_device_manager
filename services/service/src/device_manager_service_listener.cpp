@@ -48,6 +48,7 @@
 #include "ipc_notify_set_remote_device_name_req.h"
 #include "ipc_service_publish_result_req.h"
 #include "ipc_notify_service_state_req.h"
+#include "ipc_notify_svr_trusted_peer_state_req.h"
 #include "ipc_server_stub.h"
 #include "ipc_sync_service_info_result_req.h"
 #include "datetime_ex.h"
@@ -1691,6 +1692,14 @@ void DeviceManagerServiceListener::OnServiceStateOnlineResult(const ServiceState
     LOGI("success.");
 }
 
+void DeviceManagerServiceListener::OnSvrTrustedPeerStateOnlineResult(const AuthInfo &authInfo,
+    const DmServiceTrustedPeer &peer)
+{
+    LOGI("start.");
+    DeviceManagerService::GetInstance().BindTrustedPeerStateOnline(authInfo, peer);
+    LOGI("success.");
+}
+
 bool DeviceManagerServiceListener::CheckIsOnlineAdapter(const std::string &peerUdid)
 {
     return SoftbusCache::GetInstance().CheckIsOnlineByPeerUdid(peerUdid);
@@ -1699,6 +1708,55 @@ bool DeviceManagerServiceListener::CheckIsOnlineAdapter(const std::string &peerU
 int32_t DeviceManagerServiceListener::GetNetworkIdFromCache(const std::string &udid, std::string &networkId)
 {
     return SoftbusCache::GetInstance().GetNetworkIdFromCache(udid, networkId);
+}
+
+int32_t DeviceManagerServiceListener::OnServiceTrustedPeerOnline(const DmRegisterServiceState &regState,
+    const AuthInfo &authInfo, const DmServiceTrustedPeer &peer)
+{
+    LOGI("start.");
+    std::shared_ptr<IpcNotifySvrTrustedPeerStateReq> pReq = std::make_shared<IpcNotifySvrTrustedPeerStateReq>();
+    std::shared_ptr<IpcRsp> pRsp = std::make_shared<IpcRsp>();
+    ProcessInfo processInfo{regState.userId, regState.pkgName, static_cast<uint32_t>(regState.tokenId)};
+    LOGI("regState userid: %{public}d, pkgName: %{public}s, tokenId: %{public}s", regState.userId,
+        regState.pkgName.c_str(), std::to_string(regState.tokenId).c_str());
+    LOGI("processInfo userid: %{public}d, pkgName: %{public}s, tokenId: %{public}s", processInfo.userId,
+        processInfo.pkgName.c_str(), std::to_string(processInfo.tokenId).c_str());
+    pReq->SetDmRegisterServiceState(regState);
+    pReq->SetAuthInfo(authInfo);
+    pReq->SetDmServiceTrustedPeer(peer);
+    pReq->SetPeerState(DmServiceState::SERVICE_STATE_ONLINE);
+    pReq->SetServiceId(authInfo.localServiceId);
+    pReq->SetPkgName(regState.pkgName);
+    pReq->SetProcessInfo(processInfo);
+    int32_t ret = ipcServerListener_.SendRequest(SERVER_SVR_TRUSTED_PEER_STATE_NOTIFY, pReq, pRsp);
+    if (ret != DM_OK) {
+        LOGE("SERVER_SVR_TRUSTED_PEER_STATE_NOTIFY request failed.");
+        return ret;
+    }
+    LOGI("success.");
+    return DM_OK;
+}
+
+int32_t DeviceManagerServiceListener::OnServiceTrustedPeerOffline(const DmRegisterServiceState &regState,
+    const DmServiceTrustedPeer &peer)
+{
+    LOGI("start.");
+    std::shared_ptr<IpcNotifySvrTrustedPeerStateReq> pReq = std::make_shared<IpcNotifySvrTrustedPeerStateReq>();
+    std::shared_ptr<IpcRsp> pRsp = std::make_shared<IpcRsp>();
+    ProcessInfo processInfo{regState.userId, regState.pkgName, static_cast<uint32_t>(regState.tokenId)};
+    pReq->SetDmRegisterServiceState(regState);
+    pReq->SetDmServiceTrustedPeer(peer);
+    pReq->SetPeerState(DmServiceState::SERVICE_STATE_OFFLINE);
+    pReq->SetServiceId(-1);
+    pReq->SetPkgName(regState.pkgName);
+    pReq->SetProcessInfo(processInfo);
+    int32_t ret = ipcServerListener_.SendRequest(SERVER_SVR_TRUSTED_PEER_STATE_NOTIFY, pReq, pRsp);
+    if (ret != DM_OK) {
+        LOGE("SERVER_SVR_TRUSTED_PEER_STATE_NOTIFY request failed.");
+        return ret;
+    }
+    LOGI("success.");
+    return DM_OK;
 }
 //LCOV_EXCL_STOP
 } // namespace DistributedHardware

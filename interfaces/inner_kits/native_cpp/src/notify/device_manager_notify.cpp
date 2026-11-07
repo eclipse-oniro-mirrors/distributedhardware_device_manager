@@ -1848,7 +1848,127 @@ void DeviceManagerNotify::GetServiceCallBack(
     if (statePkgnameSet.size() > 0) {
         serviceCallbackMap[DmCommonNotifyEvent::REG_SERVICE_STATE] = statePkgnameSet;
     }
+    std::set<std::pair<std::string, int64_t>> svrTrustedPeerSet;
+    for (auto it : svrTrustedPeerStateCallback_) {
+        svrTrustedPeerSet.insert(it.first);
+    }
+    if (svrTrustedPeerSet.size() > 0) {
+        serviceCallbackMap[DmCommonNotifyEvent::REG_SVR_TRUSTED_PEER_STATE] = svrTrustedPeerSet;
+    }
     LOGI("success.");
+}
+
+int32_t DeviceManagerNotify::RegisterSvrTrustedPeerStateCallback(const std::string &pkgName, int64_t serviceId,
+    std::shared_ptr<ServiceTrustedPeerStateCallback> callback)
+{
+    LOGI("start.");
+    if (pkgName.empty() || serviceId <= 0 || callback == nullptr) {
+        LOGE("Invalid parameter.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    std::pair key = std::make_pair(pkgName, serviceId);
+    std::lock_guard<std::mutex> autolock(lock_);
+    svrTrustedPeerStateCallback_[key] = callback;
+    LOGI("Callback registered successfully.");
+    return DM_OK;
+}
+
+int32_t DeviceManagerNotify::UnRegisterSvrTrustedPeerStateCallback(const std::string &pkgName, int64_t serviceId)
+{
+    LOGI("start.");
+    if (pkgName.empty() || serviceId <= 0) {
+        LOGE("Invalid parameter.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    std::pair key = std::make_pair(pkgName, serviceId);
+    std::lock_guard<std::mutex> autolock(lock_);
+    if (svrTrustedPeerStateCallback_.find(key) == svrTrustedPeerStateCallback_.end()) {
+        LOGE("Invalid parameter.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    svrTrustedPeerStateCallback_.erase(key);
+    LOGI("Callback unregistered successfully.");
+    return DM_OK;
+}
+
+void DeviceManagerNotify::OnServiceTrustedPeerOnline(const std::string &pkgName, int64_t serviceId,
+    const AuthInfo &authInfo, const DmServiceTrustedPeer &peer)
+{
+    LOGI("start.");
+    std::shared_ptr<ServiceTrustedPeerStateCallback> callbackInfo;
+    {
+        std::lock_guard<std::mutex> autoLock(lock_);
+        std::pair key = std::make_pair(pkgName, serviceId);
+        auto iter = svrTrustedPeerStateCallback_.find(key);
+        if (iter == svrTrustedPeerStateCallback_.end()) {
+            LOGW("callback not found for key: %{public}s-%" PRId64, pkgName.c_str(), serviceId);
+            return;
+        }
+        callbackInfo = iter->second;
+    }
+    if (callbackInfo == nullptr) {
+        LOGE("registered svr trusted peer state callback is nullptr.");
+        return;
+    }
+#if !(defined(__LITEOS_M__) || defined(LITE_DEVICE))
+    ffrt::submit([=]() { ServiceTrustedPeerOnline(callbackInfo, authInfo, peer); },
+        ffrt::task_attr().name("DM_SvrPeerOnline"));
+#else
+    std::thread onlineThread([=]() { ServiceTrustedPeerOnline(callbackInfo, authInfo, peer); });
+    onlineThread.detach();
+#endif
+}
+
+void DeviceManagerNotify::OnServiceTrustedPeerOffline(const std::string &pkgName, int64_t serviceId,
+    const DmServiceTrustedPeer &peer)
+{
+    LOGI("start.");
+    std::shared_ptr<ServiceTrustedPeerStateCallback> callbackInfo;
+    {
+        std::lock_guard<std::mutex> autoLock(lock_);
+        std::pair key = std::make_pair(pkgName, serviceId);
+        auto iter = svrTrustedPeerStateCallback_.find(key);
+        if (iter == svrTrustedPeerStateCallback_.end()) {
+            LOGW("callback not found for key: %{public}s-%" PRId64, pkgName.c_str(), serviceId);
+            return;
+        }
+        callbackInfo = iter->second;
+    }
+    if (callbackInfo == nullptr) {
+        LOGE("registered svr trusted peer state callback is nullptr.");
+        return;
+    }
+#if !(defined(__LITEOS_M__) || defined(LITE_DEVICE))
+    ffrt::submit([=]() { ServiceTrustedPeerOffline(callbackInfo, peer); },
+        ffrt::task_attr().name("DM_SvrPeerOffline"));
+#else
+    std::thread offlineThread([=]() { ServiceTrustedPeerOffline(callbackInfo, peer); });
+    offlineThread.detach();
+#endif
+}
+
+void DeviceManagerNotify::ServiceTrustedPeerOnline(
+    const std::shared_ptr<ServiceTrustedPeerStateCallback> &callback,
+    const AuthInfo &authInfo, const DmServiceTrustedPeer &peer)
+{
+    LOGI("start.");
+    if (callback == nullptr) {
+        LOGE("error, ServiceTrustedPeerOnline not register.");
+        return;
+    }
+    callback->OnServiceTrustedPeerOnline(authInfo, peer);
+}
+
+void DeviceManagerNotify::ServiceTrustedPeerOffline(
+    const std::shared_ptr<ServiceTrustedPeerStateCallback> &callback,
+    const DmServiceTrustedPeer &peer)
+{
+    LOGI("start.");
+    if (callback == nullptr) {
+        LOGE("error, ServiceTrustedPeerOffline not register.");
+        return;
+    }
+    callback->OnServiceTrustedPeerOffline(peer);
 }
 } // namespace DistributedHardware
 } // namespace OHOS

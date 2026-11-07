@@ -220,6 +220,7 @@ public:
         DistributedDeviceProfile::Accesser &accesser,
         DistributedDeviceProfile::Accessee &accessee,
         JsonObject &extraData);
+    void NotifyNonLnnAclBindResult(std::shared_ptr<DmAuthContext> context, DmAccess &access);
     int32_t PutDeviceControlList(std::shared_ptr<DmAuthContext> context, DistributedDeviceProfile::Accesser accesser,
         DistributedDeviceProfile::Accessee accessee, DistributedDeviceProfile::AccessControlProfile profile,
         DmAccess &access);
