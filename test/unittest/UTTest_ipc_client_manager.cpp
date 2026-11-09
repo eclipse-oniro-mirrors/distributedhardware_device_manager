@@ -18,13 +18,16 @@
 #include "device_manager_ipc_interface_code.h"
 #include "device_manager_notify.h"
 #include "dm_device_info.h"
+#include "dm_system_ability_manager_mock.h"
 #include "ipc_client_stub.h"
 #include "ipc_register_listener_req.h"
 #include "ipc_remote_broker.h"
 #include "iremote_object.h"
 #include "iservice_registry.h"
+#include "system_ability_manager_client_mock.h"
 #include "dm_constants.h"
 #include "system_ability_definition.h"
+#include "system_ability_load_callback_stub.h"
 
 #include <unistd.h>
 
@@ -400,27 +403,38 @@ HWTEST_F(IpcClientManagerTest, UnInit_005, testing::ext::TestSize.Level0)
 
 /**
  * @tc.name: SendRequest_001
- * @tc.desc:  1. set pkgName null
- *            2. set IpcClientManager dmInterface_null
- *            3. call SendRequest with parameter
- *            4. check ret is ERR_DM_INIT_FAILED
+ * @tc.desc:  1. set IpcClientManager dmInterface_ null
+ *            2. call SendRequest with parameter
+ *            3. dmInterface_ null triggers ClientInit re-init, DM SA still unavailable
+ *            4. check ret is ERR_DM_INIT_FAILED (re-init fail, no crash/hang)
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */
 HWTEST_F(IpcClientManagerTest, SendRequest_001, testing::ext::TestSize.Level0)
 {
-    // 1. set pkgName null
+    // 0. mock samgr: DM SA unavailable so re-init always fails
+    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
+        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
+    auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
+    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(mockAbilityMgr));
+    EXPECT_CALL(*mockAbilityMgr, CheckSystemAbility(testing::_)).WillRepeatedly(testing::Return(nullptr));
+    EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(testing::_, testing::An<const sptr<ISystemAbilityLoadCallback>&>()))
+        .WillRepeatedly(testing::Return(ERR_DM_FAILED));
+
+    // 1. set IpcClientManager dmInterface_ null
     std::string pkgName = "";
     std::shared_ptr<IpcReq> req = std::make_shared<IpcReq>();
     std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
     req->SetPkgName(pkgName);
-    // 2. set IpcClientManager dmInterface_null
+    // 2. set IpcClientManager dmInterface_ null
     std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
     instance->dmInterface_ = nullptr;
     // 3. call SendRequest with parameter
     int ret = instance->SendRequest(0, req, rsp);
     // 4. check ret is ERR_DM_INIT_FAILED
     ASSERT_EQ(ret, ERR_DM_INIT_FAILED);
+
+    ISystemAbilityManagerClient::ReleaseSAMgrClient();
 }
 
 /**
