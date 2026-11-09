@@ -3027,6 +3027,7 @@ ohos_unittest("UTTest_dm_auth_manager_second") {
     "${devicemanager_path}/test/commonunittest/UTTest_dm_auth_manager_second.cpp",
     "${servicesimpl_path}/src/authentication/dm_auth_manager.cpp",
     "mock/deviceprofile_connector_mock.cpp",
+    "mock/dm_dialog_manager_mock.cpp",
     "mock/hichain_auth_connector_mock.cpp",
     "${devicemanager_path}/test/unittest/mock/dm_crypto_mock.cpp",
     "${devicemanager_path}/test/unittest/mock/hichain_connector_mock.cpp",
@@ -3035,7 +3036,6 @@ ohos_unittest("UTTest_dm_auth_manager_second") {
   ]
 
   deps = [
-    "${servicesimpl_path}:dm_ui",
     ":device_manager_test_common_mock",
     "${devicemanager_path}/commondependency:devicemanagerdependencytest_mock",
     "${devicemanager_path}/interfaces/kits/js:devicemanager",
@@ -3077,10 +3077,12 @@ ohos_unittest("UTTest_dm_auth_manager_third") {
 
   include_dirs = [ "${devicemanager_path}/test/commonunittest" ]
 
-  sources = [ "${devicemanager_path}/test/commonunittest/UTTest_dm_auth_manager_third.cpp" ]
+  sources = [
+    "${devicemanager_path}/test/commonunittest/UTTest_dm_auth_manager_third.cpp",
+    "mock/dm_dialog_manager_mock.cpp",
+  ]
 
   deps = [
-    "${servicesimpl_path}:dm_ui",
     ":device_manager_test_common",
     "${devicemanager_path}/commondependency:devicemanagerdependencytest",
     "${devicemanager_path}/interfaces/kits/js:devicemanager",

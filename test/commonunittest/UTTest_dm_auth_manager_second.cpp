@@ -21,7 +21,7 @@
 #include "dm_anonymous.h"
 #include "dm_constants.h"
 #include "dm_crypto.h"
-#include "dm_dialog_manager.h"
+#include "dm_dialog_manager_mock.h"
 #include "dm_log.h"
 #include "json_object.h"
 #include "softbus_error_code.h"
@@ -32,6 +32,7 @@ namespace OHOS {
 namespace DistributedHardware {
 void DmAuthManagerTest::SetUp()
 {
+    DmDialogManagerMock::dmDialogManagerMock = std::make_shared<testing::NiceMock<DmDialogManagerMock>>();
     InitDeviceAuthService();
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
@@ -54,6 +55,7 @@ void DmAuthManagerTest::SetUp()
 void DmAuthManagerTest::TearDown()
 {
     authManager_ = nullptr;
+    DmDialogManagerMock::dmDialogManagerMock = nullptr;
 }
 void DmAuthManagerTest::SetUpTestCase()
 {
@@ -627,6 +629,7 @@ HWTEST_F(DmAuthManagerTest, ShowStartAuthDialog_003, testing::ext::TestSize.Leve
 
 HWTEST_F(DmAuthManagerTest, ShowStartAuthDialog_004, testing::ext::TestSize.Level1)
 {
+    EXPECT_CALL(*DmDialogManagerMock::dmDialogManagerMock, ShowInputDialog(testing::_)).Times(0);
     authManager_->authResponseContext_->authType = AUTH_TYPE_IMPORT_AUTH_CODE;
     authManager_->importAuthCode_ = "123456";
     authManager_->importPkgName_ = "hostPkgName";
@@ -635,21 +638,24 @@ HWTEST_F(DmAuthManagerTest, ShowStartAuthDialog_004, testing::ext::TestSize.Leve
     authManager_->authResponseContext_->bindLevel = USER;
     authManager_->authResponseContext_->targetDeviceName = "ShowStartAuthDialog_004";
     authManager_->ShowStartAuthDialog();
-    EXPECT_NE(authManager_->authResponseContext_->targetDeviceName, DmDialogManager::GetInstance().targetDeviceName_);
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(DmDialogManagerMock::dmDialogManagerMock.get()));
+    EXPECT_CALL(*DmDialogManagerMock::dmDialogManagerMock, ShowInputDialog(testing::_)).Times(0);
 
     authManager_->remoteVersion_ = "4.1.5.2";
     authManager_->authResponseContext_->bindLevel = APP + 1;
     authManager_->ShowStartAuthDialog();
-    EXPECT_NE(authManager_->authResponseContext_->targetDeviceName, DmDialogManager::GetInstance().targetDeviceName_);
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(DmDialogManagerMock::dmDialogManagerMock.get()));
+    EXPECT_CALL(*DmDialogManagerMock::dmDialogManagerMock, ShowInputDialog(testing::_)).Times(0);
 
     authManager_->remoteVersion_ = "4.1.5.2";
     authManager_->authResponseContext_->bindLevel = INVALIED_TYPE;
     authManager_->ShowStartAuthDialog();
-    EXPECT_NE(authManager_->authResponseContext_->targetDeviceName, DmDialogManager::GetInstance().targetDeviceName_);
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(DmDialogManagerMock::dmDialogManagerMock.get()));
+    EXPECT_CALL(*DmDialogManagerMock::dmDialogManagerMock, ShowInputDialog(testing::_)).Times(0);
 
     authManager_->remoteVersion_ = "4.1.5.0";
     authManager_->ShowStartAuthDialog();
-    EXPECT_NE(authManager_->authResponseContext_->targetDeviceName, DmDialogManager::GetInstance().targetDeviceName_);
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(DmDialogManagerMock::dmDialogManagerMock.get()));
 }
 
 HWTEST_F(DmAuthManagerTest, ProcessPincode_001, testing::ext::TestSize.Level1)
