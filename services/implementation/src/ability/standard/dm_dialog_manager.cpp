@@ -139,8 +139,8 @@ void DmDialogManager::ConnectSessionExtension()
         RetireSession();
         return;
     }
-    // CloseSession records intent while connecting. The completion callback owns
-    // disconnection once AbilityManager has established the connection.
+    // CloseSession records a pending close request while connecting. The completion
+    // callback disconnects the session after AbilityManager establishes the connection.
 }
 
 int32_t DmDialogManager::DisconnectSession()
