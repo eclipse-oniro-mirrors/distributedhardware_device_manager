@@ -22,16 +22,19 @@ namespace DistributedHardware {
 
 void DmDialogClient::ShowConfirmDialog(const std::string &param)
 {
+    ASSERT_NE(DmDialogManagerMock::dmDialogManagerMock, nullptr);
     DmDialogManagerMock::dmDialogManagerMock->ShowConfirmDialog(param);
 }
 
 void DmDialogClient::ShowPinDialog(const std::string &param)
 {
+    ASSERT_NE(DmDialogManagerMock::dmDialogManagerMock, nullptr);
     DmDialogManagerMock::dmDialogManagerMock->ShowPinDialog(param);
 }
 
 void DmDialogClient::ShowInputDialog(const std::string &param)
 {
+    ASSERT_NE(DmDialogManagerMock::dmDialogManagerMock, nullptr);
     DmDialogManagerMock::dmDialogManagerMock->ShowInputDialog(param);
 }
 void DmDialogClient::ShowServiceBindConfirmDialog(const std::string &param)

@@ -14,6 +14,7 @@
  */
 #include <atomic>
 #include <condition_variable>
+#include <chrono>
 #include <cstring>
 #include <cstdlib>
 #include <mutex>
@@ -78,6 +79,8 @@ std::set<Context *> g_contexts;
 std::mutex g_gate;
 std::condition_variable g_changed;
 bool g_blockShow = false;
+bool g_blockCallback = false;
+std::atomic<uint32_t> g_lastOperation{ DM_UI_CLOSE };
 bool g_entered = false;
 bool g_proceed = false;
 bool g_blockWork = false;
@@ -87,6 +90,10 @@ std::vector<sptr<AAFwk::IAbilityConnection>> g_connections;
 
 void *Create(const DmUiSessionHost *host, void *connection)
 {
+    if (host == nullptr || connection == nullptr) {
+        ADD_FAILURE() << "Missing module creation arguments";
+        return nullptr;
+    }
     EXPECT_EQ(host->size, sizeof(DmUiSessionHost));
     EXPECT_NE(host->submit, nullptr);
     g_connections.emplace_back(static_cast<AAFwk::IAbilityConnection *>(connection));
@@ -114,6 +121,10 @@ void RunConnectionWork(void *)
 
 int32_t Invoke(void *value, uint32_t operation, const char *, size_t)
 {
+    if (value == nullptr) {
+        ADD_FAILURE() << "Missing session context";
+        return -1;
+    }
     ++g_inside;
     ++g_calls;
     if (operation == DM_UI_CONFIRM) {
@@ -124,13 +135,26 @@ int32_t Invoke(void *value, uint32_t operation, const char *, size_t)
             g_changed.wait(lock, [] { return g_proceed; });
         }
     }
+    if (operation != DM_UI_CLOSE) {
+        g_lastOperation = operation;
+    }
     if (operation == DM_UI_PIN) {
         auto context = static_cast<Context *>(value);
+        if (context->host.submit == nullptr) {
+            ADD_FAILURE() << "Missing task dispatcher";
+            --g_inside;
+            return -1;
+        }
         EXPECT_EQ(context->host.submit(context->host.generation, RunConnectionWork, value), 0);
     }
     if (operation == DM_UI_CLOSE && !g_deferClose && g_closeResult == 0) {
-        static_cast<Context *>(value)->connection->OnAbilityDisconnectDone(
-            AppExecFwk::ElementName(), g_disconnectResult);
+        auto context = static_cast<Context *>(value);
+        if (context->connection == nullptr) {
+            ADD_FAILURE() << "Missing callback bridge";
+            --g_inside;
+            return -1;
+        }
+        context->connection->OnAbilityDisconnectDone(AppExecFwk::ElementName(), g_disconnectResult);
     }
     --g_inside;
     return operation == DM_UI_CLOSE ? g_closeResult : 0;
@@ -138,11 +162,23 @@ int32_t Invoke(void *value, uint32_t operation, const char *, size_t)
 void Connected(void *, void *, int32_t)
 {
     ++g_events;
+    ++g_inside;
+    {
+        std::unique_lock<std::mutex> lock(g_gate);
+        if (g_blockCallback) {
+            g_entered = true;
+            g_changed.notify_all();
+            g_changed.wait(lock, [] { return g_proceed; });
+        }
+    }
+    --g_inside;
 }
 void Disconnected(void *value, int32_t result)
 {
     ++g_events;
     auto context = static_cast<Context *>(value);
+    ASSERT_NE(context, nullptr);
+    ASSERT_NE(context->host.retire, nullptr);
     if (result == 0 || result == DM_UI_TARGET_TERMINATED) {
         context->host.retire(context->host.generation);
     }
@@ -151,7 +187,8 @@ void Destroy(void *context)
 {
     EXPECT_EQ(g_inside.load(), 0);
     ++g_destroys;
-    g_contexts.erase(static_cast<Context *>(context));
+    ASSERT_NE(context, nullptr);
+    ASSERT_EQ(g_contexts.erase(static_cast<Context *>(context)), 1U);
     delete static_cast<Context *>(context);
 }
 DmUiSessionApi g_api{ DM_UI_SESSION_API_VERSION,
@@ -191,6 +228,9 @@ void RunTasks(std::vector<ffrt_function_header_t *> &queue, bool execute)
         tasks.swap(queue);
     }
     for (auto task : tasks) {
+        ASSERT_NE(task, nullptr);
+        ASSERT_NE(task->exec, nullptr);
+        ASSERT_NE(task->destroy, nullptr);
         if (execute) {
             task->exec(task);
         }
@@ -220,7 +260,8 @@ public:
         g_failSessionSymbol = false;
         g_workCalls = 0;
         g_blockWork = g_workEntered = g_workProceed = false;
-        g_blockShow = g_entered = g_proceed = false;
+        g_blockShow = g_blockCallback = g_entered = g_proceed = false;
+        g_lastOperation = DM_UI_CLOSE;
     }
     void TearDown() override
     {
@@ -230,7 +271,9 @@ public:
         g_connections.clear();
         // The fixture, not the production recovery path, reclaims retained mock sessions.
         for (auto context : g_contexts) {
-            delete context;
+            if (context != nullptr) {
+                delete context;
+            }
         }
         g_contexts.clear();
     }
@@ -243,6 +286,8 @@ extern "C" void *WrapFfrtAllocAutoManagedFunctionStorageBase(ffrt_function_kind_
 extern "C" void WrapFfrtSubmitBase(
     ffrt_function_header_t *task, const ffrt_deps_t *, const ffrt_deps_t *, const ffrt_task_attr_t *attr)
 {
+    ASSERT_NE(task, nullptr);
+    ASSERT_NE(attr, nullptr);
     auto delay = ffrt_task_attr_get_delay(attr);
     EXPECT_TRUE(delay == 0 || delay == CLOSE_TIMEOUT_US);
     std::lock_guard<std::mutex> lock(g_taskMutex);
@@ -250,12 +295,20 @@ extern "C" void WrapFfrtSubmitBase(
 }
 extern "C" void *WrapDlopen(const char *name, int)
 {
+    if (name == nullptr) {
+        ADD_FAILURE() << "Missing module name";
+        return nullptr;
+    }
     EXPECT_STREQ(name, "libdm_ui.z.so");
     ++g_opens;
     return g_failOpen ? nullptr : &g_opens;
 }
 extern "C" void *WrapDlsym(void *, const char *name)
 {
+    if (name == nullptr) {
+        ADD_FAILURE() << "Missing symbol name";
+        return nullptr;
+    }
     if (std::strcmp(name, "DmGetUiApiV1") == 0) {
         return reinterpret_cast<void *>(GetResidentApi);
     }
@@ -294,7 +347,11 @@ void VerifyInitializationAndReload()
         EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
         EXPECT_EQ(g_closes.load(), before + 1);
         int callbacks = g_events.load();
+        ASSERT_FALSE(g_connections.empty());
+        ASSERT_NE(g_connections.back(), nullptr);
         g_connections.back()->OnAbilityConnectDone(AppExecFwk::ElementName(), nullptr, 0);
+        ASSERT_FALSE(g_connections.empty());
+        ASSERT_NE(g_connections.back(), nullptr);
         g_connections.back()->OnAbilityDisconnectDone(AppExecFwk::ElementName(), 0);
         EXPECT_EQ(g_events.load(), callbacks); // Old generations cannot call unloaded code.
     }
@@ -306,7 +363,9 @@ void VerifyShowQueuedDuringClose()
     // The next show is accepted into the host queue while the old close completes.
     g_deferClose = true;
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    ASSERT_FALSE(g_connections.empty());
     auto closingConnection = g_connections.back();
+    ASSERT_NE(closingConnection, nullptr);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
     int dispatched = g_calls.load();
     int before = g_closes.load();
@@ -325,11 +384,16 @@ void VerifyRetirementWaitsForActiveCall()
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     {
         std::lock_guard<std::mutex> lock(g_gate);
-        g_blockShow = true;
+        g_blockCallback = true;
         g_entered = false;
         g_proceed = false;
     }
-    std::thread active([] { ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0); });
+    ASSERT_FALSE(g_connections.empty());
+    auto connection = g_connections.back();
+    ASSERT_NE(connection, nullptr);
+    std::thread active([connection] {
+        connection->OnAbilityConnectDone(AppExecFwk::ElementName(), nullptr, 0);
+    });
     {
         std::unique_lock<std::mutex> lock(g_gate);
         g_changed.wait(lock, [] { return g_entered; });
@@ -340,7 +404,7 @@ void VerifyRetirementWaitsForActiveCall()
     {
         std::lock_guard<std::mutex> lock(g_gate);
         g_proceed = true;
-        g_blockShow = false;
+        g_blockCallback = false;
         g_changed.notify_all();
     }
     active.join();
@@ -425,7 +489,9 @@ TEST_F(DmUiLifecycle, StaleWatchdogCannotRecoverNewGeneration)
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
     ASSERT_EQ(g_closes.load(), 1);
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    ASSERT_FALSE(g_connections.empty());
     auto currentConnection = g_connections.back();
+    ASSERT_NE(currentConnection, nullptr);
     std::vector<ffrt_function_header_t *> staleTimers;
     {
         std::lock_guard<std::mutex> lock(g_taskMutex);
@@ -480,9 +546,14 @@ TEST_F(DmUiLifecycle, RecoveryWaitsForExecutingModuleCall)
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     {
         std::lock_guard<std::mutex> lock(g_gate);
-        g_blockShow = true;
+        g_blockCallback = true;
     }
-    std::thread running([] { EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0); });
+    ASSERT_FALSE(g_connections.empty());
+    auto activeConnection = g_connections.back();
+    ASSERT_NE(activeConnection, nullptr);
+    std::thread running([activeConnection] {
+        activeConnection->OnAbilityConnectDone(AppExecFwk::ElementName(), nullptr, 0);
+    });
     {
         std::unique_lock<std::mutex> lock(g_gate);
         g_changed.wait(lock, [] { return g_entered; });
@@ -494,7 +565,7 @@ TEST_F(DmUiLifecycle, RecoveryWaitsForExecutingModuleCall)
     EXPECT_EQ(g_closes.load(), 0);
     {
         std::lock_guard<std::mutex> lock(g_gate);
-        g_blockShow = false;
+        g_blockCallback = false;
         g_proceed = true;
         g_changed.notify_all();
     }
@@ -507,7 +578,9 @@ TEST_F(DmUiLifecycle, LateCallbackCannotUnloadResidentBackend)
 {
     g_deferClose = true;
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    ASSERT_FALSE(g_connections.empty());
     auto old = g_connections.back();
+    ASSERT_NE(old, nullptr);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
     RunTimers();
     EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
@@ -575,12 +648,19 @@ void VerifySuccessfulDisconnectBeforeDrain(bool acknowledgeBeforeTimeout)
 {
     g_deferClose = true;
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    ASSERT_FALSE(g_connections.empty());
     auto connection = g_connections.back();
+    ASSERT_NE(connection, nullptr);
     {
         std::lock_guard<std::mutex> lock(g_gate);
-        g_blockShow = true;
+        g_blockCallback = true;
     }
-    std::thread running([] { EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0); });
+    ASSERT_FALSE(g_connections.empty());
+    auto activeConnection = g_connections.back();
+    ASSERT_NE(activeConnection, nullptr);
+    std::thread running([activeConnection] {
+        activeConnection->OnAbilityConnectDone(AppExecFwk::ElementName(), nullptr, 0);
+    });
     {
         std::unique_lock<std::mutex> lock(g_gate);
         g_changed.wait(lock, [] { return g_entered; });
@@ -597,7 +677,7 @@ void VerifySuccessfulDisconnectBeforeDrain(bool acknowledgeBeforeTimeout)
     EXPECT_EQ(g_closes.load(), 0);
     {
         std::lock_guard<std::mutex> lock(g_gate);
-        g_blockShow = false;
+        g_blockCallback = false;
         g_proceed = true;
         g_changed.notify_all();
     }
@@ -607,7 +687,9 @@ void VerifySuccessfulDisconnectBeforeDrain(bool acknowledgeBeforeTimeout)
 TEST_F(DmUiLifecycle, TargetTerminationReleasesWithoutExplicitClose)
 {
     EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    ASSERT_FALSE(g_connections.empty());
     auto old = g_connections.back();
+    ASSERT_NE(old, nullptr);
     old->OnAbilityDisconnectDone(AppExecFwk::ElementName(), DM_UI_TARGET_TERMINATED);
     EXPECT_EQ(g_destroys.load(), 1);
     EXPECT_EQ(g_closes.load(), 1);
@@ -735,7 +817,9 @@ TEST_F(DmUiLifecycle, TypedCancelPreservesOtherQueuedDialogs)
 {
     g_deferClose = true;
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    ASSERT_FALSE(g_connections.empty());
     auto connection = g_connections.back();
+    ASSERT_NE(connection, nullptr);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
     int dispatched = g_calls.load();
     EXPECT_EQ(InvokeDmUi(DM_UI_INPUT, TEST_PAYLOAD, TEST_PAYLOAD_SIZE), 0);
@@ -793,6 +877,98 @@ TEST_F(DmUiLifecycle, MissingV2SymbolAndOldApiVersionAreRejected)
     EXPECT_EQ(g_destroys.load(), 0);
     g_sessionVersion = DM_UI_SESSION_API_VERSION;
     EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
+    EXPECT_EQ(g_destroys.load(), 1);
+}
+
+// @tc.name: RepeatedGlobalClose001
+// @tc.desc: Repeated closes cancel queued displays without disconnecting twice.
+// @tc.type: FUNC
+TEST_F(DmUiLifecycle, RepeatedGlobalClose001)
+{
+    g_deferClose = true;
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
+    ASSERT_FALSE(g_connections.empty());
+    ASSERT_FALSE(g_connections.empty());
+    auto connection = g_connections.back();
+    ASSERT_NE(connection, nullptr);
+    ASSERT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
+    int calls = g_calls.load();
+    ASSERT_EQ(InvokeDmUi(DM_UI_INPUT, TEST_PAYLOAD, TEST_PAYLOAD_SIZE), 0);
+    EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
+    EXPECT_EQ(g_calls.load(), calls);
+    connection->OnAbilityDisconnectDone(AppExecFwk::ElementName(), 0);
+    EXPECT_EQ(g_destroys.load(), 1);
+    EXPECT_EQ(g_closes.load(), 1);
+    EXPECT_EQ(g_calls.load(), calls);
+    ASSERT_EQ(InvokeDmUi(DM_UI_INPUT, TEST_PAYLOAD, TEST_PAYLOAD_SIZE), 0);
+    EXPECT_EQ(g_residentCalls.load(), 0);
+    g_deferClose = false;
+    DmDialogClient::GetInstance().ReleaseSession(DM_UI_INPUT);
+    EXPECT_EQ(g_destroys.load(), TWO_SESSIONS);
+}
+
+// @tc.name: ConcurrentShowCancellation001
+// @tc.desc: Typed cancellation follows actual serialized display order.
+// @tc.type: FUNC
+TEST_F(DmUiLifecycle, ConcurrentShowCancellation001)
+{
+    g_blockShow = true;
+    std::thread first([] { EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0); });
+    {
+        std::unique_lock<std::mutex> lock(g_gate);
+        g_changed.wait(lock, [] { return g_entered; });
+    }
+    std::atomic<bool> secondStarted{ false };
+    std::thread second([&secondStarted] {
+        secondStarted = true;
+        EXPECT_EQ(InvokeDmUi(DM_UI_INPUT, TEST_PAYLOAD, TEST_PAYLOAD_SIZE), 0);
+    });
+    while (!secondStarted.load()) {
+        std::this_thread::yield();
+    }
+    // Bounded wait also allows the old implementation to enter its second call.
+    constexpr auto overlapWindow = std::chrono::milliseconds(50);
+    std::this_thread::sleep_for(overlapWindow);
+    {
+        std::lock_guard<std::mutex> lock(g_gate);
+        g_blockShow = false;
+        g_proceed = true;
+        g_changed.notify_all();
+    }
+    first.join();
+    second.join();
+    uint32_t last = g_lastOperation.load();
+    ASSERT_LT(last, static_cast<uint32_t>(DM_UI_CLOSE));
+    DmDialogClient::GetInstance().ReleaseSession(last);
+    EXPECT_EQ(g_destroys.load(), 1);
+    EXPECT_EQ(g_closes.load(), 1);
+}
+
+// @tc.name: MissingFunctionPointers001
+// @tc.desc: Incomplete function tables must never be dereferenced.
+// @tc.type: FUNC
+TEST_F(DmUiLifecycle, MissingFunctionPointers001)
+{
+    const DmUiSessionApi saved = g_api;
+    g_api.create = nullptr;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
+    g_api = saved;
+    g_api.invoke = nullptr;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
+    g_api = saved;
+    g_api.connected = nullptr;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
+    g_api = saved;
+    g_api.disconnected = nullptr;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
+    g_api = saved;
+    g_api.destroy = nullptr;
+    EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
+    g_api = saved;
+    EXPECT_EQ(g_calls.load(), 0);
+    EXPECT_TRUE(g_contexts.empty());
+    ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
     EXPECT_EQ(g_destroys.load(), 1);
 }

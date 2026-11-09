@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <array>
 #include <condition_variable>
+#include <cstdlib>
 #include <deque>
 #include <dlfcn.h>
 #include <mutex>
@@ -36,6 +37,9 @@ struct UiRequest {
     uint64_t cancelEpoch;
 };
 struct UiState {
+    // Order requests and typed cancellation without holding mutex across module calls.
+    // Synchronous close/replay may reenter this thread; callbacks never take this lock.
+    std::recursive_mutex dispatchMutex;
     std::mutex mutex;
     std::condition_variable changed;
     void *handle = nullptr;
@@ -58,7 +62,11 @@ struct UiState {
 UiState &State()
 {
     // The callback bridge outlives IPC references; only module contexts are transient.
-    static auto state = new UiState;
+    static auto state = new (std::nothrow) UiState;
+    if (state == nullptr) {
+        LOGE("UI host state allocation failed");
+        std::abort();
+    }
     return *state;
 }
 void ReleaseCall();
@@ -121,7 +129,8 @@ int32_t SubmitSessionWork(uint64_t generation, void (*work)(void *), void *conte
             auto &state = State();
             {
                 std::lock_guard<std::mutex> lock(state.mutex);
-                if (generation != state.generation || context != state.context || state.closing || state.retired ||
+                if (work == nullptr || context == nullptr || generation != state.generation ||
+                    context != state.context || state.closing || state.retired ||
                     state.residentMode || state.currentOperation != DM_UI_PIN ||
                     epoch != state.cancelEpoch[DM_UI_PIN]) {
                     return;
@@ -282,6 +291,10 @@ void TryFinishSession()
     } else if (!state.retired) {
         return;
     } else {
+        if (!ValidApi(state.api) || state.context == nullptr || state.handle == nullptr) {
+            LOGE("UI retirement has no valid module context; retaining resources");
+            return;
+        }
         state.transitioning = true;
         auto api = state.api;
         void *context = state.context;
@@ -320,7 +333,8 @@ void DeliverConnection(uint64_t generation, IRemoteObject *remote, int32_t resul
 {
     auto &state = State();
     std::unique_lock<std::mutex> lock(state.mutex);
-    if (state.transitioning || state.context == nullptr || generation != state.generation || state.retired) {
+    if (state.transitioning || state.context == nullptr || !ValidApi(state.api) ||
+        generation != state.generation || state.retired) {
         return;
     }
     ++state.active;
@@ -342,6 +356,10 @@ void DeliverConnection(uint64_t generation, IRemoteObject *remote, int32_t resul
 int32_t InvokeResidentRequest(std::unique_lock<std::mutex> &lock, uint32_t operation, const char *data, size_t size)
 {
     auto &state = State();
+    if (!ValidResidentApi(state.residentApi)) {
+        LOGE("UI resident interface unavailable");
+        return -1;
+    }
     if (operation < DM_UI_CLOSE) {
         state.currentOperation = operation;
     }
@@ -358,6 +376,10 @@ int32_t InvokeSessionRequest(std::unique_lock<std::mutex> &lock, uint32_t operat
         return -1;
     }
     auto &state = State();
+    if (!ValidApi(state.api) || state.context == nullptr) {
+        LOGE("UI session interface unavailable");
+        return -1;
+    }
     if (operation < DM_UI_CLOSE) {
         state.currentOperation = operation;
     }
@@ -387,6 +409,7 @@ int32_t InvokeUiRequest(uint32_t operation, const char *data, size_t size, bool 
         return -1;
     }
     auto &state = State();
+    std::lock_guard<std::recursive_mutex> dispatch(state.dispatchMutex);
     std::unique_lock<std::mutex> lock(state.mutex);
     state.changed.wait(lock, [&state] { return !state.transitioning; });
     if (deferred && (operation >= DM_UI_CLOSE || cancelEpoch != state.cancelEpoch[CancelGroup(operation)])) {
@@ -398,7 +421,7 @@ int32_t InvokeUiRequest(uint32_t operation, const char *data, size_t size, bool 
     if (state.residentMode) {
         return InvokeResidentRequest(lock, operation, data, size);
     }
-    if (operation == DM_UI_CLOSE && state.context == nullptr) {
+    if (operation == DM_UI_CLOSE && (state.context == nullptr || state.closing || state.retired)) {
         return 0;
     }
     if ((state.closing || state.retired) && operation != DM_UI_CLOSE) {
@@ -432,6 +455,7 @@ void DmDialogClient::ReleaseSession(uint32_t operation)
         return;
     }
     auto &state = State();
+    std::lock_guard<std::recursive_mutex> dispatch(state.dispatchMutex);
     std::unique_lock<std::mutex> lock(state.mutex);
     state.changed.wait(lock, [&state] { return !state.transitioning; });
     CancelPending(state, operation);
@@ -439,6 +463,10 @@ void DmDialogClient::ReleaseSession(uint32_t operation)
         return;
     }
     if (state.residentMode) {
+        if (!ValidResidentApi(state.residentApi)) {
+            LOGE("UI resident close interface unavailable");
+            return;
+        }
         ++state.active;
         auto api = state.residentApi;
         state.currentOperation = DM_UI_CLOSE;
@@ -449,7 +477,7 @@ void DmDialogClient::ReleaseSession(uint32_t operation)
         }
         return;
     }
-    if (state.context == nullptr || state.closing || state.retired) {
+    if (state.context == nullptr || !ValidApi(state.api) || state.closing || state.retired) {
         return;
     }
     state.closing = true;

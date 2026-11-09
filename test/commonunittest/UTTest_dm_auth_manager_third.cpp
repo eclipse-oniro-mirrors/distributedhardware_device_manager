@@ -96,6 +96,7 @@ bool DeviceProfileConnector::CheckSrcDevIdInAclForDevBind(const std::string &pkg
 void DmAuthManagerTest::SetUp()
 {
     DmDialogManagerMock::dmDialogManagerMock = std::make_shared<testing::NiceMock<DmDialogManagerMock>>();
+    ASSERT_NE(DmDialogManagerMock::dmDialogManagerMock, nullptr);
     InitDeviceAuthService();
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();

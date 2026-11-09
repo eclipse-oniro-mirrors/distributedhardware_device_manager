@@ -87,6 +87,7 @@ private:
     bool managedSession_ = false;
     bool sessionClosing_ = false;
     bool sessionRequested_ = false;
+    bool sessionDisconnecting_ = false;
     DmUiSessionHost sessionHost_ {};
 };
 } // namespace DistributedHardware

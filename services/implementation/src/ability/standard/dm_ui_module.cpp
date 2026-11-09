@@ -87,6 +87,9 @@ int32_t InvokeSession(void *context, uint32_t operation, const char *data, size_
 
 void Connected(void *context, void *remote, int32_t result)
 {
+    if (context == nullptr) {
+        return;
+    }
     // The host retains a strong reference throughout this synchronous callback.
     sptr<IRemoteObject> object(static_cast<IRemoteObject *>(remote));
     static_cast<DmDialogManager *>(context)->OnAbilityConnectDone(AppExecFwk::ElementName(), object, result);
@@ -94,11 +97,17 @@ void Connected(void *context, void *remote, int32_t result)
 
 void Disconnected(void *context, int32_t result)
 {
+    if (context == nullptr) {
+        return;
+    }
     static_cast<DmDialogManager *>(context)->OnAbilityDisconnectDone(AppExecFwk::ElementName(), result);
 }
 
 void DestroySession(void *context)
 {
+    if (context == nullptr) {
+        return;
+    }
     DmDialogManager::DestroySession(static_cast<DmDialogManager *>(context));
 }
 

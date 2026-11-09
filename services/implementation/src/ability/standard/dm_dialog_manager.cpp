@@ -66,6 +66,9 @@ DmDialogManager *DmDialogManager::CreateSession(const DmUiSessionHost &host, voi
 
 void DmDialogManager::DestroySession(DmDialogManager *session)
 {
+    if (session == nullptr) {
+        return;
+    }
     delete session;
 }
 
@@ -83,6 +86,10 @@ sptr<AAFwk::IAbilityManager> GetSessionAbilityManager()
 
 void DmDialogManager::RetireSession()
 {
+    if (sessionHost_.retire == nullptr) {
+        LOGE("UI retirement callback unavailable");
+        return;
+    }
     sessionHost_.retire(sessionHost_.generation);
 }
 
@@ -97,6 +104,10 @@ void DmDialogManager::ConnectSessionExtension()
             return;
         }
         existing = g_remoteObject;
+        if (existing == nullptr && sessionRequested_) {
+            // The pending connection callback will display the latest parameters.
+            return;
+        }
         connection = dialogConnectionCallback_;
         userId = userId_;
         sessionRequested_ = true;
@@ -106,8 +117,8 @@ void DmDialogManager::ConnectSessionExtension()
         return;
     }
     auto manager = GetSessionAbilityManager();
-    if (manager == nullptr) {
-        LOGE("UI session ability service unavailable");
+    if (manager == nullptr || connection == nullptr) {
+        LOGE("UI session ability service or callback unavailable");
         RetireSession();
         return;
     }
@@ -128,14 +139,8 @@ void DmDialogManager::ConnectSessionExtension()
         RetireSession();
         return;
     }
-    bool closing;
-    {
-        std::lock_guard<ffrt::mutex> lock(mutex_);
-        closing = sessionClosing_;
-    }
-    if (closing) {
-        DisconnectSession();
-    }
+    // CloseSession records intent while connecting. The completion callback owns
+    // disconnection once AbilityManager has established the connection.
 }
 
 int32_t DmDialogManager::DisconnectSession()
@@ -143,16 +148,24 @@ int32_t DmDialogManager::DisconnectSession()
     sptr<AAFwk::IAbilityConnection> connection;
     {
         std::lock_guard<ffrt::mutex> lock(mutex_);
+        if (sessionDisconnecting_ || !sessionRequested_ || g_remoteObject == nullptr) {
+            return ERR_OK;
+        }
+        sessionDisconnecting_ = true;
         connection = dialogConnectionCallback_;
     }
     auto manager = GetSessionAbilityManager();
     if (manager == nullptr || connection == nullptr) {
         LOGE("UI session cannot disconnect; retaining resources");
+        std::lock_guard<ffrt::mutex> lock(mutex_);
+        sessionDisconnecting_ = false;
         return -1;
     }
     int32_t result = manager->DisconnectAbility(connection);
     if (result != ERR_OK) {
         LOGE("UI session disconnect failed: %{public}d; retaining resources", result);
+        std::lock_guard<ffrt::mutex> lock(mutex_);
+        sessionDisconnecting_ = false;
     }
     return result;
 }
@@ -311,7 +324,15 @@ void DmDialogManager::ShowPinDialog(const std::string &param)
         pinCode_ = param;
     }
     if (managedSession_) {
-        auto connect = [](void *context) { static_cast<DmDialogManager *>(context)->ConnectExtension(); };
+        if (sessionHost_.submit == nullptr) {
+            LOGE("PIN connection dispatcher unavailable");
+            return;
+        }
+        auto connect = [](void *context) {
+            if (context != nullptr) {
+                static_cast<DmDialogManager *>(context)->ConnectExtension();
+            }
+        };
         if (sessionHost_.submit(sessionHost_.generation, connect, this) != ERR_OK) {
             LOGW("PIN connection work was cancelled before dispatch");
         }
@@ -446,6 +467,10 @@ void DmDialogManager::OnAbilityConnectDone(
 
 void DmDialogManager::SendMsgRequest(const sptr<IRemoteObject>& remoteObject)
 {
+    if (remoteObject == nullptr) {
+        LOGE("UI message target unavailable");
+        return;
+    }
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
@@ -502,7 +527,9 @@ void DmDialogManager::OnAbilityDisconnectDone(const AppExecFwk::ElementName& ele
             g_remoteObject = nullptr;
             isConnectSystemUI_.store(false);
             sessionRequested_ = false;
-            sessionClosing_ = false;
+            // A retiring session must not start another connection before the
+            // host observes retirement and drains the last active call.
+            sessionClosing_ = true;
         }
         RetireSession();
         return;
