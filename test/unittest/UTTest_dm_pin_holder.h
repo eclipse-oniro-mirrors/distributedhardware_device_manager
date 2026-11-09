@@ -382,6 +382,29 @@ public:
         (void)networkId;
         return 0;
     }
+
+    virtual int32_t OnServiceTrustedPeerOnline(const DmRegisterServiceState &regState, const AuthInfo &authInfo,
+        const DmServiceTrustedPeer &peer) override
+    {
+        (void)regState;
+        (void)authInfo;
+        (void)peer;
+        return 0;
+    }
+
+    virtual int32_t OnServiceTrustedPeerOffline(const DmRegisterServiceState &regState,
+        const DmServiceTrustedPeer &peer) override
+    {
+        (void)regState;
+        (void)peer;
+        return 0;
+    }
+
+    virtual void OnSvrTrustedPeerStateOnlineResult(const AuthInfo &authInfo, const DmServiceTrustedPeer &peer) override
+    {
+        (void)authInfo;
+        (void)peer;
+    }
 };
 } // namespace DistributedHardware
 } // namespace OHOS

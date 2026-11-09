@@ -491,6 +491,13 @@ public:
     virtual bool IsDeviceOnline(const std::string &pkgName) override;
     virtual int32_t Register3rdDeviceInfo(const Dm3rdDeviceInfo &info) override;
     virtual int32_t UnRegister3rdDeviceInfo(const std::string &networkId) override;
+    virtual int32_t UnbindSvrTarByUdidOnSvrPublisher(const std::string &pkgName, const std::string &peerUdid,
+        int64_t serviceId, const std::map<std::string, std::string> &unbindParam) override;
+    virtual int32_t GetServiceTrustedPeersOnSvrPublisher(const std::string &pkgName, int64_t serviceId,
+        std::vector<DmServiceTrustedPeer> &peers) override;
+    virtual int32_t RegSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId,
+        std::shared_ptr<ServiceTrustedPeerStateCallback> callback) override;
+    virtual int32_t UnregSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId) override;
 private:
     DeviceManagerImpl() = default;
     ~DeviceManagerImpl() = default;

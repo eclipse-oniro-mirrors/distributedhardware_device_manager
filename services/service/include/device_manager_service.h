@@ -329,7 +329,14 @@ public:
     int32_t UnbindServiceTarget(const std::string &pkgName,
         const std::map<std::string, std::string> &unbindParam, const std::string &netWorkId,
         int64_t serviceId);
+    int32_t UnbindSvrTarByUdidOnSvrPublisher(const std::string &pkgName, const std::string &peerUdid,
+        int64_t serviceId, const std::map<std::string, std::string> &unbindParam);
+    int32_t GetServiceTrustedPeersOnSvrPublisher(const std::string &pkgName, int64_t serviceId,
+        std::vector<DmServiceTrustedPeer> &peers);
+    int32_t RegSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId);
+    int32_t UnregSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId);
     int32_t BindServiceOnline(const ServiceStateBindParameter &bindParam);
+    int32_t BindTrustedPeerStateOnline(const AuthInfo &authInfo, const DmServiceTrustedPeer &peer);
     int32_t BindServiceOffline(uint64_t tokenId, const std::string &pkgName, int32_t bindType,
         const std::string &peerUdid, const DistributedDeviceProfile::ServiceInfo &serviceInfo);
     int32_t HandleRemoteDied(const ProcessInfo &processInfo);
@@ -337,6 +344,8 @@ public:
     int32_t HandleServiceStatusChange(DmDeviceState devState, const std::string &peerUdid);
     void ProcessReceiveRspSvcUnbindProxy(const std::string &remoteUdid);
     void ProcessUnBindServiceProxy(const UnbindServiceProxyParam &param);
+    void ProcessReceiveRspSvcUnbindProxyOnSvrPublisher(const std::string &remoteUdid);
+    void ProcessUnBindServiceProxyOnSvrPublisher(const UnbindServiceProxyParam &param);
     bool CheckIsDeviceOnline();
 private:
     int32_t ValidateUnBindTokenId(const std::string &pkgName, const std::string &udidHash);
@@ -514,6 +523,10 @@ private:
         const std::string &netWorkId, int64_t serviceId);
     void NotifyRemoteUnBindServiceByWifi(int32_t userId, uint64_t localTokenId, uint64_t subjectTokenId,
         int64_t serviceId, const std::string &netWorkId, bool isProxyUnbind);
+    void NotifyRemoteUnbindServiceOnSvrPublisher(const std::map<std::string, std::string> &unbindParam,
+        const std::string &peerUdid, int64_t serviceId);
+    void NotifyRemoteUnBindServiceOnSvrPublisherByWifi(int32_t userId, uint64_t localTokenId,
+        uint64_t subjectTokenId, int64_t serviceId, const std::string &peerNetWorkId, bool isProxyUnbind);
     int32_t GetSubjectTokenId(const std::map<std::string, std::string> &unbindParam, uint64_t &subjectTokenId);
     void DeleteInvalidSkIdAcl();
 #if defined(SUPPORT_BLUETOOTH) || defined(SUPPORT_WIFI)

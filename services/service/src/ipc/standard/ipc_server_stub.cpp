@@ -358,7 +358,7 @@ ServiceRunningState IpcServerStub::QueryServiceState() const
 
 int32_t IpcServerStub::RegisterDeviceManagerListener(const ProcessInfo &processInfo, sptr<IpcRemoteBroker> listener)
 {
-    LOGI("pkgName: %{public}s", processInfo.pkgName.c_str());
+    LOGI("pkgName: %{public}s, userId: %{public}d", processInfo.pkgName.c_str(), processInfo.userId);
     if (processInfo.pkgName.empty() || listener == nullptr) {
         LOGE("input parameter invalid.");
         return ERR_DM_POINT_NULL;

@@ -70,18 +70,19 @@ public:
     MOCK_METHOD(int32_t, UnRegisterServiceStateCallback, (const std::string &, int64_t));
     MOCK_METHOD(int32_t, HandleServiceStatusChange, (DmDeviceState, const std::string &));
     MOCK_METHOD(int32_t, BindServiceOnline, (const ServiceStateBindParameter &));
-    MOCK_METHOD(int32_t, BindServiceOffline, (uint64_t, const std::string &, int32_t, const std::string &,
-        const DistributedDeviceProfile::ServiceInfo &));
+    MOCK_METHOD(int32_t, BindServiceOffline, (uint64_t, const std::string &, int32_t,
+        (const std::string &), const DistributedDeviceProfile::ServiceInfo &));
     MOCK_METHOD(int32_t, SetServiceNodeKeyInfo, (const std::string &));
     MOCK_METHOD(int32_t, GetServiceNodeKeyInfo, (const std::string &, const std::string &));
     MOCK_METHOD(int32_t, SyncServiceInfoOnline, (const std::string &, const std::string &));
-    MOCK_METHOD(int32_t, SyncServiceInfoByServiceId, (const std::string &, int32_t, const std::string &, int64_t));
+    MOCK_METHOD(int32_t, SyncServiceInfoByServiceId, (const std::string &, int32_t,
+        (const std::string &), int64_t));
     MOCK_METHOD(int32_t, SyncAllServiceInfo, (const std::string &, int32_t, const std::string &));
     MOCK_METHOD(int32_t, GetLocalServiceInfoByServiceId, (int64_t, DmRegisterServiceInfo &));
     MOCK_METHOD(int32_t, GetTrustServiceInfo, (const std::string &,
         (const std::map<std::string, std::string> &), (std::vector<DmServiceInfo> &)));
-    MOCK_METHOD(int32_t, GetRegisterServiceInfo,
-        ((const std::map<std::string, std::string> &), (std::vector<DmRegisterServiceInfo> &)));
+    MOCK_METHOD(int32_t, GetRegisterServiceInfo, (const std::map<std::string, std::string> &,
+        (std::vector<DmRegisterServiceInfo> &)));
     MOCK_METHOD(int32_t, GetPeerServiceInfoByServiceId,
         (const std::string &, int64_t, DmRegisterServiceInfo &));
     MOCK_METHOD(int32_t, UnbindServiceTarget, (const std::string &,
@@ -95,6 +96,14 @@ public:
         (int32_t, const std::string &, const std::string &));
     MOCK_METHOD(int32_t, SubscribeAllServiceInfo, ());
     MOCK_METHOD(void, HandleProcessUnBindServiceProxy, (UnbindServiceProxyParam &));
+    MOCK_METHOD(void, HandleProcessUnBindServiceProxyOnSvrPublisher, (UnbindServiceProxyParam &));
+    MOCK_METHOD(int32_t, BindTrustedPeerStateOnline, (const AuthInfo &, const DmServiceTrustedPeer &));
+    MOCK_METHOD(int32_t, UnbindSvrTarByUdidOnSvrPublisher, (const std::string &, const std::string &,
+        int64_t, (const std::map<std::string, std::string> &)));
+    MOCK_METHOD(int32_t, GetServiceTrustedPeersOnSvrPublisher, (const std::string &, int64_t,
+        (std::vector<DmServiceTrustedPeer> &)));
+    MOCK_METHOD(int32_t, RegSvrTrustedPeerStateCbOnSvrPublisher, (const std::string &, int64_t));
+    MOCK_METHOD(int32_t, UnregSvrTrustedPeerStateCbOnSvrPublisher, (const std::string &, int64_t));
 #endif
 };
 } // namespace DistributedHardware

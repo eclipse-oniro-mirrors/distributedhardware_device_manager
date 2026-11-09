@@ -5220,6 +5220,30 @@ void DeviceManagerService::ProcessUnBindServiceProxy(const UnbindServiceProxyPar
     }
 }
 
+void DeviceManagerService::ProcessReceiveRspSvcUnbindProxyOnSvrPublisher(const std::string &remoteUdid)
+{
+    LOGI("remoteUdid: %{public}s", GetAnonyString(remoteUdid).c_str());
+    std::lock_guard<std::mutex> autoLock(timerLocks_);
+    if (timer_ != nullptr && remoteUdid != "") {
+        timer_->DeleteTimer(std::string(SERVICE_UNBIND_PROXY_BY_WIFI_TIMEOUT_TASK) + Crypto::Sha256(remoteUdid));
+    }
+}
+
+void DeviceManagerService::ProcessUnBindServiceProxyOnSvrPublisher(const UnbindServiceProxyParam &param)
+{
+    LOGI("start");
+    UnbindServiceProxyParam reverseParam;
+    reverseParam.userId = param.userId;
+    reverseParam.localTokenId = param.localTokenId;
+    reverseParam.subjectTokenId = param.subjectTokenId;
+    reverseParam.peerUdid = param.localUdid;
+    reverseParam.serviceId = param.serviceId;
+    reverseParam.isProxyUnbind = param.isProxyUnbind;
+    if (IsDMServiceAdapterResidentLoad()) {
+        dmServiceImplExtResident_->HandleProcessUnBindServiceProxyOnSvrPublisher(reverseParam);
+    }
+}
+
 bool DeviceManagerService::CheckIsDeviceOnline()
 {
     return SoftbusCache::GetInstance().CheckIsDeviceOnlineFormCache();
@@ -6785,6 +6809,15 @@ int32_t DeviceManagerService::BindServiceOnline(const ServiceStateBindParameter 
     return dmServiceImplExtResident_->BindServiceOnline(bindParam);
 }
 
+int32_t DeviceManagerService::BindTrustedPeerStateOnline(const AuthInfo &authInfo, const DmServiceTrustedPeer &peer)
+{
+    if (!IsDMServiceAdapterResidentLoad()) {
+        LOGE("adapter instance not init or init failed.");
+        return ERR_DM_UNSUPPORTED_METHOD;
+    }
+    return dmServiceImplExtResident_->BindTrustedPeerStateOnline(authInfo, peer);
+}
+
 int32_t DeviceManagerService::BindServiceOffline(uint64_t tokenId, const std::string &pkgName, int32_t bindType,
     const std::string &peerUdid, const DistributedDeviceProfile::ServiceInfo &serviceInfo)
 {
@@ -6842,6 +6875,174 @@ bool DeviceManagerService::CheckConstraintEnabledByNetworkId(const std::string &
     return DmConstrainsManager::GetInstance().CheckOsAccountConstraintEnabled(
         MultipleUserConnector::GetForgroundUserId(), DM_ACCOUNT_CONSTRAINT);
     return false;
+}
+
+int32_t DeviceManagerService::UnbindSvrTarByUdidOnSvrPublisher(const std::string &pkgName, const std::string &peerUdid,
+    int64_t serviceId, const std::map<std::string, std::string> &unbindParam)
+{
+    LOGI("start, peerUdid %{public}s", GetAnonyString(peerUdid).c_str());
+    if (!PermissionManager::GetInstance().CheckAccessServicePermission()) {
+        LOGE("No permission");
+        return ERR_DM_NO_PERMISSION;
+    }
+    if (pkgName.empty() || peerUdid.empty() || serviceId <= 0) {
+        LOGE("Invalid parameter, pkgName or peerUdid is empty.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    if (!IsDMServiceAdapterResidentLoad()) {
+        LOGE("adapter instance not init or init failed.");
+        return ERR_DM_UNSUPPORTED_METHOD;
+    }
+    NotifyRemoteUnbindServiceOnSvrPublisher(unbindParam, peerUdid, serviceId);
+    int32_t ret =
+        dmServiceImplExtResident_->UnbindSvrTarByUdidOnSvrPublisher(pkgName, peerUdid, serviceId, unbindParam);
+    LOGI("ret: %{public}d", ret);
+    return ret;
+}
+
+void DeviceManagerService::NotifyRemoteUnbindServiceOnSvrPublisher(
+    const std::map<std::string, std::string> &unbindParam, const std::string &peerUdidHash, int64_t serviceId)
+{
+    LOGI("start, peerUdidHash: %{public}s, serviceId: %{public}s",
+        GetAnonyString(peerUdidHash).c_str(), std::to_string(serviceId).c_str());
+    uint64_t localTokenId = OHOS::IPCSkeleton::GetCallingTokenID();
+    bool isProxyUnbind = false;
+    auto it = unbindParam.find(PARAM_KEY_IS_PROXY_UNBIND);
+    if (it != unbindParam.end()) {
+        isProxyUnbind = (it->second == "true");
+    }
+    std::string localUdid = GetLocalDeviceUdid();
+    DistributedDeviceProfile::ServiceInfo dpServiceInfo;
+    int32_t ret = DeviceProfileConnector::GetInstance().GetServiceInfoByUdidAndServiceId(localUdid,
+        serviceId, dpServiceInfo);
+    if (ret != DM_OK) {
+        LOGE("failed, ret: %{public}d", ret);
+        return;
+    }
+    int32_t localUserId = dpServiceInfo.GetUserId();
+    LOGI("localUserId: %{public}d", localUserId);
+    uint64_t subjectTokenId = 0;
+    if (isProxyUnbind) {
+        LOGI("isProxyUnbind is true.");
+        int32_t ret = GetSubjectTokenId(unbindParam, subjectTokenId);
+        if (ret != DM_OK) {
+            LOGE("input unbind parameter not contains subjectTokenId");
+        }
+    }
+    std::string realDeviceId = peerUdidHash;
+#if !(defined(__LITEOS_M__) || defined(LITE_DEVICE))
+    std::string udidHashTemp = "";
+    if (GetUdidHashByAnoyDeviceId(peerUdidHash, udidHashTemp) == DM_OK) {
+        realDeviceId = udidHashTemp;
+    }
+#endif
+    CHECK_NULL_VOID(softbusListener_);
+    std::string peerUdid = "";
+    if (softbusListener_->GetUdidFromDp(realDeviceId, peerUdid) != DM_OK) {
+        LOGE("Get udid by udidhash failed.");
+        return;
+    }
+    std::string peerNetWorkId = "";
+    SoftbusCache::GetInstance().GetNetworkIdFromCache(peerUdid, peerNetWorkId);
+    if (peerNetWorkId.empty()) {
+        LOGE("peerUdid: %{public}s is offline, peerNetWorkId is empty", GetAnonyString(peerUdid).c_str());
+        return;
+    }
+    LOGI("peerNetWorkId: %{public}s", GetAnonyString(peerNetWorkId).c_str());
+    NotifyRemoteUnBindServiceOnSvrPublisherByWifi(localUserId, localTokenId, subjectTokenId, serviceId,
+        peerNetWorkId, isProxyUnbind);
+}
+
+void DeviceManagerService::NotifyRemoteUnBindServiceOnSvrPublisherByWifi(int32_t localUserId, uint64_t localTokenId,
+    uint64_t subjectTokenId, int64_t localServiceId, const std::string &peerNetWorkId, bool isProxyUnbind)
+{
+    LOGI("start.");
+    std::string localUdid = GetLocalDeviceUdid();
+    UnbindServiceProxyParam param;
+    param.userId = localUserId;
+    param.localUdid = localUdid;
+    param.localTokenId = localTokenId;
+    param.subjectTokenId = subjectTokenId;
+    param.isProxyUnbind = isProxyUnbind;
+    param.peerNetworkId = peerNetWorkId;
+    param.serviceId = localServiceId;
+    CHECK_NULL_VOID(DMCommTool::GetInstance());
+    int32_t res = DMCommTool::GetInstance()->SendUnBindServiceProxyObjOnSvrPublisher(param);
+    if (res != DM_OK) {
+        LOGE("failed: %{public}s", GetAnonyString(peerNetWorkId).c_str());
+        return;
+    }
+    std::lock_guard<std::mutex> autoLock(timerLocks_);
+    if (timer_ == nullptr) {
+        timer_ = std::make_shared<DmTimer>();
+    }
+    std::string peerUdid = "";
+    SoftbusListener::GetUdidByNetworkId(peerNetWorkId.c_str(), peerUdid);
+    timer_->StartTimer(std::string(SERVICE_UNBIND_PROXY_BY_WIFI_TIMEOUT_TASK) + Crypto::Sha256(peerUdid),
+        USER_SWITCH_BY_WIFI_TIMEOUT_S, [this, peerNetWorkId] (std::string name) {
+        DMCommTool::GetInstance()->StopSocket(peerNetWorkId);
+    });
+}
+
+int32_t DeviceManagerService::GetServiceTrustedPeersOnSvrPublisher(const std::string &pkgName, int64_t serviceId,
+    std::vector<DmServiceTrustedPeer> &peers)
+{
+    LOGI("start");
+    if (!PermissionManager::GetInstance().CheckAccessServicePermission()) {
+        LOGE("No permission");
+        return ERR_DM_NO_PERMISSION;
+    }
+    if (pkgName.empty() || serviceId < 0) {
+        LOGE("Invalid parameter, pkgName is empty or serviceId is invaild.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    if (!IsDMServiceAdapterResidentLoad()) {
+        LOGE("adapter instance not init or init failed.");
+        return ERR_DM_UNSUPPORTED_METHOD;
+    }
+    int32_t ret = dmServiceImplExtResident_->GetServiceTrustedPeersOnSvrPublisher(pkgName, serviceId, peers);
+    LOGI("ret: %{public}d", ret);
+    return ret;
+}
+
+int32_t DeviceManagerService::RegSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId)
+{
+    LOGI("start");
+    if (!PermissionManager::GetInstance().CheckAccessServicePermission()) {
+        LOGE("No permission");
+        return ERR_DM_NO_PERMISSION;
+    }
+    if (pkgName.empty() || serviceId <= 0) {
+        LOGE("Invalid parameter.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    if (!IsDMServiceAdapterResidentLoad()) {
+        LOGE("adapter instance not init or init failed.");
+        return ERR_DM_UNSUPPORTED_METHOD;
+    }
+    int32_t ret = dmServiceImplExtResident_->RegSvrTrustedPeerStateCbOnSvrPublisher(pkgName, serviceId);
+    LOGI("ret: %{public}d", ret);
+    return ret;
+}
+
+int32_t DeviceManagerService::UnregSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId)
+{
+    LOGI("start");
+    if (!PermissionManager::GetInstance().CheckAccessServicePermission()) {
+        LOGE("No permission");
+        return ERR_DM_NO_PERMISSION;
+    }
+    if (pkgName.empty() || serviceId < 0) {
+        LOGE("Invalid parameter.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    if (!IsDMServiceAdapterResidentLoad()) {
+        LOGE("adapter instance not init or init failed.");
+        return ERR_DM_UNSUPPORTED_METHOD;
+    }
+    int32_t ret = dmServiceImplExtResident_->UnregSvrTrustedPeerStateCbOnSvrPublisher(pkgName, serviceId);
+    LOGI("ret: %{public}d", ret);
+    return ret;
 }
 } // namespace DistributedHardware
 } // namespace OHOS

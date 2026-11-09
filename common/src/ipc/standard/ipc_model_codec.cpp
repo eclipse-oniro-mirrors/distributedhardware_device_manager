@@ -840,6 +840,44 @@ bool IpcModelCodec::Decode3rdDeviceInfo(MessageParcel &parcel, Dm3rdDeviceInfo &
     }
     return true;
 }
+
+bool IpcModelCodec::EncodeAuthInfo(const AuthInfo &authInfo, MessageParcel &parcel)
+{
+    bool bRet = true;
+    bRet = (bRet && parcel.WriteUint32(authInfo.bindType));
+    bRet = (bRet && parcel.WriteUint32(authInfo.bindLevel));
+    bRet = (bRet && parcel.WriteInt64(authInfo.localServiceId));
+    return bRet;
+}
+
+bool IpcModelCodec::DecodeAuthInfo(MessageParcel &parcel, AuthInfo &authInfo)
+{
+    READ_HELPER_RET(parcel, Uint32, authInfo.bindType, false);
+    READ_HELPER_RET(parcel, Uint32, authInfo.bindLevel, false);
+    READ_HELPER_RET(parcel, Int64, authInfo.localServiceId, false);
+    return true;
+}
+
+bool IpcModelCodec::EncodeDmServiceTrustedPeer(const DmServiceTrustedPeer &peer, MessageParcel &parcel)
+{
+    bool bRet = true;
+    bRet = (bRet && parcel.WriteString(peer.peerUdid));
+    bRet = (bRet && parcel.WriteString(peer.peerDeviceName));
+    bRet = (bRet && parcel.WriteInt32(peer.bindType));
+    bRet = (bRet && parcel.WriteBool(peer.isOnline));
+    bRet = (bRet && parcel.WriteString(peer.peerNetworkId));
+    return bRet;
+}
+
+bool IpcModelCodec::DecodeDmServiceTrustedPeer(MessageParcel &parcel, DmServiceTrustedPeer &peer)
+{
+    READ_HELPER_RET(parcel, String, peer.peerUdid, false);
+    READ_HELPER_RET(parcel, String, peer.peerDeviceName, false);
+    READ_HELPER_RET(parcel, Int32, peer.bindType, false);
+    READ_HELPER_RET(parcel, Bool, peer.isOnline, false);
+    READ_HELPER_RET(parcel, String, peer.peerNetworkId, false);
+    return true;
+}
 //LCOV_EXCL_STOP
 }  // namespace DistributedHardware
 }  // namespace OHOS

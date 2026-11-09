@@ -50,6 +50,7 @@
 #include "ipc_server_stub.h"
 #include "ipc_service_publish_result_req.h"
 #include "ipc_notify_service_state_req.h"
+#include "ipc_notify_svr_trusted_peer_state_req.h"
 #include "ipc_sync_service_info_req.h"
 #include "ipc_sync_service_info_result_req.h"
 #include "multiple_user_connector.h"
@@ -2463,17 +2464,29 @@ ON_IPC_CMD(SYNC_SERVICE_CALLBACK, MessageParcel &data, MessageParcel &reply)
     int32_t dmCommonNotifyEvent = data.ReadInt32();
     ProcessInfo processInfo;
     processInfo.pkgName = pkgName;
-    MultipleUserConnector::GetCallerUserId(processInfo.userId);
     MultipleUserConnector::GetCallingTokenId(processInfo.tokenId);
-    int32_t result = DeviceManagerServiceNotify::GetInstance().RegisterCallBack(dmCommonNotifyEvent, processInfo);
+    int32_t result = 0;
+#ifdef CAR_DEVICE_ENABLE
+    DmRegisterServiceInfo serviceInfo;
+    DeviceManagerService::GetInstance().GetLocalServiceInfoByServiceId(serviceId, serviceInfo);
+    processInfo.userId = serviceInfo.userId;
+#else
+    MultipleUserConnector::GetCallerUserId(processInfo.userId);
+#endif
+    result = DeviceManagerServiceNotify::GetInstance().RegisterCallBack(dmCommonNotifyEvent, processInfo);
     if (dmCommonNotifyEvent == static_cast<int32_t>(DmCommonNotifyEvent::REG_SERVICE_STATE)) {
         DeviceManagerService::GetInstance().RegServiceStateCallback(pkgName, serviceId);
     } else if (dmCommonNotifyEvent == static_cast<int32_t>(DmCommonNotifyEvent::UN_REG_SERVICE_STATE)) {
         DeviceManagerService::GetInstance().UnRegServiceStateCallback(pkgName, serviceId);
+    } else if (dmCommonNotifyEvent == static_cast<int32_t>(DmCommonNotifyEvent::REG_SVR_TRUSTED_PEER_STATE)) {
+        DeviceManagerService::GetInstance().RegSvrTrustedPeerStateCbOnSvrPublisher(pkgName, serviceId);
+    } else if (dmCommonNotifyEvent == static_cast<int32_t>(DmCommonNotifyEvent::UN_REG_SVR_TRUSTED_PEER_STATE)) {
+        DeviceManagerService::GetInstance().UnregSvrTrustedPeerStateCbOnSvrPublisher(pkgName, serviceId);
     } else {
-        LOGE("Request out of scope");
+        LOGE("dmCommonNotifyEvent: %{public}d, Request out of scope", dmCommonNotifyEvent);
         return ERR_DM_IPC_WRITE_FAILED;
     }
+
     if (!reply.WriteInt32(result)) {
         LOGE("write result failed");
         return ERR_DM_IPC_WRITE_FAILED;
@@ -2682,6 +2695,88 @@ ON_IPC_CMD(UNREG_3RD_DEVICE_INFO, MessageParcel &data, MessageParcel &reply)
         LOGE("write result failed");
         return ERR_DM_IPC_WRITE_FAILED;
     }
+    return DM_OK;
+}
+
+ON_IPC_CMD(UNBIND_SVR_TAR_BY_UDID_ON_SVR_PUBLISHER, MessageParcel &data, MessageParcel &reply)
+{
+    std::string pkgName = data.ReadString();
+    std::string peerUdid = data.ReadString();
+    int64_t serviceId = data.ReadInt64();
+    std::string unbindParamStr = data.ReadString();
+    std::map<std::string, std::string> unbindParam;
+    ParseMapFromJsonString(unbindParamStr, unbindParam);
+    int32_t result =
+        DeviceManagerService::GetInstance().UnbindSvrTarByUdidOnSvrPublisher(pkgName, peerUdid, serviceId, unbindParam);
+    if (!reply.WriteInt32(result)) {
+        LOGE("write result failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    return DM_OK;
+}
+
+ON_IPC_CMD(GET_SERVICE_TRUSTED_PEERS_ON_SVR_PUBLISHER, MessageParcel &data, MessageParcel &reply)
+{
+    std::string pkgName = data.ReadString();
+    int64_t serviceId = data.ReadInt64();
+    std::vector<DmServiceTrustedPeer> peers;
+    int32_t result =
+        DeviceManagerService::GetInstance().GetServiceTrustedPeersOnSvrPublisher(pkgName, serviceId, peers);
+    if ((int32_t)peers.size() > SERVICE_LIST_MAX_SIZE) {
+        LOGE("peers list over max size");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    if (!reply.WriteInt32((int32_t)peers.size())) {
+        LOGE("write peers size failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    for (const auto &peer : peers) {
+        if (!IpcModelCodec::EncodeDmServiceTrustedPeer(peer, reply)) {
+            LOGE("write dm service trusted peer failed");
+            return ERR_DM_IPC_WRITE_FAILED;
+        }
+    }
+    if (!reply.WriteInt32(result)) {
+        LOGE("write result failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    return DM_OK;
+}
+
+ON_IPC_SET_REQUEST(SERVER_SVR_TRUSTED_PEER_STATE_NOTIFY, std::shared_ptr<IpcReq> pBaseReq,
+    MessageParcel &data)
+{
+    CHECK_NULL_RETURN(pBaseReq, ERR_DM_FAILED);
+    std::shared_ptr<IpcNotifySvrTrustedPeerStateReq> pReq =
+        std::static_pointer_cast<IpcNotifySvrTrustedPeerStateReq>(pBaseReq);
+    DmRegisterServiceState registerServiceState = pReq->GetDmRegisterServiceState();
+    AuthInfo authInfo = pReq->GetAuthInfo();
+    DmServiceTrustedPeer peer = pReq->GetDmServiceTrustedPeer();
+    int32_t peerState = pReq->GetPeerState();
+    if (!IpcModelCodec::EncodeDmRegisterServiceState(registerServiceState, data)) {
+        LOGE("write register service state failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    if (!IpcModelCodec::EncodeAuthInfo(authInfo, data)) {
+        LOGE("write authInfo failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    if (!IpcModelCodec::EncodeDmServiceTrustedPeer(peer, data)) {
+        LOGE("write dm service trusted peer failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    if (!data.WriteInt32(peerState)) {
+        LOGE("write peerState failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    return DM_OK;
+}
+
+ON_IPC_READ_RESPONSE(SERVER_SVR_TRUSTED_PEER_STATE_NOTIFY, MessageParcel &reply,
+    std::shared_ptr<IpcRsp> pBaseRsp)
+{
+    CHECK_NULL_RETURN(pBaseRsp, ERR_DM_FAILED);
+    pBaseRsp->SetErrCode(reply.ReadInt32());
     return DM_OK;
 }
 } // namespace DistributedHardware

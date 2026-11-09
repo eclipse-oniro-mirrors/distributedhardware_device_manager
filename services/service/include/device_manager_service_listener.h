@@ -115,6 +115,11 @@ public:
     void OnServiceStateOnlineResult(const ServiceStateBindParameter &bindParam) override;
     bool CheckIsOnlineAdapter(const std::string &peerUdid) override;
     int32_t GetNetworkIdFromCache(const std::string &udid, std::string &networkId) override;
+    int32_t OnServiceTrustedPeerOnline(const DmRegisterServiceState &regState, const AuthInfo &authInfo,
+        const DmServiceTrustedPeer &peer) override;
+    int32_t OnServiceTrustedPeerOffline(const DmRegisterServiceState &regState,
+        const DmServiceTrustedPeer &peer) override;
+    void OnSvrTrustedPeerStateOnlineResult(const AuthInfo &authInfo, const DmServiceTrustedPeer &peer) override;
 private:
     void ConvertDeviceInfoToDeviceBasicInfo(const std::string &pkgName,
         const DmDeviceInfo &info, DmDeviceBasicInfo &deviceBasicInfo);

@@ -32,6 +32,8 @@ public:
     }
     virtual void OnServiceOfflineExt(uint64_t tokenId, const std::string &pkgName, int32_t bindType,
         const std::string &peerUdid, const DistributedDeviceProfile::ServiceInfo &serviceInfo) = 0;
+    virtual void OnServiceTrustedPeerOfflineExt(uint64_t tokenId, const std::string &pkgName,
+        int32_t bindType, const std::string &peerUdid, int64_t serviceId) = 0;
 };
 
 class IDMServiceImplExt {
@@ -120,7 +122,11 @@ public:
     virtual int32_t OpenAuthSessionWithPara(int64_t serviceId) = 0;
     virtual void OnDynamicSessionOpened(int32_t sessionId, int32_t sessionSide, int32_t result) = 0;
     virtual void OnDynamicSessionClosed(const int32_t sessionId) = 0;
+    virtual void HandleProcessUnBindServiceProxyOnSvrPublisher(UnbindServiceProxyParam &param) = 0;
     virtual void RegisterAdapterExtCallback(const std::shared_ptr<AdapterExtCallback> &cb) = 0;
+    virtual int32_t UnbindSvrTarByUdidOnSvrPublisher(const std::string &pkgName,
+        const std::string &peerUdidHash, int64_t serviceId,
+        const std::map<std::string, std::string> &unbindParam) = 0;
 };
 
 using CreateDMServiceImplExtFuncPtr = IDMServiceImplExt *(*)(void);

@@ -701,21 +701,40 @@ void DmAuthMessageProcessor::PutNonLnnAclProfile(std::shared_ptr<DmAuthContext> 
         LOGE("PutAccessControlProfile failed.");
         return;
     }
-
-    ServiceStateBindParameter bindParam = {
-        context->accesser.tokenId,
-        context->accesser.pkgName,
-        DM_POINT_TO_POINT,
-        context->accessee.deviceId,
-        context->accessee.userId,
-        context->accessee.serviceId
-    };
-    char deviceIdHash[DM_MAX_DEVICE_ID_LEN] = {0};
-    Crypto::GetUdidHash(context->accessee.deviceId, reinterpret_cast<uint8_t*>(deviceIdHash));
-    if (SoftbusCache::GetInstance().CheckIsOnline(std::string(deviceIdHash))) {
-        context->listener->OnServiceStateOnlineResult(bindParam);
-    }
+    NotifyNonLnnAclBindResult(context, access);
     LOGI("call BindServiceOnline in PutServiceControlList");
+}
+
+void DmAuthMessageProcessor::NotifyNonLnnAclBindResult(std::shared_ptr<DmAuthContext> context, DmAccess &access)
+{
+    CHECK_NULL_VOID(context);
+    if (context->direction == DM_AUTH_SOURCE) {
+        ServiceStateBindParameter bindParam = {
+            context->accesser.tokenId, context->accesser.pkgName, DM_POINT_TO_POINT,
+            context->accessee.deviceId, context->accessee.userId, context->accessee.serviceId
+        };
+        char deviceIdHash[DM_MAX_DEVICE_ID_LEN] = {0};
+        Crypto::GetUdidHash(context->accessee.deviceId, reinterpret_cast<uint8_t*>(deviceIdHash));
+        if (SoftbusCache::GetInstance().CheckIsOnline(std::string(deviceIdHash))) {
+            context->listener->OnServiceStateOnlineResult(bindParam);
+        }
+    } else {
+        AuthInfo authInfo;
+        authInfo.bindType = access.transmitBindType;
+        authInfo.bindLevel = access.bindLevel;
+        authInfo.localServiceId = access.serviceId;
+        char accesserDeviceIdHash[DM_MAX_DEVICE_ID_LEN] = {0};
+        Crypto::GetUdidHash(context->accesser.deviceId, reinterpret_cast<uint8_t*>(accesserDeviceIdHash));
+        if (SoftbusCache::GetInstance().CheckIsOnline(std::string(accesserDeviceIdHash))) {
+            DmServiceTrustedPeer peerDevice;
+            SoftbusCache::GetInstance().GetNetworkIdFromCache(context->accesser.deviceId, peerDevice.peerNetworkId);
+            peerDevice.peerUdid = std::string(accesserDeviceIdHash);
+            peerDevice.peerDeviceName = context->accesser.deviceName;
+            peerDevice.bindType = authInfo.bindType;
+            peerDevice.isOnline = true;
+            context->listener->OnSvrTrustedPeerStateOnlineResult(authInfo, peerDevice);
+        }
+    }
 }
 
 int32_t DmAuthMessageProcessor::PutDeviceControlList(std::shared_ptr<DmAuthContext> context,

@@ -205,6 +205,11 @@ public:
         int32_t result, const std::string &content) = 0;
     virtual bool CheckIsOnlineAdapter(const std::string &peerUdid) = 0;
     virtual int32_t GetNetworkIdFromCache(const std::string &udid, std::string &networkId) = 0;
+    virtual int32_t OnServiceTrustedPeerOnline(const DmRegisterServiceState &regState, const AuthInfo &authInfo,
+        const DmServiceTrustedPeer &peer) = 0;
+    virtual int32_t OnServiceTrustedPeerOffline(const DmRegisterServiceState &regState,
+        const DmServiceTrustedPeer &peer) = 0;
+    virtual void OnSvrTrustedPeerStateOnlineResult(const AuthInfo &authInfo, const DmServiceTrustedPeer &peer) = 0;
 };
 } // namespace DistributedHardware
 } // namespace OHOS

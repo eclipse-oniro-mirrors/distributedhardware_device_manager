@@ -74,6 +74,10 @@ public:
     static void DecodeServiceSyncInfo(MessageParcel &parcel, ServiceSyncInfo &serviceSyncInfo);
     static bool Encode3rdDeviceInfo(const Dm3rdDeviceInfo &info, MessageParcel &parcel);
     static bool Decode3rdDeviceInfo(MessageParcel &parcel, Dm3rdDeviceInfo &info);
+    static bool EncodeAuthInfo(const AuthInfo &authInfo, MessageParcel &parcel);
+    static bool DecodeAuthInfo(MessageParcel &parcel, AuthInfo &authInfo);
+    static bool EncodeDmServiceTrustedPeer(const DmServiceTrustedPeer &peer, MessageParcel &parcel);
+    static bool DecodeDmServiceTrustedPeer(MessageParcel &parcel, DmServiceTrustedPeer &peer);
 };
 } // namespace DistributedHardware
 } // namespace OHOS

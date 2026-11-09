@@ -137,6 +137,7 @@ public:
     virtual int32_t UnRegisterServiceStateCallback(const std::string &pkgName, int64_t serviceId) = 0;
     virtual int32_t HandleServiceStatusChange(DmDeviceState devState, const std::string &peerUdid) = 0;
     virtual int32_t BindServiceOnline(const ServiceStateBindParameter &bindParam) = 0;
+    virtual int32_t BindTrustedPeerStateOnline(const AuthInfo &authInfo, const DmServiceTrustedPeer &peer) = 0;
     virtual int32_t BindServiceOffline(uint64_t tokenId, const std::string &pkgName, int32_t bindType,
         const std::string &peerUdid, const DistributedDeviceProfile::ServiceInfo &serviceInfo) = 0;
     virtual int32_t SetServiceNodeKeyInfo(const std::string &pkgName) = 0;
@@ -165,6 +166,13 @@ public:
         const std::string &localUdid) = 0;
     virtual int32_t SubscribeAllServiceInfo() = 0;
     virtual void HandleProcessUnBindServiceProxy(UnbindServiceProxyParam &param) = 0;
+    virtual void HandleProcessUnBindServiceProxyOnSvrPublisher(UnbindServiceProxyParam &param) = 0;
+    virtual int32_t UnbindSvrTarByUdidOnSvrPublisher(const std::string &pkgName, const std::string &peerUdid,
+        int64_t serviceId, const std::map<std::string, std::string> &unbindParam) = 0;
+    virtual int32_t GetServiceTrustedPeersOnSvrPublisher(const std::string &pkgName, int64_t serviceId,
+        std::vector<DmServiceTrustedPeer> &peers) = 0;
+    virtual int32_t RegSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId) = 0;
+    virtual int32_t UnregSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId) = 0;
 };
 
 using CreateDMServiceExtResidentFuncPtr = IDMServiceImplExtResident *(*)(void);

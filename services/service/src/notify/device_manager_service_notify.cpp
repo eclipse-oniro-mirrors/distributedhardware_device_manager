@@ -31,6 +31,7 @@ const static std::map<DmCommonNotifyEvent, DmCommonNotifyEvent> unRegNotifyEvent
     {DmCommonNotifyEvent::UN_REG_CREDENTIAL_AUTH_STATUS_NOTIFY, DmCommonNotifyEvent::REG_CREDENTIAL_AUTH_STATUS_NOTIFY},
     {DmCommonNotifyEvent::UN_REG_AUTH_CODE_INVALID, DmCommonNotifyEvent::REG_AUTH_CODE_INVALID},
     {DmCommonNotifyEvent::UN_REG_SERVICE_STATE, DmCommonNotifyEvent::REG_SERVICE_STATE},
+    {DmCommonNotifyEvent::UN_REG_SVR_TRUSTED_PEER_STATE, DmCommonNotifyEvent::REG_SVR_TRUSTED_PEER_STATE},
 };
 
 const static std::set<DmCommonNotifyEvent> regNotifyEventSet_ = {
@@ -40,6 +41,7 @@ const static std::set<DmCommonNotifyEvent> regNotifyEventSet_ = {
     DmCommonNotifyEvent::REG_CREDENTIAL_AUTH_STATUS_NOTIFY,
     DmCommonNotifyEvent::REG_AUTH_CODE_INVALID,
     DmCommonNotifyEvent::REG_SERVICE_STATE,
+    DmCommonNotifyEvent::REG_SVR_TRUSTED_PEER_STATE,
 };
 }
 

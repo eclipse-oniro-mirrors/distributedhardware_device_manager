@@ -97,6 +97,9 @@
 #include "ipc_register_service_info_req.h"
 #include "ipc_sync_service_info_req.h"
 #include "ipc_sync_service_info_result_req.h"
+#include "ipc_unbind_svr_tar_by_udid_req.h"
+#include "ipc_get_service_trusted_peers_rsp.h"
+#include "ipc_notify_svr_trusted_peer_state_req.h"
 namespace OHOS { class IRemoteObject; }
 
 namespace OHOS {
@@ -3036,6 +3039,102 @@ ON_IPC_READ_RESPONSE(UNREG_3RD_DEVICE_INFO, MessageParcel &reply, std::shared_pt
         return ERR_DM_FAILED;
     }
     pBaseRsp->SetErrCode(reply.ReadInt32());
+    return DM_OK;
+}
+
+ON_IPC_SET_REQUEST(UNBIND_SVR_TAR_BY_UDID_ON_SVR_PUBLISHER, std::shared_ptr<IpcReq> pBaseReq, MessageParcel &data)
+{
+    CHECK_NULL_RETURN(pBaseReq, ERR_DM_FAILED);
+    std::shared_ptr<IpcUnbindSvrTarByUdidReq> pReq =
+        std::static_pointer_cast<IpcUnbindSvrTarByUdidReq>(pBaseReq);
+    std::string pkgName = pReq->GetPkgName();
+    std::string peerUdid = pReq->GetPeerUdid();
+    int64_t serviceId = pReq->GetServiceId();
+    std::string unbindParam = pReq->GetUnbindParam();
+    if (!data.WriteString(pkgName)) {
+        LOGE("write pkgName failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    if (!data.WriteString(peerUdid)) {
+        LOGE("write peerUdid failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    if (!data.WriteInt64(serviceId)) {
+        LOGE("write serviceId failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    if (!data.WriteString(unbindParam)) {
+        LOGE("write unbindParam failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    return DM_OK;
+}
+
+ON_IPC_READ_RESPONSE(UNBIND_SVR_TAR_BY_UDID_ON_SVR_PUBLISHER, MessageParcel &reply,
+    std::shared_ptr<IpcRsp> pBaseRsp)
+{
+    CHECK_NULL_RETURN(pBaseRsp, ERR_DM_FAILED);
+    pBaseRsp->SetErrCode(reply.ReadInt32());
+    return DM_OK;
+}
+
+ON_IPC_SET_REQUEST(GET_SERVICE_TRUSTED_PEERS_ON_SVR_PUBLISHER, std::shared_ptr<IpcReq> pBaseReq,
+    MessageParcel &data)
+{
+    CHECK_NULL_RETURN(pBaseReq, ERR_DM_FAILED);
+    std::shared_ptr<IpcUnbindSvrTarByUdidReq> pReq =
+        std::static_pointer_cast<IpcUnbindSvrTarByUdidReq>(pBaseReq);
+    std::string pkgName = pReq->GetPkgName();
+    int64_t serviceId = pReq->GetServiceId();
+    if (!data.WriteString(pkgName)) {
+        LOGE("write pkgName failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    if (!data.WriteInt64(serviceId)) {
+        LOGE("write serviceId failed");
+        return ERR_DM_IPC_WRITE_FAILED;
+    }
+    return DM_OK;
+}
+
+ON_IPC_READ_RESPONSE(GET_SERVICE_TRUSTED_PEERS_ON_SVR_PUBLISHER, MessageParcel &reply,
+    std::shared_ptr<IpcRsp> pBaseRsp)
+{
+    CHECK_NULL_RETURN(pBaseRsp, ERR_DM_FAILED);
+    std::shared_ptr<IpcGetServiceTrustedPeersRsp> pRsp =
+        std::static_pointer_cast<IpcGetServiceTrustedPeersRsp>(pBaseRsp);
+    int32_t peersSize = reply.ReadInt32();
+    if (peersSize > 0 && peersSize <= DM_MAX_TRUST_DEVICE_NUM) {
+        std::vector<DmServiceTrustedPeer> peers;
+        for (int32_t i = 0; i < peersSize; ++i) {
+            DmServiceTrustedPeer peer;
+            IpcModelCodec::DecodeDmServiceTrustedPeer(reply, peer);
+            peers.emplace_back(peer);
+        }
+        pRsp->SetServiceTrustedPeers(peers);
+    }
+    pRsp->SetErrCode(reply.ReadInt32());
+    return DM_OK;
+}
+
+ON_IPC_CMD(SERVER_SVR_TRUSTED_PEER_STATE_NOTIFY, MessageParcel &data, MessageParcel &reply)
+{
+    DmRegisterServiceState regState;
+    IpcModelCodec::DecodeDmRegisterServiceState(data, regState);
+    AuthInfo authInfo;
+    IpcModelCodec::DecodeAuthInfo(data, authInfo);
+    DmServiceTrustedPeer peer;
+    IpcModelCodec::DecodeDmServiceTrustedPeer(data, peer);
+    DmServiceState deviceState = static_cast<DmServiceState>(data.ReadInt32());
+    if (deviceState == SERVICE_STATE_ONLINE) {
+        DeviceManagerNotify::GetInstance().OnServiceTrustedPeerOnline(regState.pkgName, regState.serviceId,
+            authInfo, peer);
+    } else if (deviceState == SERVICE_STATE_OFFLINE) {
+        DeviceManagerNotify::GetInstance().OnServiceTrustedPeerOffline(regState.pkgName, regState.serviceId, peer);
+    } else {
+        LOGE("unknown service state: %{public}d", deviceState);
+    }
+    reply.WriteInt32(DM_OK);
     return DM_OK;
 }
 } // namespace DistributedHardware
