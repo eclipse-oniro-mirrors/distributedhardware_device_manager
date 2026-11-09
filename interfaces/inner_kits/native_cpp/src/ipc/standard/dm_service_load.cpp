@@ -41,7 +41,7 @@ int32_t DmServiceLoad::LoadDMService(void)
         LOGD("DM service is loading, wait finish.");
         bool loadDone = dmServiceLoadCv_.wait_for(autoLock,
             std::chrono::seconds(DM_SERVICE_LOAD_TIMEOUT_SECONDS),
-            [this](){ return !isDMServiceLoading_.load(); });
+            [this]() { return !isDMServiceLoading_.load(); });
         LOGD("LoadDMService wait done (already-loading), loadDone:%{public}d, loadFailed:%{public}d",
             loadDone, loadFailed_.load());
         return (loadDone && !loadFailed_.load()) ? DM_OK : ERR_DM_INIT_FAILED;
@@ -64,7 +64,7 @@ int32_t DmServiceLoad::LoadDMService(void)
         return ret;
     }
     if (!dmServiceLoadCv_.wait_for(autoLock, std::chrono::seconds(DM_SERVICE_LOAD_TIMEOUT_SECONDS),
-        [this](){ return !isDMServiceLoading_.load(); })) {
+        [this]() { return !isDMServiceLoading_.load(); })) {
         LOGE("LoadDMService wait timeout, reset loading flag");
         ResetLoadState();
         return ERR_DM_INIT_FAILED;
