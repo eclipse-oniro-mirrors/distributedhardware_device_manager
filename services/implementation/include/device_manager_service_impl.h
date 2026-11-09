@@ -288,6 +288,11 @@ private:
     void CleanSessionMap(std::shared_ptr<Session> session, int32_t connDelayCloseTime);
     void CleanSessionMap(int sessionId, int32_t connDelayCloseTime);
     void CleanSessionMapByLogicalSessionId(uint64_t logicalSessionId, int32_t connDelayCloseTime);
+    void ClearServerBusySession(int32_t sessionId);
+    bool IsSessionMarkedStop(int32_t sessionId);
+    bool RejectServerSessionIfBusy(int32_t sessionId, int32_t result);
+    void SubmitServerBusyGuardTask(int32_t sessionId);
+    bool UpdateSessionEnableStatus(int32_t sessionId, int32_t result);
     int32_t DeleteAclForProcV2(const std::string &localUdid, uint32_t localTokenId, const std::string &remoteUdid,
         int32_t bindLevel, const std::string &extra, int32_t userId);
     void DeleteCredential(DmAclIdParam &acl);
@@ -384,7 +389,7 @@ private:
     std::map<uint64_t, std::shared_ptr<AuthManagerBase>> authMgrMap_;  // New protocol sharing
     ffrt::mutex tokenIdSessionIdMapMtx_;
     std::map<uint64_t, int> tokenIdSessionIdMap_;  // New protocol sharing
-    std::atomic<bool> isServerBusy_ = false;
+    std::atomic<int32_t> serverBusySessionId_ = -1;
 };
 
 using CreateDMServiceFuncPtr = IDeviceManagerServiceImpl *(*)(void);
