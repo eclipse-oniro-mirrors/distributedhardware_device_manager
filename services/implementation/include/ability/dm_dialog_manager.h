@@ -39,10 +39,10 @@ public:
     static DmDialogManager *CreateSession(const DmUiSessionHost &host, void *connection);
     static void DestroySession(DmDialogManager *session);
     void ConnectExtension();
-    void ShowConfirmDialog(const std::string param);
-    void ShowServiceBindConfirmDialog(const std::string param);
-    void ShowPinDialog(const std::string param);
-    void ShowInputDialog(const std::string param);
+    void ShowConfirmDialog(const std::string &param);
+    void ShowServiceBindConfirmDialog(const std::string &param);
+    void ShowPinDialog(const std::string &param);
+    void ShowInputDialog(const std::string &param);
     void CloseDialog();
     int32_t CloseSession();
     void OnAbilityConnectDone(

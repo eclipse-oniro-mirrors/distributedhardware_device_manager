@@ -213,7 +213,7 @@ void DmDialogManager::ConfigLocalInfo(JsonObject& jsonObject)
     }
 }
 
-void DmDialogManager::ShowServiceBindConfirmDialog(const std::string param)
+void DmDialogManager::ShowServiceBindConfirmDialog(const std::string &param)
 {
     std::string deviceName = "";
     std::string appOperationStr = "";
@@ -253,7 +253,7 @@ void DmDialogManager::ShowServiceBindConfirmDialog(const std::string param)
     ConnectExtension();
 }
 
-void DmDialogManager::ShowConfirmDialog(const std::string param)
+void DmDialogManager::ShowConfirmDialog(const std::string &param)
 {
     std::string deviceName = "";
     std::string appOperationStr = "";
@@ -301,7 +301,7 @@ void DmDialogManager::ShowConfirmDialog(const std::string param)
     ConnectExtension();
 }
 
-void DmDialogManager::ShowPinDialog(const std::string param)
+void DmDialogManager::ShowPinDialog(const std::string &param)
 {
     LOGI("pinCode: %{public}s", GetAnonyString(param).c_str());
     {
@@ -321,7 +321,7 @@ void DmDialogManager::ShowPinDialog(const std::string param)
         ffrt::task_attr().name(CONNECT_PIN_DIALOG));
 }
 
-void DmDialogManager::ShowInputDialog(const std::string param)
+void DmDialogManager::ShowInputDialog(const std::string &param)
 {
     {
         std::lock_guard<ffrt::mutex> lock(mutex_);

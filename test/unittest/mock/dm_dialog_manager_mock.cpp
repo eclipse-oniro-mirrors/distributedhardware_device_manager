@@ -20,21 +20,21 @@
 namespace OHOS {
 namespace DistributedHardware {
 
-void DmDialogClient::ShowConfirmDialog(const std::string param)
+void DmDialogClient::ShowConfirmDialog(const std::string &param)
 {
     DmDialogManagerMock::dmDialogManagerMock->ShowConfirmDialog(param);
 }
 
-void DmDialogClient::ShowPinDialog(const std::string param)
+void DmDialogClient::ShowPinDialog(const std::string &param)
 {
     DmDialogManagerMock::dmDialogManagerMock->ShowPinDialog(param);
 }
 
-void DmDialogClient::ShowInputDialog(const std::string param)
+void DmDialogClient::ShowInputDialog(const std::string &param)
 {
     DmDialogManagerMock::dmDialogManagerMock->ShowInputDialog(param);
 }
-void DmDialogClient::ShowServiceBindConfirmDialog(const std::string param)
+void DmDialogClient::ShowServiceBindConfirmDialog(const std::string &param)
 {
     if (DmDialogManagerMock::dmDialogManagerMock != nullptr) {
         DmDialogManagerMock::dmDialogManagerMock->ShowServiceBindConfirmDialog(param);

@@ -25,10 +25,10 @@ namespace DistributedHardware {
 class DmDialogClient {
     DM_DECLARE_SINGLE_INSTANCE_BASE(DmDialogClient);
 public:
-    void ShowConfirmDialog(const std::string param);
-    void ShowServiceBindConfirmDialog(const std::string param);
-    void ShowPinDialog(const std::string param);
-    void ShowInputDialog(const std::string param);
+    void ShowConfirmDialog(const std::string &param);
+    void ShowServiceBindConfirmDialog(const std::string &param);
+    void ShowPinDialog(const std::string &param);
+    void ShowInputDialog(const std::string &param);
     void CloseDialog();
     void ReleaseConfirmSession();
     void ReleaseSession(uint32_t operation);

@@ -493,25 +493,25 @@ bool ResetUiStateForTest()
 }
 #endif
 
-void DmDialogClient::ShowConfirmDialog(const std::string param)
+void DmDialogClient::ShowConfirmDialog(const std::string &param)
 {
     if (InvokeDmUi(DM_UI_CONFIRM, param.data(), param.size()) != 0) {
         LOGE("Confirm dialog dispatch failed");
     }
 }
-void DmDialogClient::ShowServiceBindConfirmDialog(const std::string param)
+void DmDialogClient::ShowServiceBindConfirmDialog(const std::string &param)
 {
     if (InvokeDmUi(DM_UI_SERVICE_CONFIRM, param.data(), param.size()) != 0) {
         LOGE("Service confirm dialog dispatch failed");
     }
 }
-void DmDialogClient::ShowPinDialog(const std::string param)
+void DmDialogClient::ShowPinDialog(const std::string &param)
 {
     if (InvokeDmUi(DM_UI_PIN, param.data(), param.size()) != 0) {
         LOGE("PIN dialog dispatch failed");
     }
 }
-void DmDialogClient::ShowInputDialog(const std::string param)
+void DmDialogClient::ShowInputDialog(const std::string &param)
 {
     if (InvokeDmUi(DM_UI_INPUT, param.data(), param.size()) != 0) {
         LOGE("Input dialog dispatch failed");
