@@ -65,7 +65,7 @@ void AuthPinAuthStateTest::TearDown()
     context = nullptr;
 }
 
-bool DmAuthState::CheckScreenLockAndWakeUp(int32_t userId)
+bool DmAuthState::CheckScreenLockAndWakeUp(int32_t userId, std::shared_ptr<IDeviceManagerServiceListener> listener)
 {
     return false;
 }

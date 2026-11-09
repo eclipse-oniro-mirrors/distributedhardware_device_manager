@@ -96,6 +96,9 @@ public:
     std::string GetLocalDisplayDeviceName() override;
     int32_t OpenAuthSessionWithPara(const std::string &deviceId, int32_t actionId, bool isEnable160m) override;
     int32_t OpenAuthSessionWithPara(int64_t serviceId) override;
+    bool CheckScreenLockAndWakeUp(int32_t displayId) override;
+    int32_t SubscribeScreenState(int32_t displayId) override;
+    void UnsubscribeScreenState() override;
     void OnDevDbReadyCallbackAdd(const ProcessInfo &processInfo, const std::vector<DmDeviceInfo> &deviceList) override;
     void OnLeaveLNNResult(const std::string &pkgName, const std::string &networkId, int32_t retCode) override;
     void OnAuthCodeInvalid(const std::string &pkgName, const std::string &consumerPkgName) override;

@@ -116,6 +116,4 @@ declare_args() {
   } else {
     car_device_enable = false
   }
-
-  device_manager_enable_vehicle_power_service = false
 }

@@ -105,6 +105,9 @@ public:
     MOCK_METHOD(int32_t, RegSvrTrustedPeerStateCbOnSvrPublisher, (const std::string &, int64_t));
     MOCK_METHOD(int32_t, UnregSvrTrustedPeerStateCbOnSvrPublisher, (const std::string &, int64_t));
 #endif
+    MOCK_METHOD(bool, CheckScreenLockAndWakeUp, (int32_t, std::shared_ptr<IDeviceManagerServiceListener>));
+    MOCK_METHOD(int32_t, SubscribeScreenState, (int32_t));
+    MOCK_METHOD(void, UnsubscribeScreenState, ());
 };
 } // namespace DistributedHardware
 } // namespace OHOS

@@ -111,7 +111,7 @@ void AuthConfirmTest::TearDown()
     Mock::VerifyAndClearExpectations(dmHiChainAuthConnectorMock.get());
 }
 
-bool DmAuthState::CheckScreenLockAndWakeUp(int32_t userId)
+bool DmAuthState::CheckScreenLockAndWakeUp(int32_t userId, std::shared_ptr<IDeviceManagerServiceListener> listener)
 {
     return false;
 }

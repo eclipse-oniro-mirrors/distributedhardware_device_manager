@@ -1432,6 +1432,21 @@ int32_t DeviceManagerServiceListener::OpenAuthSessionWithPara(int64_t serviceId)
     return ERR_DM_UNSUPPORTED_METHOD;
 }
 
+bool DeviceManagerServiceListener::CheckScreenLockAndWakeUp(int32_t displayId)
+{
+    return DeviceManagerService::GetInstance().CheckScreenLockAndWakeUp(displayId);
+}
+
+int32_t DeviceManagerServiceListener::SubscribeScreenState(int32_t displayId)
+{
+    return DeviceManagerService::GetInstance().SubscribeScreenState(displayId);
+}
+
+void DeviceManagerServiceListener::UnsubscribeScreenState()
+{
+    DeviceManagerService::GetInstance().UnsubscribeScreenState();
+}
+
 int32_t DeviceManagerServiceListener::OpenAuthSessionWithPara(const std::string &deviceId,
     int32_t actionId, bool isEnable160m)
 {
