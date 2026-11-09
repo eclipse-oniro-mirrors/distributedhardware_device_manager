@@ -57,9 +57,14 @@ int32_t IpcClientManager::ClientInit()
 
     auto object = samgr->CheckSystemAbility(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
     if (object == nullptr) {
-        LOGE("Get DeviceManager SystemAbility Failed");
+        LOGW("DM SA null, trigger LoadDMService");
         DmServiceLoad::GetInstance().LoadDMService();
-        return ERR_DM_INIT_FAILED;
+        object = samgr->CheckSystemAbility(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
+        if (object == nullptr) {
+            LOGE("DM SA still unavailable after load");
+            return ERR_DM_INIT_FAILED;
+        }
+        LOGD("DM SA re-check ok, rebuild proxy");
     }
 
     if (dmRecipient_ == nullptr) {
@@ -162,7 +167,12 @@ int32_t IpcClientManager::SendRequest(int32_t cmdCode, std::shared_ptr<IpcReq> r
         LOGD("cmdCode: %{public}d", cmdCode);
         return dmInterface_->SendCmd(cmdCode, req, rsp);
     } else {
-        LOGE("dmInterface_ is not init.");
+        LOGW("SendRequest dmInterface_ null, cmdCode:%{public}d, try re-init", cmdCode);
+        if (ClientInit() == DM_OK && dmInterface_ != nullptr) {
+            LOGD("SendRequest re-init ok, retry send");
+            return dmInterface_->SendCmd(cmdCode, req, rsp);
+        }
+        LOGE("SendRequest re-init failed, return ERR_DM_INIT_FAILED");
         return ERR_DM_INIT_FAILED;
     }
 }

@@ -16,6 +16,7 @@
 #ifndef OHOS_DM_IPC_SERVER_STUB_H
 #define OHOS_DM_IPC_SERVER_STUB_H
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <set>
@@ -23,6 +24,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "dm_timer.h"
 #include "ffrt.h"
 #include "ipc_remote_broker.h"
 #include "ipc_req.h"
@@ -175,6 +177,11 @@ private:
     void ReclaimMemmgrFileMemForDM();
     void HandleSoftBusServerAdd();
     bool IsIpcServiceStub3rdReady();
+    void AddRunningIpcCount();
+    void SubtractRunningIpcCount();
+    void StartIdleCriticalTask();
+    void CancelIdleCriticalTask();
+    void SetCriticalState(bool critical);
 
 private:
     ffrt::mutex registerLock_;
@@ -186,6 +193,11 @@ private:
     std::map<ProcessInfo, sptr<IpcRemoteBroker>> dmListener_;
     std::set<std::string> systemSA_;
     int64_t startBeginTime_ = 0;
+
+    std::atomic<int32_t> runningIpcCount_ = 0;
+    std::atomic<bool> isCritical_ = false;
+    DmTimer idleCriticalTimer_;
+    ffrt::mutex criticalStateMutex_; // serialize check-count + set-critical to close TOCTOU window
 
 private:
     void *ipcServiceStub3rdSoHandle_ = nullptr;

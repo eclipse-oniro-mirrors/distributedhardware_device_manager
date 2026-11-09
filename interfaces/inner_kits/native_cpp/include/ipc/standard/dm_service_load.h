@@ -16,6 +16,8 @@
 #ifndef OHOS_DM_SA_LOAD_H
 #define OHOS_DM_SA_LOAD_H
 
+#include <atomic>
+#include <condition_variable>
 #include <mutex>
 
 #include "dm_single_instance.h"
@@ -35,9 +37,13 @@ class DmServiceLoad {
 public:
     int32_t LoadDMService(void);
     void SetLoadFinish(void);
+    void SetLoadFailed(void);
 private:
+    void ResetLoadState(void);
     std::atomic<bool> isDMServiceLoading_ = false;
+    std::atomic<bool> loadFailed_ = false;
     std::mutex dmServiceLoadLock_;
+    std::condition_variable dmServiceLoadCv_;
 };
 } // namespace DistributedHardware
 } // namespace OHOS
