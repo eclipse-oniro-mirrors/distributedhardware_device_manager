@@ -1431,7 +1431,8 @@ void DeviceManagerNotify::OnServiceOnline(
         std::pair<std::string, int64_t> key = std::make_pair(pkgName, serviceId);
         auto iter = serviceStateCallback_.find(key);
         if (iter == serviceStateCallback_.end()) {
-            LOGW("callback not found for key: %{public}s-%" PRId64, pkgName.c_str(), serviceId);
+            LOGW("callback not found for key: %{public}s-%{public}s",
+                pkgName.c_str(), std::to_string(serviceId).c_str());
             return;
         }
         callbackInfo = iter->second;
@@ -1901,7 +1902,8 @@ void DeviceManagerNotify::OnServiceTrustedPeerOnline(const std::string &pkgName,
         std::pair key = std::make_pair(pkgName, serviceId);
         auto iter = svrTrustedPeerStateCallback_.find(key);
         if (iter == svrTrustedPeerStateCallback_.end()) {
-            LOGW("callback not found for key: %{public}s-%" PRId64, pkgName.c_str(), serviceId);
+            LOGW("callback not found for key: %{public}s-%{public}s",
+                pkgName.c_str(), std::to_string(serviceId).c_str());
             return;
         }
         callbackInfo = iter->second;
@@ -1929,7 +1931,8 @@ void DeviceManagerNotify::OnServiceTrustedPeerOffline(const std::string &pkgName
         std::pair key = std::make_pair(pkgName, serviceId);
         auto iter = svrTrustedPeerStateCallback_.find(key);
         if (iter == svrTrustedPeerStateCallback_.end()) {
-            LOGW("callback not found for key: %{public}s-%" PRId64, pkgName.c_str(), serviceId);
+            LOGW("callback not found for key: %{public}s-%{public}s",
+                pkgName.c_str(), std::to_string(serviceId).c_str());
             return;
         }
         callbackInfo = iter->second;

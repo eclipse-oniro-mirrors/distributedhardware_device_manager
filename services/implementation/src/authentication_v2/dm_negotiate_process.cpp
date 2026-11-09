@@ -112,7 +112,8 @@ static bool IsServiceInAclExtraData(const std::string &extraData, int64_t &servi
         for (auto& id : tmpServiceId.Items()) {
             int64_t idValue = id.Get<int64_t>();
             if (idValue == serviceId) {
-                LOGI("Is service in acl extra data check success, service id:%{public}" PRId64, serviceId);
+                LOGI("Is service in acl extra data check success, service id:%{public}s",
+                    std::to_string(serviceId).c_str());
                 return true;
             }
         }

@@ -3437,7 +3437,7 @@ int32_t DeviceManagerImpl::RegisterServiceInfo(const DmRegisterServiceInfo &regS
 
 int32_t DeviceManagerImpl::UnRegisterServiceInfo(int64_t serviceId)
 {
-    LOGI("Start UnRegisterServiceInfo, serviceId: %{public}" PRId64, serviceId);
+    LOGI("Start UnRegisterServiceInfo, serviceId: %{public}s", std::to_string(serviceId).c_str());
     std::shared_ptr<IpcUnRegisterServiceInfoReq> req = std::make_shared<IpcUnRegisterServiceInfoReq>();
     std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
     req->SetServiceId(serviceId);
@@ -3492,8 +3492,8 @@ int32_t DeviceManagerImpl::StopPublishService(const std::string &pkgName, int64_
         LOGE("pkgName is empty");
         return ERR_DM_INPUT_PARA_INVALID;
     }
-    LOGI("start, pkgName: %{public}s, serviceId: %{public}" PRId64,
-        pkgName.c_str(), serviceId);
+    LOGI("start, pkgName: %{public}s, serviceId: %{public}s",
+        pkgName.c_str(), std::to_string(serviceId).c_str());
     std::shared_ptr<IpcStopPublishServiceReq> req = std::make_shared<IpcStopPublishServiceReq>();
     std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
     req->SetPkgName(pkgName);
@@ -3573,8 +3573,8 @@ int32_t DeviceManagerImpl::SyncCallbackToServiceForServiceInfo(DmCommonNotifyEve
     const std::string &pkgName, int64_t serviceId)
 {
     LOGI("start. dmCommonNotifyEvent: %{public}d,"
-         "pkgName: %{public}s, serviceId: %{public}" PRId64,
-         dmCommonNotifyEvent, pkgName.c_str(), serviceId);
+         "pkgName: %{public}s, serviceId: %{public}s",
+         dmCommonNotifyEvent, pkgName.c_str(), std::to_string(serviceId).c_str());
     if (pkgName.empty()) {
         LOGE("Invalid parameter, pkgName is empty.");
         return ERR_DM_INPUT_PARA_INVALID;

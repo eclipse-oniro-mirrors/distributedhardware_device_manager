@@ -893,8 +893,8 @@ int32_t AuthSinkConfirmState::ShowServiceBindConfigDialog(std::shared_ptr<DmAuth
         object[TAG_SERVICE_DISPLAY_NAME] = dpServiceInfo.GetServiceDisplayName();
         object[TAG_SERVICE_ID] = dpServiceInfo.GetServiceId();
         object[TAG_DESCRIPTION] = dpServiceInfo.GetDescription();
-        LOGI("serviceDisplayName:%{public}s, serviceId:%{public}" PRId64,
-            dpServiceInfo.GetServiceDisplayName().c_str(), dpServiceInfo.GetServiceId());
+        LOGI("serviceDisplayName:%{public}s, serviceId:%{public}s",
+            dpServiceInfo.GetServiceDisplayName().c_str(), std::to_string(dpServiceInfo.GetServiceId()).c_str());
         allProxyObj.PushBack(object);
         jsonObj[SERVICE_USER_DATA] = allProxyObj.Dump();
         jsonObj[TITLE] = context->title;
@@ -1021,7 +1021,7 @@ int32_t AuthSinkConfirmState::CreateServiceBindProxyData(std::shared_ptr<DmAuthC
     JsonObject allProxyObj(JsonCreateType::JSON_CREATE_TYPE_ARRAY);
     for (const auto &app : context->subjectServiceOnes) {
         if (!app.needBind && !app.IsNeedSetProxyRelationShip) {
-            LOGI("no need bind, serviceId:%{public}" PRId64, app.proxyAccessee.serviceId);
+            LOGI("no need bind, serviceId:%{public}s", std::to_string(app.proxyAccessee.serviceId).c_str());
             continue;
         }
         DistributedDeviceProfile::ServiceInfo dpServiceInfo;
@@ -1035,8 +1035,8 @@ int32_t AuthSinkConfirmState::CreateServiceBindProxyData(std::shared_ptr<DmAuthC
         object[TAG_SERVICE_DISPLAY_NAME] = dpServiceInfo.GetServiceDisplayName();
         object[TAG_SERVICE_ID] = dpServiceInfo.GetServiceId();
         object[TAG_DESCRIPTION] = dpServiceInfo.GetDescription();
-        LOGI("serviceDisplayName:%{public}s, serviceId:%{public}" PRId64,
-            dpServiceInfo.GetServiceDisplayName().c_str(), dpServiceInfo.GetServiceId());
+        LOGI("serviceDisplayName:%{public}s, serviceId:%{public}s",
+            dpServiceInfo.GetServiceDisplayName().c_str(), std::to_string(dpServiceInfo.GetServiceId()).c_str());
         allProxyObj.PushBack(object);
     }
     jsonObj[SERVICE_USER_DATA] = allProxyObj.Dump();
