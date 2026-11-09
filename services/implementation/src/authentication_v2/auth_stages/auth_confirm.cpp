@@ -1465,7 +1465,8 @@ int32_t AuthSinkConfirmState::ProcessBindAuthorize(std::shared_ptr<DmAuthContext
         return DM_OK;
     }
     if ((context->authType == DmAuthType::AUTH_TYPE_PIN || context->authType == DmAuthType::AUTH_TYPE_NFC ||
-        context->authType == DmAuthType::AUTH_TYPE_PIN_ULTRASONIC) &&
+        context->authType == DmAuthType::AUTH_TYPE_PIN_ULTRASONIC ||
+        context->authType == DmAuthType::AUTH_TYPE_IMPORT_AUTH_CODE) &&
         context->authBoxType == DMLocalServiceInfoAuthBoxType::STATE3) {
         return ProcessUserAuthorize(context);
     }

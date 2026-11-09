@@ -417,7 +417,9 @@ int32_t AuthSinkNegotiateStateMachine::Action(std::shared_ptr<DmAuthContext> con
 void AuthSinkNegotiateStateMachine::SetIsProxyBind(std::shared_ptr<DmAuthContext> context)
 {
     CHECK_NULL_VOID(context);
-    if (!context->IsProxyBind || context->authType != DmAuthType::AUTH_TYPE_IMPORT_AUTH_CODE) {
+    if (!context->IsProxyBind ||
+        context->authType != DmAuthType::AUTH_TYPE_IMPORT_AUTH_CODE ||
+        context->isServiceBind) {
         return;
     }
     if (AuthManagerBase::CheckProcessNameInProxyAdaptationList(context->accessee.pkgName)) {
