@@ -18,10 +18,10 @@
 #include <algorithm>
 #include <array>
 #include <condition_variable>
-#include <cstdlib>
 #include <deque>
 #include <dlfcn.h>
 #include <mutex>
+#include <new>
 #include "ability_connect_callback_stub.h"
 #include "dm_log.h"
 #include "dm_ui_api.h"
@@ -61,12 +61,10 @@ struct UiState {
 };
 UiState &State()
 {
-    // The callback bridge outlives IPC references; only module contexts are transient.
-    static auto state = new (std::nothrow) UiState;
-    if (state == nullptr) {
-        LOGE("UI host state allocation failed");
-        std::abort();
-    }
+    // Keep the host state object in static storage for late IPC callbacks.
+    // Placement construction avoids registering a static exit destructor.
+    alignas(UiState) static unsigned char stateStorage[sizeof(UiState)];
+    static UiState *state = new (stateStorage) UiState;
     return *state;
 }
 void ReleaseCall();
