@@ -63,6 +63,8 @@ constexpr const char* LIB_IPC_SERVICE_STUB_3RD_NAME = "libdevicemanager3rdservic
 
 constexpr const char* RECLAIM_MEMMGR_FILE_MEM_FOR_DMTASK = "ReclaimMemmgrFileMemForDMTask";
 constexpr const char* START_DETECT_DEVICE_RISK_TASK = "StartDetectDeviceRiskTask";
+constexpr int32_t IDLE_CRITICAL_DELAY_SECONDS = 60;
+constexpr const char* IDLE_CRITICAL_TIMER_NAME = "IdleCriticalTimer";
 }
 
 DM_IMPLEMENT_SINGLE_INSTANCE(IpcServerStub);
@@ -302,30 +304,104 @@ bool IpcServerStub::IsIpcServiceStub3rdReady()
     return true;
 }
 
+void IpcServerStub::AddRunningIpcCount()
+{
+    int32_t oldCount = runningIpcCount_.fetch_add(1);
+    LOGD("AddRunningIpcCount old:%{public}d new:%{public}d", oldCount, oldCount + 1);
+    if (oldCount == 0) {
+        std::lock_guard<ffrt::mutex> lock(criticalStateMutex_);
+        LOGD("ipc count 0->1, cancel idle debounce");
+        if (runningIpcCount_.load() != 0) {
+            CancelIdleCriticalTask();
+            SetCriticalState(true);
+        }
+    }
+}
+
+void IpcServerStub::SubtractRunningIpcCount()
+{
+    int32_t oldCount = runningIpcCount_.fetch_sub(1);
+    LOGD("SubtractRunningIpcCount old:%{public}d new:%{public}d", oldCount, oldCount - 1);
+    if (oldCount == 1) {
+        std::lock_guard<ffrt::mutex> lock(criticalStateMutex_);
+        LOGD("ipc count 1->0, start 1min idle debounce");
+        if (runningIpcCount_.load() == 0) {
+            StartIdleCriticalTask();
+        }
+    }
+}
+
+void IpcServerStub::StartIdleCriticalTask()
+{
+    LOGD("start idle critical timer, delay:%{public}d s", IDLE_CRITICAL_DELAY_SECONDS);
+    idleCriticalTimer_.DeleteTimer(IDLE_CRITICAL_TIMER_NAME);
+    idleCriticalTimer_.StartTimer(IDLE_CRITICAL_TIMER_NAME, IDLE_CRITICAL_DELAY_SECONDS,
+        [this](std::string /*name*/) {
+            std::lock_guard<ffrt::mutex> lock(criticalStateMutex_);
+            LOGD("idle critical timer fired, runningIpcCount:%{public}d", runningIpcCount_.load());
+            if (runningIpcCount_.load() == 0) {
+                SetCriticalState(false);
+            }
+        });
+}
+
+void IpcServerStub::CancelIdleCriticalTask()
+{
+    LOGD("cancel idle critical timer");
+    idleCriticalTimer_.DeleteTimer(IDLE_CRITICAL_TIMER_NAME);
+}
+
+void IpcServerStub::SetCriticalState(bool critical)
+{
+    if (isCritical_.load() == critical) {
+        return;
+    }
+    LOGD("SetCritical %{public}s, pid:%{public}d", critical ? "true" : "false", getpid());
+#ifdef SUPPORT_MEMMGR
+    int32_t ret = Memory::MemMgrClient::GetInstance().SetCritical(getpid(), critical,
+        DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
+    if (ret != 0) {
+        LOGE("SetCritical to memmgr failed ret:%{public}d", ret);
+        return;
+    }
+#endif // SUPPORT_MEMMGR
+    isCritical_.store(critical);
+}
+
 int32_t IpcServerStub::OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
+    AddRunningIpcCount();
     if (CLIENT_CODE_3RD.find(code) != CLIENT_CODE_3RD.end()) {
         LOGI("CLIENT_CODE_3RD, code: %{public}d", code);
         if (IsIpcServiceStub3rdReady()) {
-            return ipcServiceStub3rd_->OnRemoteRequest(code, data, reply, option);
+            int32_t ret = ipcServiceStub3rd_->OnRemoteRequest(code, data, reply, option);
+            SubtractRunningIpcCount();
+            return ret;
         }
         LOGE("isload3rdSo failed");
+        SubtractRunningIpcCount();
         return ERR_DM_FAILED;
     }
 
     if (CLIENT_CODE.find(code) != CLIENT_CODE.end()) {
-        return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+        int32_t ret = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+        SubtractRunningIpcCount();
+        return ret;
     }
     auto remoteDescriptor = data.ReadInterfaceToken();
     if (GetDescriptor() != remoteDescriptor) {
         LOGI("ReadInterfaceToken fail!");
+        SubtractRunningIpcCount();
         return ERR_DM_IPC_READ_FAILED;
     }
     int32_t ret = IpcCmdRegister::GetInstance().OnIpcCmd(static_cast<int32_t>(code), data, reply);
     if (ret == ERR_DM_UNSUPPORTED_IPC_COMMAND) {
         LOGW("unsupported code: %{public}d", code);
-        return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+        int32_t ret2 = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+        SubtractRunningIpcCount();
+        return ret2;
     }
+    SubtractRunningIpcCount();
     return ret;
 }
 
@@ -363,10 +439,6 @@ int32_t IpcServerStub::RegisterDeviceManagerListener(const ProcessInfo &processI
         LOGE("input parameter invalid.");
         return ERR_DM_POINT_NULL;
     }
-#ifdef SUPPORT_MEMMGR
-    int pid = getpid();
-    Memory::MemMgrClient::GetInstance().SetCritical(pid, true, DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
-#endif // SUPPORT_MEMMGR
     std::lock_guard<ffrt::mutex> autoLock(listenerLock_);
     auto iter = dmListener_.find(processInfo);
     if (iter != dmListener_.end()) {
@@ -423,12 +495,6 @@ int32_t IpcServerStub::UnRegisterDeviceManagerListener(const ProcessInfo &proces
     listener->AsObject()->RemoveDeathRecipient(appRecipient);
     appRecipient_.erase(processInfo);
     dmListener_.erase(processInfo);
-#ifdef SUPPORT_MEMMGR
-    if (dmListener_.size() == 0) {
-        int pid = getpid();
-        Memory::MemMgrClient::GetInstance().SetCritical(pid, false, DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
-    }
-#endif // SUPPORT_MEMMGR
     DeviceManagerService::GetInstance().RemoveNotifyRecord(processInfo);
     RemoveSystemSA(processInfo.pkgName);
     return DM_OK;

@@ -1840,7 +1840,10 @@ ohos_unittest("UTTest_process_info") {
 ohos_unittest("UTTest_ipc_client_manager") {
   module_out_path = module_out_path
 
-  sources = [ "UTTest_ipc_client_manager.cpp" ]
+  sources = [
+    "UTTest_ipc_client_manager.cpp",
+    "mock/system_ability_manager_client_mock.cpp",
+  ]
 
   deps = [
     ":device_manager_test_common",

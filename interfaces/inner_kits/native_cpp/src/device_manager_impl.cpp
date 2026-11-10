@@ -133,7 +133,6 @@ const int32_t NORMAL = 0;
 const int32_t SYSTEM_BASIC = 1;
 const int32_t SYSTEM_CORE = 2;
 const int32_t USLEEP_TIME_US_100000 = 100000; // 100ms
-constexpr int32_t SERVICE_INIT_MAX_NUM = 20;
 constexpr int32_t DM_STRING_LENGTH_MAX = 1024;
 constexpr int32_t DM_PEER_UDID_MAX_LENGTH = 128;
 constexpr size_t DM_UNBIND_PARAM_MAX_SIZE = 16;
@@ -154,23 +153,8 @@ int32_t DeviceManagerImpl::InitDeviceManager(const std::string &pkgName, std::sh
     }
     DmTraceStart(std::string(DM_HITRACE_INIT));
     LOGI("Start, pkgName: %{public}s", GetAnonyString(pkgName).c_str());
-    int32_t ret = DM_OK;
-    int32_t retryNum = 0;
     CHECK_NULL_RETURN(ipcClientProxy_, ERR_DM_POINT_NULL);
-    while (retryNum < SERVICE_INIT_MAX_NUM) {
-        ret = ipcClientProxy_->Init(pkgName);
-        if (ret == DM_OK) {
-            break;
-        }
-        usleep(USLEEP_TIME_US_100000);
-        retryNum++;
-        if (retryNum == SERVICE_INIT_TRY_MAX_NUM) {
-            DmRadarHelper::GetInstance().ReportDmBehavior(pkgName, "InitDeviceManager",
-                ERR_DM_NOT_INIT, "***");
-            LOGE("wait for device manager service starting timeout.");
-            return ERR_DM_NOT_INIT;
-        }
-    }
+    int32_t ret = ipcClientProxy_->Init(pkgName);
     if (ret != DM_OK) {
         LOGE("proxy init failed ret: %{public}d", ret);
         SysEventWrite(std::string(DM_INIT_DEVICE_MANAGER_FAILED), DM_HISYEVENT_FAULT,
