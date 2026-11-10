@@ -210,6 +210,9 @@ public:
     virtual int32_t OnServiceTrustedPeerOffline(const DmRegisterServiceState &regState,
         const DmServiceTrustedPeer &peer) = 0;
     virtual void OnSvrTrustedPeerStateOnlineResult(const AuthInfo &authInfo, const DmServiceTrustedPeer &peer) = 0;
+    virtual bool CheckScreenLockAndWakeUp(int32_t displayId) { return false; }
+    virtual int32_t SubscribeScreenState(int32_t displayId) { return 0; }
+    virtual void UnsubscribeScreenState() {}
 };
 } // namespace DistributedHardware
 } // namespace OHOS

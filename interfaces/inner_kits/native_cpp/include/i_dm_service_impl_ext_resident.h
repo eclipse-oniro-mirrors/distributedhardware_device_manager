@@ -173,6 +173,9 @@ public:
         std::vector<DmServiceTrustedPeer> &peers) = 0;
     virtual int32_t RegSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId) = 0;
     virtual int32_t UnregSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId) = 0;
+    virtual bool CheckScreenLockAndWakeUp(int32_t displayId) = 0;
+    virtual int32_t SubscribeScreenState(int32_t displayId) = 0;
+    virtual void UnsubscribeScreenState() = 0;
 };
 
 using CreateDMServiceExtResidentFuncPtr = IDMServiceImplExtResident *(*)(void);

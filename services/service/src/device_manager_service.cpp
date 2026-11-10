@@ -6215,6 +6215,33 @@ int32_t DeviceManagerService::OpenAuthSessionWithPara(int64_t serviceId)
     return dmServiceImplExtResident_->OpenAuthSessionWithPara(serviceId);
 }
 
+bool DeviceManagerService::CheckScreenLockAndWakeUp(int32_t displayId)
+{
+    if (!IsDMServiceAdapterResidentLoad()) {
+        LOGE("adapter instance not init or init failed.");
+        return false;
+    }
+    return dmServiceImplExtResident_->CheckScreenLockAndWakeUp(displayId);
+}
+
+int32_t DeviceManagerService::SubscribeScreenState(int32_t displayId)
+{
+    if (!IsDMServiceAdapterResidentLoad()) {
+        LOGE("adapter instance not init or init failed.");
+        return ERR_DM_UNSUPPORTED_METHOD;
+    }
+    return dmServiceImplExtResident_->SubscribeScreenState(displayId);
+}
+
+void DeviceManagerService::UnsubscribeScreenState()
+{
+    if (!IsDMServiceAdapterResidentLoad()) {
+        LOGE("adapter instance not init or init failed.");
+        return;
+    }
+    dmServiceImplExtResident_->UnsubscribeScreenState();
+}
+
 int32_t DeviceManagerService::GetAuthTypeByUdidHash(const std::string &udidHash, const std::string &pkgName,
     DMLocalServiceInfoAuthType &authType)
 {

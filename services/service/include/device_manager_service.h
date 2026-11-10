@@ -230,6 +230,9 @@ public:
     int32_t BindServiceTarget(const std::string &pkgName, const PeerTargetId &targetId,
         const std::map<std::string, std::string> &bindParam);
     int32_t OpenAuthSessionWithPara(int64_t serviceId);
+    bool CheckScreenLockAndWakeUp(int32_t displayId);
+    int32_t SubscribeScreenState(int32_t displayId);
+    void UnsubscribeScreenState();
     int32_t SetDnPolicy(const std::string &pkgName, std::map<std::string, std::string> &policy);
     void ClearDiscoveryCache(const ProcessInfo &processInfo);
     void HandleDeviceScreenStatusChange(DmDeviceInfo &devInfo);

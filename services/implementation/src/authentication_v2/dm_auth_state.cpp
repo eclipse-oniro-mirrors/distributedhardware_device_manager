@@ -27,9 +27,7 @@
 #include "mini_sdk_loader.h"
 #include "screenlock_mini_sdk.h"
 #endif
-#if defined(CAR_DEVICE_ENABLE) && defined(VEHICLE_POWER_ENABLE)
-#include "ivi_screen_power_helper.h"
-#endif
+#include "idevice_manager_service_listener.h"
 #include "dm_log.h"
 #include "dm_anonymous.h"
 #include <sys/time.h>
@@ -120,24 +118,16 @@ void DmAuthState::HandleAuthenticateTimeout(std::shared_ptr<DmAuthContext> conte
     LOGI("complete");
 }
 
-bool DmAuthState::CheckScreenLockAndWakeUp(int32_t userId)
+bool DmAuthState::CheckScreenLockAndWakeUp(int32_t userId, std::shared_ptr<IDeviceManagerServiceListener> listener)
 {
-#if defined(CAR_DEVICE_ENABLE) && defined(VEHICLE_POWER_ENABLE)
+#ifdef CAR_DEVICE_ENABLE
+    CHECK_NULL_RETURN(listener, true);
     int32_t displayId = MultipleUserConnector::GetDisplayIdByUserId(userId);
     if (displayId < 0) {
         LOGE("GetDisplayIdByUserId failed, userId: %{public}d, treat as screen locked", userId);
         return true;
     }
-    bool isScreenOn = IviScreenPowerHelper::GetInstance().IsScreenOnByDisplayId(displayId);
-    LOGI("userId: %{public}d, displayId: %{public}d, isScreenOn: %{public}d", userId, displayId, isScreenOn);
-    if (!isScreenOn) {
-        int32_t ret = IviScreenPowerHelper::GetInstance().WakeUpByDisplayId(displayId);
-        if (ret != DM_OK) {
-            LOGE("WakeUp fail, displayId: %{public}d, ret: %{public}d", displayId, ret);
-            return true;
-        }
-        LOGI("WakeUp success, displayId: %{public}d", displayId);
-    }
+    return listener->CheckScreenLockAndWakeUp(displayId);
 #endif
     bool isLocked = false;
 #if defined(SUPPORT_SCREENLOCK)
@@ -236,8 +226,9 @@ void DmAuthState::SinkFinish(std::shared_ptr<DmAuthContext> context)
     context->authUiStateMgr->UpdateUiState(DmUiStateMsg::MSG_CANCEL_CONFIRM_SHOW);
     context->timer->DeleteAll();
     context->authMessageProcessor->CreateAndSendMsg(MSG_TYPE_AUTH_RESP_FINISH, context); // 发送201给source侧
-#if defined(CAR_DEVICE_ENABLE) && defined(VEHICLE_POWER_ENABLE)
-    IviScreenPowerHelper::GetInstance().UnsubscribeScreenState();
+#ifdef CAR_DEVICE_ENABLE
+    CHECK_NULL_VOID(context->listener);
+    context->listener->UnsubscribeScreenState();
 #endif
 }
 

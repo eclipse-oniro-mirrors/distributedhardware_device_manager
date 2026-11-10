@@ -127,6 +127,9 @@ public:
     virtual int32_t UnbindSvrTarByUdidOnSvrPublisher(const std::string &pkgName,
         const std::string &peerUdidHash, int64_t serviceId,
         const std::map<std::string, std::string> &unbindParam) = 0;
+    virtual bool CheckScreenLockAndWakeUp(int32_t displayId) = 0;
+    virtual int32_t SubscribeScreenState(int32_t displayId) = 0;
+    virtual void UnsubscribeScreenState() = 0;
 };
 
 using CreateDMServiceImplExtFuncPtr = IDMServiceImplExt *(*)(void);
