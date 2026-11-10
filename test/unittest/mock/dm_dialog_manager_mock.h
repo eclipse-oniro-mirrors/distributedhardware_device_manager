@@ -24,9 +24,13 @@ namespace OHOS {
 namespace DistributedHardware {
 class DmDialogManagerMock {
 public:
-    MOCK_METHOD(void, ShowConfirmDialog, (const std::string));
-    MOCK_METHOD(void, ShowPinDialog, (const std::string));
-    MOCK_METHOD(void, ShowInputDialog, (const std::string));
+    MOCK_METHOD(void, ShowConfirmDialog, (const std::string &));
+    MOCK_METHOD(void, ShowServiceBindConfirmDialog, (const std::string &));
+    MOCK_METHOD(void, CloseDialog, ());
+    MOCK_METHOD(void, ReleaseConfirmSession, ());
+    MOCK_METHOD(void, ReleaseSession, (uint32_t));
+    MOCK_METHOD(void, ShowPinDialog, (const std::string &));
+    MOCK_METHOD(void, ShowInputDialog, (const std::string &));
     static inline std::shared_ptr<DmDialogManagerMock> dmDialogManagerMock = nullptr;
 };
 } // namespace DistributedHardware

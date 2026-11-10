@@ -95,8 +95,7 @@ if (defined(ohos_lite) || !support_jsapi) {
       ]
 
       sources = [
-        "src/ability/standard/dm_ability_manager.cpp",
-        "src/ability/standard/dm_dialog_manager.cpp",
+        "src/ability/standard/dm_dialog_client.cpp",
         "src/attest/dm_auth_attest_common.cpp",
         "src/attest/dm_auth_cert.cpp",
         "src/authentication/auth_message_processor.cpp",
@@ -149,10 +148,10 @@ if (defined(ohos_lite) || !support_jsapi) {
       ]
 
       external_deps = [
-        "ability_base:session_info",
-        "ability_base:want",
         "ability_runtime:ability_connect_callback_stub",
         "access_token:libaccesstoken_sdk",
+        "bundle_framework:appexecfwk_base",
+        "bundle_framework:appexecfwk_core",
         "cJSON:cjson",
         "c_utils:utils",
         "common_event_service:cesfwk_innerkits",
@@ -175,9 +174,7 @@ if (defined(ohos_lite) || !support_jsapi) {
         "samgr:samgr_proxy",
         "zlib:shared_libz",
       ]
-      if (support_jsapi) {
-        external_deps += [ "ability_runtime:ability_manager" ]
-      }
+      deps += [ ":dm_ui" ]
 
       if (support_screenlock && device_manager_feature_product == "default") {
         defines += [ "SUPPORT_SCREENLOCK" ]
@@ -205,5 +202,45 @@ if (defined(ohos_lite) || !support_jsapi) {
 
       part_name = "device_manager"
     }
+  }
+
+  ohos_shared_library("dm_ui") {
+    install_enable = device_manager_capability
+    branch_protector_ret = "pac_ret"
+    sanitize = {
+      boundary_sanitize = true
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+      integer_overflow = true
+      ubsan = true
+    }
+    cflags = [ "-Werror", "-fPIC", "-fstack-protector-strong" ]
+    ldflags = [ "-Wl,-z,relro", "-Wl,-z,now" ]
+    sources = [
+      "src/ability/standard/dm_dialog_manager.cpp",
+      "src/ability/standard/dm_ui_module.cpp",
+    ]
+    configs = [ ":devicemanagerserviceimpl_config" ]
+    defines = [ "HI_LOG_ENABLE", "DH_LOG_TAG=\"dmui\"", "LOG_DOMAIN=0xD004110" ]
+    deps = [
+      "${innerkits_path}/native_cpp:devicemanagersdk",
+      "${json_path}:devicemanagerjson",
+      "${utils_path}:devicemanagerutils",
+    ]
+    external_deps = [
+      "ability_base:session_info",
+      "ability_base:want",
+      "ability_runtime:ability_connect_callback_stub",
+      "ability_runtime:ability_manager",
+      "c_utils:utils",
+      "ffrt:libffrt",
+      "hilog:libhilog",
+      "init:libbegetutil",
+      "ipc:ipc_core",
+      "samgr:samgr_proxy",
+    ]
+    subsystem_name = "distributedhardware"
+    part_name = "device_manager"
   }
 }

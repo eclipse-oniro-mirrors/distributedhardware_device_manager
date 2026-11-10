@@ -23,6 +23,7 @@ ohos_fuzztest("DmDialogManagerFuzzTest") {
       "${devicemanager_path}/test/servicesfuzztest/dmdialogmanager_fuzzer"
 
   include_dirs = [
+    "${json_path}/include",
     "${utils_path}/include",
     "${innerkits_path}/native_cpp/include",
     "${innerkits_path}/native_cpp/include/ipc/standard",
@@ -53,7 +54,10 @@ ohos_fuzztest("DmDialogManagerFuzzTest") {
 
   sources = [ "dm_dialog_manager_fuzzer.cpp" ]
 
-  deps = [ "${servicesimpl_path}:devicemanagerserviceimpl" ]
+  deps = [
+    "${servicesimpl_path}:dm_ui",
+    "${json_path}:devicemanagerjson",
+  ]
 
   defines = [
     "HI_LOG_ENABLE",

@@ -21,7 +21,7 @@
 #include "dm_auth_manager.h"
 #include "dm_anonymous.h"
 #include "dm_constants.h"
-#include "dm_dialog_manager.h"
+#include "dm_dialog_manager_mock.h"
 #include "dm_log.h"
 #include "dm_radar_helper.h"
 #include "multiple_user_connector.h"
@@ -95,6 +95,8 @@ bool DeviceProfileConnector::CheckSrcDevIdInAclForDevBind(const std::string &pkg
 
 void DmAuthManagerTest::SetUp()
 {
+    DmDialogManagerMock::dmDialogManagerMock = std::make_shared<testing::NiceMock<DmDialogManagerMock>>();
+    ASSERT_NE(DmDialogManagerMock::dmDialogManagerMock, nullptr);
     InitDeviceAuthService();
     std::shared_ptr<SoftbusConnector> softbusConnector = std::make_shared<SoftbusConnector>();
     std::shared_ptr<DeviceManagerServiceListener> listener = std::make_shared<DeviceManagerServiceListener>();
@@ -116,6 +118,9 @@ void DmAuthManagerTest::SetUp()
 }
 void DmAuthManagerTest::TearDown()
 {
+    authManager_ = nullptr;
+    DmDialogManagerMock::dmDialogManagerMock = nullptr;
+    g_isLocked = false;
     g_bindType = INVALIED_TYPE;
     g_createSimpleMessageReturnDataStr = "{}";
     g_isIdenticalAccountReturnBoolValue = false;
@@ -132,6 +137,7 @@ void DmAuthManagerTest::TearDownTestCase()
 
 HWTEST_F(DmAuthManagerTest, ShowStartAuthDialog001, testing::ext::TestSize.Level1)
 {
+    EXPECT_CALL(*DmDialogManagerMock::dmDialogManagerMock, ShowInputDialog(testing::_)).Times(0);
     authManager_->authResponseContext_->authType = AUTH_TYPE_UNKNOW;
     authManager_->authRequestState_ = nullptr;
     authManager_->authResponseState_ = nullptr;
@@ -139,21 +145,24 @@ HWTEST_F(DmAuthManagerTest, ShowStartAuthDialog001, testing::ext::TestSize.Level
     authManager_->ShowStartAuthDialog();
     ASSERT_EQ(authManager_->authResponseContext_->state, STATUS_DM_AUTH_DEFAULT);
 
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(DmDialogManagerMock::dmDialogManagerMock.get()));
+    EXPECT_CALL(*DmDialogManagerMock::dmDialogManagerMock, ShowInputDialog("test")).Times(1);
     g_isLocked = false;
     authManager_->authResponseContext_->targetDeviceName = "test";
     authManager_->ShowStartAuthDialog();
-    ASSERT_EQ(authManager_->authResponseContext_->targetDeviceName, DmDialogManager::GetInstance().targetDeviceName_);
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(DmDialogManagerMock::dmDialogManagerMock.get()));
 }
 
 HWTEST_F(DmAuthManagerTest, ShowStartAuthDialog002, testing::ext::TestSize.Level0)
 {
+    EXPECT_CALL(*DmDialogManagerMock::dmDialogManagerMock, ShowInputDialog(testing::_)).Times(0);
     authManager_->authResponseContext_->authType = AUTH_TYPE_NFC;
     authManager_->importAuthCode_ = "123456";
     authManager_->importPkgName_ = "hostPkgName";
     authManager_->authResponseContext_->hostPkgName = "hostPkgName";
     authManager_->authResponseContext_->targetDeviceName = "ShowStartAuthDialog_004";
     authManager_->ShowStartAuthDialog();
-    EXPECT_NE(authManager_->authResponseContext_->targetDeviceName, DmDialogManager::GetInstance().targetDeviceName_);
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(DmDialogManagerMock::dmDialogManagerMock.get()));
 }
 
 HWTEST_F(DmAuthManagerTest, DeleteAcl001, testing::ext::TestSize.Level0)

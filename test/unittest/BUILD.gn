@@ -52,7 +52,6 @@ group("unittest") {
     ":UTTest_discovery_filter",
     ":UTTest_discovery_manager",
     ":UTTest_dm_account_common_event",
-    ":UTTest_dm_ability_manager",
     ":UTTest_dm_auth_attest_common",
     ":UTTest_dm_auth_cert",
     ":UTTest_dm_anonymous",
@@ -3030,6 +3029,7 @@ ohos_unittest("UTTest_dm_auth_manager_second") {
     "${devicemanager_path}/test/commonunittest/UTTest_dm_auth_manager_second.cpp",
     "${servicesimpl_path}/src/authentication/dm_auth_manager.cpp",
     "mock/deviceprofile_connector_mock.cpp",
+    "mock/dm_dialog_manager_mock.cpp",
     "mock/hichain_auth_connector_mock.cpp",
     "${devicemanager_path}/test/unittest/mock/dm_crypto_mock.cpp",
     "${devicemanager_path}/test/unittest/mock/hichain_connector_mock.cpp",
@@ -3079,7 +3079,10 @@ ohos_unittest("UTTest_dm_auth_manager_third") {
 
   include_dirs = [ "${devicemanager_path}/test/commonunittest" ]
 
-  sources = [ "${devicemanager_path}/test/commonunittest/UTTest_dm_auth_manager_third.cpp" ]
+  sources = [
+    "${devicemanager_path}/test/commonunittest/UTTest_dm_auth_manager_third.cpp",
+    "mock/dm_dialog_manager_mock.cpp",
+  ]
 
   deps = [
     ":device_manager_test_common",
@@ -4812,45 +4815,6 @@ ohos_unittest("UTTest_ipc_model_codec_test") {
 }
 
 ## UnitTest UTTest_ipc_model_codec_test }}}
-## UnitTest UTTest_dm_ability_manager {{{
-ohos_unittest("UTTest_dm_ability_manager") {
-  module_out_path = module_out_path
-
-  include_dirs = [
-    "${devicemanager_path}/services/implementation/include",
-    "${devicemanager_path}/services/implementation/include/ability",
-  ]
-
-  sources = [
-    "${devicemanager_path}/test/unittest/UTTest_dm_ability_manager.cpp",
-  ]
-
-  deps = [
-    ":device_manager_test_common",
-    "${devicemanager_path}/commondependency:devicemanagerdependencytest",
-    "${devicemanager_path}/interfaces/kits/js:devicemanager",
-    "${devicemanager_path}/radar:devicemanagerradartest",
-    "${ext_path}/pin_auth:devicemanagerext_pin_auth",
-    "${innerkits_path}/native_cpp:devicemanagersdk",
-    "${json_path}:devicemanagerjson",
-    "${mini_tools_kits_path}/native_cpp:devicemanagerminisdk",
-    "${services_path}:devicemanagerservicetest",
-    "${servicesimpl_path}:devicemanagerserviceimpl",
-    "${softbuscache_parh}:dmdevicecache",
-    "${utils_path}:devicemanagerutilstest",
-  ]
-
-  external_deps = [
-    "bundle_framework:appexecfwk_base",
-    "cJSON:cjson_static",
-    "ffrt:libffrt",
-    "googletest:gmock",
-    "hilog:libhilog",
-  ]
-}
-
-## UnitTest UTTest_dm_ability_manager }}}
-
 ## UnitTest UTTest_auth_cred_negotiate_cred {{{
 ohos_unittest("UTTest_auth_cred_negotiate_cred") {
   module_out_path = module_out_path

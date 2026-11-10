@@ -19,7 +19,9 @@
 #include <thread>
 
 #include "ability_manager_client.h"
-#include "auth_message_processor.h"
+#include "iservice_registry.h"
+#include "system_ability_definition.h"
+#include "dm_ui_constants.h"
 #include "dm_constants.h"
 #include "dm_anonymous.h"
 #include "dm_log.h"
@@ -45,6 +47,155 @@ constexpr uint32_t SHOW_DIALOG_CMD_CODE = 1;
 constexpr const char* TAG_USER_ID = "userId";
 }
 DM_IMPLEMENT_SINGLE_INSTANCE(DmDialogManager);
+
+DmDialogManager *DmDialogManager::CreateSession(const DmUiSessionHost &host, void *connection)
+{
+    if (connection == nullptr || host.size != sizeof(DmUiSessionHost) || host.retire == nullptr ||
+        host.submit == nullptr) {
+        return nullptr;
+    }
+    auto session = new (std::nothrow) DmDialogManager;
+    if (session != nullptr) {
+        session->managedSession_ = true;
+        session->sessionHost_ = host;
+        session->dialogConnectionCallback_ =
+            sptr<AAFwk::IAbilityConnection>(static_cast<AAFwk::IAbilityConnection *>(connection));
+    }
+    return session;
+}
+
+void DmDialogManager::DestroySession(DmDialogManager *session)
+{
+    if (session == nullptr) {
+        return;
+    }
+    delete session;
+}
+
+namespace {
+sptr<AAFwk::IAbilityManager> GetSessionAbilityManager()
+{
+    auto manager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (manager == nullptr) {
+        return nullptr;
+    }
+    auto remote = manager->GetSystemAbility(ABILITY_MGR_SERVICE_ID);
+    return remote == nullptr ? nullptr : iface_cast<AAFwk::IAbilityManager>(remote);
+}
+} // namespace
+
+void DmDialogManager::RetireSession()
+{
+    if (sessionHost_.retire == nullptr) {
+        LOGE("UI retirement callback unavailable");
+        return;
+    }
+    sessionHost_.retire(sessionHost_.generation);
+}
+
+void DmDialogManager::ConnectSessionExtension()
+{
+    sptr<IRemoteObject> existing;
+    sptr<AAFwk::IAbilityConnection> connection;
+    int32_t userId;
+    {
+        std::lock_guard<ffrt::mutex> lock(mutex_);
+        if (sessionClosing_) {
+            return;
+        }
+        existing = g_remoteObject;
+        if (existing == nullptr && sessionRequested_) {
+            // The pending connection callback will display the latest parameters.
+            return;
+        }
+        connection = dialogConnectionCallback_;
+        userId = userId_;
+        sessionRequested_ = true;
+    }
+    if (existing != nullptr) {
+        OnAbilityConnectDone(AppExecFwk::ElementName(), existing, ERR_OK);
+        return;
+    }
+    auto manager = GetSessionAbilityManager();
+    if (manager == nullptr || connection == nullptr) {
+        LOGE("UI session ability service or callback unavailable");
+        RetireSession();
+        return;
+    }
+    AAFwk::Want want;
+    want.SetElementName("com.ohos.sceneboard", "com.ohos.sceneboard.systemdialog");
+    auto connect = [&manager, &want, &connection, userId]() {
+        // Match the official three-argument ConnectAbility wrapper; keep proxy-side checks.
+        return manager->ConnectAbilityCommon(want, connection, nullptr,
+            AppExecFwk::ExtensionAbilityType::SERVICE, userId, false, 0, 0);
+    };
+    int32_t result = connect();
+    if (result != ERR_OK) {
+        want.SetElementName("com.ohos.systemui", "com.ohos.systemui.dialog");
+        result = connect();
+    }
+    if (result != ERR_OK) {
+        LOGE("UI session connect failed: %{public}d", result);
+        RetireSession();
+        return;
+    }
+    // CloseSession records a pending close request while connecting. The completion
+    // callback disconnects the session after AbilityManager establishes the connection.
+}
+
+int32_t DmDialogManager::DisconnectSession()
+{
+    sptr<AAFwk::IAbilityConnection> connection;
+    {
+        std::lock_guard<ffrt::mutex> lock(mutex_);
+        if (sessionDisconnecting_ || !sessionRequested_ || g_remoteObject == nullptr) {
+            return ERR_OK;
+        }
+        sessionDisconnecting_ = true;
+        connection = dialogConnectionCallback_;
+    }
+    auto manager = GetSessionAbilityManager();
+    if (manager == nullptr || connection == nullptr) {
+        LOGE("UI session cannot disconnect; retaining resources");
+        std::lock_guard<ffrt::mutex> lock(mutex_);
+        sessionDisconnecting_ = false;
+        return -1;
+    }
+    int32_t result = manager->DisconnectAbility(connection);
+    if (result != ERR_OK) {
+        LOGE("UI session disconnect failed: %{public}d; retaining resources", result);
+        std::lock_guard<ffrt::mutex> lock(mutex_);
+        sessionDisconnecting_ = false;
+    }
+    return result;
+}
+
+int32_t DmDialogManager::CloseSession()
+{
+    sptr<IRemoteObject> remote;
+    bool requested;
+    {
+        std::lock_guard<ffrt::mutex> lock(mutex_);
+        sessionClosing_ = true;
+        remote = g_remoteObject;
+        requested = sessionRequested_;
+    }
+    if (remote != nullptr) {
+        MessageParcel data;
+        MessageParcel reply;
+        MessageOption option;
+        int32_t result = remote->SendRequest(CLOSE_DIALOG_CMD_CODE, data, reply, option);
+        if (result != ERR_OK) {
+            LOGW("UI close request returned: %{public}d; waiting for disconnect", result);
+        }
+    }
+    if (!requested) {
+        RetireSession();
+        return ERR_OK;
+    }
+    return DisconnectSession();
+}
+
 
 DmDialogManager::DmDialogManager()
 {
@@ -75,7 +226,7 @@ void DmDialogManager::ConfigLocalInfo(JsonObject& jsonObject)
     }
 }
 
-void DmDialogManager::ShowServiceBindConfirmDialog(const std::string param)
+void DmDialogManager::ShowServiceBindConfirmDialog(const std::string &param)
 {
     std::string deviceName = "";
     std::string appOperationStr = "";
@@ -86,20 +237,20 @@ void DmDialogManager::ShowServiceBindConfirmDialog(const std::string param)
         std::lock_guard<ffrt::mutex> lock(mutex_);
         JsonObject jsonObject(param);
         if (!jsonObject.IsDiscarded()) {
-            if (IsString(jsonObject, TAG_REQUESTER)) {
-                deviceName = jsonObject[TAG_REQUESTER].Get<std::string>();
+            if (IsString(jsonObject, DmUiConstants::TAG_REQUESTER)) {
+                deviceName = jsonObject[DmUiConstants::TAG_REQUESTER].Get<std::string>();
             }
-            if (IsString(jsonObject, TAG_APP_OPERATION)) {
-                appOperationStr = jsonObject[TAG_APP_OPERATION].Get<std::string>();
+            if (IsString(jsonObject, DmUiConstants::TAG_APP_OPERATION)) {
+                appOperationStr = jsonObject[DmUiConstants::TAG_APP_OPERATION].Get<std::string>();
             }
-            if (IsString(jsonObject, TAG_CUSTOM_DESCRIPTION)) {
-                customDescriptionStr = jsonObject[TAG_CUSTOM_DESCRIPTION].Get<std::string>();
+            if (IsString(jsonObject, DmUiConstants::TAG_CUSTOM_DESCRIPTION)) {
+                customDescriptionStr = jsonObject[DmUiConstants::TAG_CUSTOM_DESCRIPTION].Get<std::string>();
             }
-            if (IsInt32(jsonObject, TAG_LOCAL_DEVICE_TYPE)) {
-                deviceType = jsonObject[TAG_LOCAL_DEVICE_TYPE].Get<std::int32_t>();
+            if (IsInt32(jsonObject, DmUiConstants::TAG_LOCAL_DEVICE_TYPE)) {
+                deviceType = jsonObject[DmUiConstants::TAG_LOCAL_DEVICE_TYPE].Get<std::int32_t>();
             }
-            if (IsString(jsonObject, TAG_HOST_PKGLABEL)) {
-                hostPkgLabel = jsonObject[TAG_HOST_PKGLABEL].Get<std::string>();
+            if (IsString(jsonObject, DmUiConstants::TAG_HOST_PKGLABEL)) {
+                hostPkgLabel = jsonObject[DmUiConstants::TAG_HOST_PKGLABEL].Get<std::string>();
             }
             ConfigLocalInfo(jsonObject);
         }
@@ -115,7 +266,7 @@ void DmDialogManager::ShowServiceBindConfirmDialog(const std::string param)
     ConnectExtension();
 }
 
-void DmDialogManager::ShowConfirmDialog(const std::string param)
+void DmDialogManager::ShowConfirmDialog(const std::string &param)
 {
     std::string deviceName = "";
     std::string appOperationStr = "";
@@ -126,20 +277,20 @@ void DmDialogManager::ShowConfirmDialog(const std::string param)
         std::lock_guard<ffrt::mutex> lock(mutex_);
         JsonObject jsonObject(param);
         if (!jsonObject.IsDiscarded()) {
-            if (IsString(jsonObject, TAG_REQUESTER)) {
-                deviceName = jsonObject[TAG_REQUESTER].Get<std::string>();
+            if (IsString(jsonObject, DmUiConstants::TAG_REQUESTER)) {
+                deviceName = jsonObject[DmUiConstants::TAG_REQUESTER].Get<std::string>();
             }
-            if (IsString(jsonObject, TAG_APP_OPERATION)) {
-                appOperationStr = jsonObject[TAG_APP_OPERATION].Get<std::string>();
+            if (IsString(jsonObject, DmUiConstants::TAG_APP_OPERATION)) {
+                appOperationStr = jsonObject[DmUiConstants::TAG_APP_OPERATION].Get<std::string>();
             }
-            if (IsString(jsonObject, TAG_CUSTOM_DESCRIPTION)) {
-                customDescriptionStr = jsonObject[TAG_CUSTOM_DESCRIPTION].Get<std::string>();
+            if (IsString(jsonObject, DmUiConstants::TAG_CUSTOM_DESCRIPTION)) {
+                customDescriptionStr = jsonObject[DmUiConstants::TAG_CUSTOM_DESCRIPTION].Get<std::string>();
             }
-            if (IsInt32(jsonObject, TAG_LOCAL_DEVICE_TYPE)) {
-                deviceType = jsonObject[TAG_LOCAL_DEVICE_TYPE].Get<std::int32_t>();
+            if (IsInt32(jsonObject, DmUiConstants::TAG_LOCAL_DEVICE_TYPE)) {
+                deviceType = jsonObject[DmUiConstants::TAG_LOCAL_DEVICE_TYPE].Get<std::int32_t>();
             }
-            if (IsString(jsonObject, TAG_HOST_PKGLABEL)) {
-                hostPkgLabel = jsonObject[TAG_HOST_PKGLABEL].Get<std::string>();
+            if (IsString(jsonObject, DmUiConstants::TAG_HOST_PKGLABEL)) {
+                hostPkgLabel = jsonObject[DmUiConstants::TAG_HOST_PKGLABEL].Get<std::string>();
             }
             if (IsBool(jsonObject, PARAM_KEY_IS_PROXY_BIND)) {
                 isProxyBind_ = jsonObject[PARAM_KEY_IS_PROXY_BIND].Get<bool>();
@@ -163,7 +314,7 @@ void DmDialogManager::ShowConfirmDialog(const std::string param)
     ConnectExtension();
 }
 
-void DmDialogManager::ShowPinDialog(const std::string param)
+void DmDialogManager::ShowPinDialog(const std::string &param)
 {
     LOGI("pinCode: %{public}s", GetAnonyString(param).c_str());
     {
@@ -172,11 +323,26 @@ void DmDialogManager::ShowPinDialog(const std::string param)
         abilityName_ = PIN_ABILITY_NAME;
         pinCode_ = param;
     }
-    ffrt::submit([]() { DmDialogManager::GetInstance().ConnectExtension(); },
+    if (managedSession_) {
+        if (sessionHost_.submit == nullptr) {
+            LOGE("PIN connection dispatcher unavailable");
+            return;
+        }
+        auto connect = [](void *context) {
+            if (context != nullptr) {
+                static_cast<DmDialogManager *>(context)->ConnectExtension();
+            }
+        };
+        if (sessionHost_.submit(sessionHost_.generation, connect, this) != ERR_OK) {
+            LOGW("PIN connection work was cancelled before dispatch");
+        }
+        return;
+    }
+    ffrt::submit([this]() { ConnectExtension(); },
         ffrt::task_attr().name(CONNECT_PIN_DIALOG));
 }
 
-void DmDialogManager::ShowInputDialog(const std::string param)
+void DmDialogManager::ShowInputDialog(const std::string &param)
 {
     {
         std::lock_guard<ffrt::mutex> lock(mutex_);
@@ -189,6 +355,10 @@ void DmDialogManager::ShowInputDialog(const std::string param)
 
 void DmDialogManager::CloseDialog()
 {
+    if (managedSession_) {
+        CloseSession();
+        return;
+    }
     LOGI("In");
     std::lock_guard<ffrt::mutex> lock(mutex_);
     if (g_remoteObject == nullptr) {
@@ -209,6 +379,10 @@ void DmDialogManager::CloseDialog()
 //LCOV_EXCL_START
 void DmDialogManager::ConnectExtension()
 {
+    if (managedSession_) {
+        ConnectSessionExtension();
+        return;
+    }
     LOGI("start.");
     isCloseDialog_.store(false);
     if (isConnectSystemUI_.load() && dialogConnectionCallback_ != nullptr && g_remoteObject != nullptr) {
@@ -253,6 +427,27 @@ void DmDialogManager::OnAbilityConnectDone(
     const AppExecFwk::ElementName& element, const sptr<IRemoteObject>& remoteObject, int resultCode)
 {
     LOGI("start");
+    if (managedSession_) {
+        if (remoteObject == nullptr || resultCode != ERR_OK) {
+            LOGE("UI connection completion failed: %{public}d", resultCode);
+            RetireSession();
+            return;
+        }
+        bool closing;
+        {
+            std::lock_guard<ffrt::mutex> lock(mutex_);
+            g_remoteObject = remoteObject;
+            isConnectSystemUI_.store(true);
+            closing = sessionClosing_;
+            if (!closing) {
+                SendMsgRequest(remoteObject);
+            }
+        }
+        if (closing) {
+            DisconnectSession();
+        }
+        return;
+    }
     std::lock_guard<ffrt::mutex> lock(mutex_);
     if (remoteObject == nullptr) {
         LOGE("remoteObject is nullptr");
@@ -272,6 +467,10 @@ void DmDialogManager::OnAbilityConnectDone(
 
 void DmDialogManager::SendMsgRequest(const sptr<IRemoteObject>& remoteObject)
 {
+    if (remoteObject == nullptr) {
+        LOGE("UI message target unavailable");
+        return;
+    }
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
@@ -301,7 +500,7 @@ void DmDialogManager::SendMsgRequest(const sptr<IRemoteObject>& remoteObject)
     param["deviceType"] = deviceType_;
     param["serviceType"] = serviceType_;
     param[TAG_TARGET_DEVICE_NAME] = targetDeviceName_;
-    param[TAG_HOST_PKGLABEL] = hostPkgLabel_;
+    param[DmUiConstants::TAG_HOST_PKGLABEL] = hostPkgLabel_;
     param["disableUpGesture"] = 1;
     param["metaType"] = PROXY_DEFAULT;
     std::string paramStr = param.Dump();
@@ -318,6 +517,23 @@ void DmDialogManager::SendMsgRequest(const sptr<IRemoteObject>& remoteObject)
 void DmDialogManager::OnAbilityDisconnectDone(const AppExecFwk::ElementName& element, int resultCode)
 {
     LOGI("start");
+    if (managedSession_) {
+        if (resultCode != ERR_OK && resultCode != DM_UI_TARGET_TERMINATED) {
+            LOGE("UI disconnect completion failed: %{public}d", resultCode);
+            return;
+        }
+        {
+            std::lock_guard<ffrt::mutex> lock(mutex_);
+            g_remoteObject = nullptr;
+            isConnectSystemUI_.store(false);
+            sessionRequested_ = false;
+            // A retiring session must not start another connection before the
+            // host observes retirement and drains the last active call.
+            sessionClosing_ = true;
+        }
+        RetireSession();
+        return;
+    }
     std::lock_guard<ffrt::mutex> lock(mutex_);
     g_remoteObject = nullptr;
     isConnectSystemUI_.store(false);

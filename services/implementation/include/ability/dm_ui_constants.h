@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,21 +13,19 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_DM_ABILITY_MANAGER_TEST_H
-#define OHOS_DM_ABILITY_MANAGER_TEST_H
-
-#include <gtest/gtest.h>
-#include "dm_ability_manager.h"
+#ifndef DM_UI_CONSTANTS_H
+#define DM_UI_CONSTANTS_H
 
 namespace OHOS {
 namespace DistributedHardware {
-class DmAbilityManagerTest : public testing::Test {
-public:
-    static void SetUpTestCase();
-    static void TearDownTestCase();
-    void SetUp();
-    void TearDown();
-};
+namespace DmUiConstants {
+constexpr const char *TAG_HOST_PKGLABEL = "hostPkgLabel";
+constexpr const char *TAG_APP_OPERATION = "APPOPERATION";
+constexpr const char *TAG_CUSTOM_DESCRIPTION = "CUSTOMDESC";
+constexpr const char *TAG_REQUESTER = "REQUESTER";
+constexpr const char *TAG_LOCAL_DEVICE_TYPE = "LOCALDEVICETYPE";
+} // namespace DmUiConstants
 } // namespace DistributedHardware
 } // namespace OHOS
-#endif // OHOS_DM_ABILITY_MANAGER_TEST_H
+
+#endif

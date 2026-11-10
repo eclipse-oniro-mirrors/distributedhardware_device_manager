@@ -702,7 +702,6 @@ void DeviceManagerServiceImpl::Release()
     ReleaseMaps();
     deviceStateMgr_ = nullptr;
     softbusConnector_ = nullptr;
-    abilityMgr_ = nullptr;
     hiChainConnector_ = nullptr;
 }
 

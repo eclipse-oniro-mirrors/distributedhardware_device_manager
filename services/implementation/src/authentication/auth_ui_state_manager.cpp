@@ -15,7 +15,8 @@
 
 #include "auth_ui_state_manager.h"
 #include "dm_anonymous.h"
-#include "dm_dialog_manager.h"
+#include "dm_dialog_client.h"
+#include "dm_ui_api.h"
 #include "dm_log.h"
 #include "json_object.h"
 #include "multiple_user_connector.h"
@@ -69,13 +70,21 @@ void AuthUiStateManager::UpdateUiState(const DmUiStateMsg msg)
         LOGW("pkgSet_ is empty");
         if (msg == MSG_CANCEL_CONFIRM_SHOW || msg == MSG_CANCEL_PIN_CODE_INPUT || msg == MSG_CANCEL_PIN_CODE_SHOW) {
             LOGW("cancel confirm or input pin code dialog");
-            DmDialogManager::GetInstance().CloseDialog();
+            DmDialogClient::GetInstance().CloseDialog();
             return;
         }
         return;
     }
     for (auto item : pkgSet_) {
         listener_->OnUiCall(item, paramJson);
+    }
+    if (msg == MSG_CANCEL_CONFIRM_SHOW) {
+        // Preserve the UI notification above and release only the matching native session.
+        DmDialogClient::GetInstance().ReleaseSession(DM_UI_CONFIRM);
+    } else if (msg == MSG_CANCEL_PIN_CODE_SHOW) {
+        DmDialogClient::GetInstance().ReleaseSession(DM_UI_PIN);
+    } else if (msg == MSG_CANCEL_PIN_CODE_INPUT) {
+        DmDialogClient::GetInstance().ReleaseSession(DM_UI_INPUT);
     }
     LOGI("complete.");
 }

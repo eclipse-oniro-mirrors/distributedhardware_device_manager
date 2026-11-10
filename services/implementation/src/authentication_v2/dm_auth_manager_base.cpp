@@ -19,6 +19,7 @@
 #include "dm_constants.h"
 #include "dm_error_type.h"
 #include "dm_auth_manager_base.h"
+#include "dm_ui_constants.h"
 #include "power_mini_sdk.h"
 #include "mini_sdk_constants.h"
 #include "mini_sdk_loader.h"
@@ -55,7 +56,7 @@ const char* TAG_ISONLINE = "isOnline";
 const char* TAG_AUTHED = "authed";
 const char* TAG_LOCAL_ACCOUNTID = "localAccountId";
 const char* TAG_TOKENID = "tokenId";
-const char* TAG_HOST_PKGLABEL = "hostPkgLabel";
+const char* TAG_HOST_PKGLABEL = DmUiConstants::TAG_HOST_PKGLABEL;
 const char* TAG_REMOTE_DEVICE_NAME = "REMOTE_DEVICE_NAME";
 const char* TAG_HOST = "HOST";
 const char* TAG_PROXY_CONTEXT_ID = "proxyContextId";

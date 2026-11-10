@@ -362,7 +362,6 @@ private:
     std::shared_ptr<HiChainAuthConnector> hiChainAuthConnector_;
     std::shared_ptr<DmDeviceStateManager> deviceStateMgr_;
     std::shared_ptr<SoftbusConnector> softbusConnector_;
-    std::shared_ptr<DmAbilityManager> abilityMgr_;
     std::shared_ptr<MineHiChainConnector> mineHiChainConnector_;
     std::shared_ptr<DmCredentialManager> credentialMgr_;
     std::shared_ptr<DmCommonEventManager> commonEventManager_;
