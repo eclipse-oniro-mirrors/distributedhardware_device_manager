@@ -2577,7 +2577,7 @@ ON_IPC_READ_RESPONSE(SYNC_SERVICE_INFO_RESULT, MessageParcel &reply, std::shared
 ON_IPC_CMD(GET_LOCAL_SERVICEINFO_BY_SERVICEID, MessageParcel &data, MessageParcel &reply)
 {
     int64_t serviceId = data.ReadInt64();
-    LOGI("GET_LOCAL_SERVICEINFO_BY_SERVICEID, serviceId: %{public}" PRId64, serviceId);
+    LOGI("GET_LOCAL_SERVICEINFO_BY_SERVICEID, serviceId: %{public}s", std::to_string(serviceId).c_str());
  
     DmRegisterServiceInfo serviceInfo;
     int32_t result = DeviceManagerService::GetInstance().GetLocalServiceInfoByServiceId(serviceId, serviceInfo);

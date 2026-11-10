@@ -294,7 +294,7 @@ static void PutServiceInfos(const std::shared_ptr<DmAuthContext> context)
         LOGI("servicecode:%{public}s", item.GetServiceCode().c_str());
         int32_t ret = DeviceProfileConnector::GetInstance().PutServiceInfo(item);
         if (ret != DM_OK) {
-            LOGE("Put service info failed, service id:%{public}" PRId64, item.GetServiceId());
+            LOGE("Put service info failed, service id:%{public}s", std::to_string(item.GetServiceId()).c_str());
         }
     }
 }

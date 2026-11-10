@@ -6328,8 +6328,8 @@ int32_t DeviceManagerService::StartPublishService(const std::string &pkgName, in
 
 int32_t DeviceManagerService::StopPublishService(const std::string &pkgName, int64_t serviceId)
 {
-    LOGI("start, pkgName: %{public}s, serviceId: %{public}" PRId64,
-        pkgName.c_str(), serviceId);
+    LOGI("start, pkgName: %{public}s, serviceId: %{public}s",
+        pkgName.c_str(), std::to_string(serviceId).c_str());
     if (!PermissionManager::GetInstance().CheckAccessServicePermission()) {
         LOGE("No permission");
         return ERR_DM_NO_PERMISSION;
@@ -6495,7 +6495,7 @@ int32_t DeviceManagerService::SyncAllServiceInfo(const std::string &pkgName, int
 
 int32_t DeviceManagerService::GetLocalServiceInfoByServiceId(int64_t serviceId, DmRegisterServiceInfo &serviceInfo)
 {
-    LOGI("serviceId: %{public}" PRId64, serviceId);
+    LOGI("serviceId: %{public}s", std::to_string(serviceId).c_str());
     if (!PermissionManager::GetInstance().CheckAccessServicePermission()) {
         LOGE("No permission");
         return ERR_DM_NO_PERMISSION;
@@ -6599,7 +6599,7 @@ int32_t DeviceManagerService::UpdateServiceInfo(int64_t serviceId, const DmRegis
 int32_t DeviceManagerService::GetPeerServiceInfoByServiceId(const std::string &networkId, int64_t serviceId,
     DmRegisterServiceInfo &serviceInfo)
 {
-    LOGI("serviceId: %{public}" PRId64, serviceId);
+    LOGI("serviceId: %{public}s", std::to_string(serviceId).c_str());
     if (CheckConstraintEnabledByNetworkId(networkId)) {
         LOGI("contraint enable is true");
         return DM_OK;

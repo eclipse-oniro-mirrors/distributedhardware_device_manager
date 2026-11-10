@@ -3555,8 +3555,8 @@ int32_t DeviceManagerServiceImpl::UnbindServiceTarget(const std::string &pkgName
     int64_t tokenIdCaller = IPCSkeleton::GetCallingTokenID();
     std::string peerDeviceId = "";
     int32_t bindLevel = -1;
-    LOGI("start pkgName:%{public}s, serviceId:%{public}" PRId64 ", tokenId:%{public}" PRId64,
-         pkgName.c_str(), serviceId, tokenIdCaller);
+    LOGI("start pkgName:%{public}s, serviceId:%{public}s, tokenId:%{public}" PRId64,
+         pkgName.c_str(), std::to_string(serviceId).c_str(), tokenIdCaller);
     int32_t ret = DeleteAclExtraDataServiceId(serviceId, tokenIdCaller, peerDeviceId, bindLevel);
     if (ret != DM_OK) {
         LOGE("DeleteAclExtraDataServiceId failed.");
@@ -3597,7 +3597,8 @@ int32_t DeviceManagerServiceImpl::DeleteAclExtraDataServiceId(int64_t serviceId,
         if (IsInt64(json, TAG_SERVICE_ID)) {
             int64_t aclServiceId = json[TAG_SERVICE_ID].Get<int64_t>();
             if (aclServiceId != serviceId) {
-                LOGW("aclServiceId(%{public}" PRId64 ") != serviceId(%{public}" PRId64 ").", aclServiceId, serviceId);
+                LOGW("aclServiceId(%{public}s) != serviceId(%{public}s).",
+                    std::to_string(aclServiceId).c_str(), std::to_string(serviceId).c_str());
                 continue;
             }
         }
