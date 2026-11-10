@@ -59,13 +59,11 @@ struct UiState {
     uint32_t currentOperation = DM_UI_CLOSE;
     std::deque<UiRequest> pending;
 };
-UiState &State()
+UiState *State()
 {
-    // Keep the host state object in static storage for late IPC callbacks.
-    // Placement construction avoids registering a static exit destructor.
-    alignas(UiState) static unsigned char stateStorage[sizeof(UiState)];
-    static UiState *state = new (stateStorage) UiState;
-    return *state;
+    // The callback bridge outlives IPC references; only module contexts are transient.
+    static auto state = new (std::nothrow) UiState;
+    return state;
 }
 void ReleaseCall();
 void TryFinishSession();
@@ -107,7 +105,12 @@ void CancelPending(UiState &state, uint32_t operation)
 
 int32_t SubmitSessionWork(uint64_t generation, void (*work)(void *), void *context)
 {
-    auto &state = State();
+    auto *statePtr = State();
+    if (statePtr == nullptr) {
+        LOGE("UI host state is unavailable");
+        return -1;
+    }
+    auto &state = *statePtr;
     uint64_t epoch;
     {
         std::lock_guard<std::mutex> lock(state.mutex);
@@ -124,7 +127,12 @@ int32_t SubmitSessionWork(uint64_t generation, void (*work)(void *), void *conte
     ffrt::submit(
         [generation, epoch, work, context]() {
             UiCallGuard call;
-            auto &state = State();
+            auto *statePtr = State();
+            if (statePtr == nullptr) {
+                LOGE("UI host state is unavailable");
+                return;
+            }
+            auto &state = *statePtr;
             {
                 std::lock_guard<std::mutex> lock(state.mutex);
                 if (work == nullptr || context == nullptr || generation != state.generation ||
@@ -142,7 +150,12 @@ int32_t SubmitSessionWork(uint64_t generation, void (*work)(void *), void *conte
 
 void RequestRecovery(uint64_t generation)
 {
-    auto &state = State();
+    auto *statePtr = State();
+    if (statePtr == nullptr) {
+        LOGE("UI host state is unavailable");
+        return;
+    }
+    auto &state = *statePtr;
     {
         std::lock_guard<std::mutex> lock(state.mutex);
         if (state.residentMode || state.context == nullptr || !state.closing || state.retired ||
@@ -180,7 +193,12 @@ private:
 
 void RequestRetirement(uint64_t generation)
 {
-    auto &state = State();
+    auto *statePtr = State();
+    if (statePtr == nullptr) {
+        LOGE("UI host state is unavailable");
+        return;
+    }
+    auto &state = *statePtr;
     std::lock_guard<std::mutex> lock(state.mutex);
     if (state.context != nullptr && state.generation == generation) {
         state.retired = true;
@@ -218,7 +236,12 @@ void LoadUiModule(void *&handle, const DmUiSessionApi *&api, const DmUiApi *&res
 // Called with the host lock held; dlopen, module creation and destruction execute without it.
 bool EnsureContext(std::unique_lock<std::mutex> &lock)
 {
-    auto &state = State();
+    auto *statePtr = State();
+    if (statePtr == nullptr) {
+        LOGE("UI host state is unavailable");
+        return false;
+    }
+    auto &state = *statePtr;
     state.changed.wait(lock, [&state] { return !state.transitioning; });
     if (state.context != nullptr) {
         return true;
@@ -265,7 +288,12 @@ bool EnsureContext(std::unique_lock<std::mutex> &lock)
 
 void ReleaseCall()
 {
-    auto &state = State();
+    auto *statePtr = State();
+    if (statePtr == nullptr) {
+        LOGE("UI host state is unavailable");
+        return;
+    }
+    auto &state = *statePtr;
     {
         std::lock_guard<std::mutex> lock(state.mutex);
         --state.active;
@@ -275,7 +303,12 @@ void ReleaseCall()
 
 void TryFinishSession()
 {
-    auto &state = State();
+    auto *statePtr = State();
+    if (statePtr == nullptr) {
+        LOGE("UI host state is unavailable");
+        return;
+    }
+    auto &state = *statePtr;
     std::unique_lock<std::mutex> lock(state.mutex);
     if (state.active != 0 || state.transitioning || state.residentMode) {
         return;
@@ -329,7 +362,12 @@ void TryFinishSession()
 
 void DeliverConnection(uint64_t generation, IRemoteObject *remote, int32_t result, bool connected)
 {
-    auto &state = State();
+    auto *statePtr = State();
+    if (statePtr == nullptr) {
+        LOGE("UI host state is unavailable");
+        return;
+    }
+    auto &state = *statePtr;
     std::unique_lock<std::mutex> lock(state.mutex);
     if (state.transitioning || state.context == nullptr || !ValidApi(state.api) ||
         generation != state.generation || state.retired) {
@@ -353,7 +391,12 @@ void DeliverConnection(uint64_t generation, IRemoteObject *remote, int32_t resul
 // The caller holds the host lock; each helper releases it only after acquiring a call lease.
 int32_t InvokeResidentRequest(std::unique_lock<std::mutex> &lock, uint32_t operation, const char *data, size_t size)
 {
-    auto &state = State();
+    auto *statePtr = State();
+    if (statePtr == nullptr) {
+        LOGE("UI host state is unavailable");
+        return -1;
+    }
+    auto &state = *statePtr;
     if (!ValidResidentApi(state.residentApi)) {
         LOGE("UI resident interface unavailable");
         return -1;
@@ -373,7 +416,12 @@ int32_t InvokeSessionRequest(std::unique_lock<std::mutex> &lock, uint32_t operat
     if (!EnsureContext(lock)) {
         return -1;
     }
-    auto &state = State();
+    auto *statePtr = State();
+    if (statePtr == nullptr) {
+        LOGE("UI host state is unavailable");
+        return -1;
+    }
+    auto &state = *statePtr;
     if (!ValidApi(state.api) || state.context == nullptr) {
         LOGE("UI session interface unavailable");
         return -1;
@@ -406,7 +454,12 @@ int32_t InvokeUiRequest(uint32_t operation, const char *data, size_t size, bool 
     if (operation > DM_UI_CLOSE || (data == nullptr && size != 0)) {
         return -1;
     }
-    auto &state = State();
+    auto *statePtr = State();
+    if (statePtr == nullptr) {
+        LOGE("UI host state is unavailable");
+        return -1;
+    }
+    auto &state = *statePtr;
     std::lock_guard<std::recursive_mutex> dispatch(state.dispatchMutex);
     std::unique_lock<std::mutex> lock(state.mutex);
     state.changed.wait(lock, [&state] { return !state.transitioning; });
@@ -452,7 +505,12 @@ void DmDialogClient::ReleaseSession(uint32_t operation)
     if (operation >= DM_UI_CLOSE) {
         return;
     }
-    auto &state = State();
+    auto *statePtr = State();
+    if (statePtr == nullptr) {
+        LOGE("UI host state is unavailable");
+        return;
+    }
+    auto &state = *statePtr;
     std::lock_guard<std::recursive_mutex> dispatch(state.dispatchMutex);
     std::unique_lock<std::mutex> lock(state.mutex);
     state.changed.wait(lock, [&state] { return !state.transitioning; });
@@ -497,7 +555,12 @@ void DmDialogClient::ReleaseSession(uint32_t operation)
 // Only the UT target defines this macro; no reset entry is emitted in product builds.
 bool ResetUiStateForTest()
 {
-    auto &state = State();
+    auto *statePtr = State();
+    if (statePtr == nullptr) {
+        LOGE("UI host state is unavailable");
+        return false;
+    }
+    auto &state = *statePtr;
     std::lock_guard<std::mutex> lock(state.mutex);
     if (state.active != 0 || state.transitioning) {
         return false;
