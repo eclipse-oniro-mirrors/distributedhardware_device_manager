@@ -92,9 +92,7 @@ HWTEST_F(IpcClientManagerTest, OnRemoteDied_001, testing::ext::TestSize.Level0)
 HWTEST_F(IpcClientManagerTest, ClientInit_001, testing::ext::TestSize.Level0)
 {
     // 1. new a dmInterface
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    auto object = samgr->CheckSystemAbility(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
-    sptr<IpcRemoteBroker> dmInterface = iface_cast<IpcRemoteBroker>(object);
+    sptr<IpcRemoteBroker> dmInterface = sptr<IpcClientStub>(new IpcClientStub());
     // 2. set IpcClientManager dmInterface_ not null
     std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
     instance->dmInterface_ = dmInterface;
@@ -688,9 +686,7 @@ HWTEST_F(IpcClientManagerTest, OnDmServiceDied_002, testing::ext::TestSize.Level
 HWTEST_F(IpcClientManagerTest, OnDmServiceDied_003, testing::ext::TestSize.Level0)
 {
     // 1. set IpcClientManager dmInterface_null
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    auto object = samgr->CheckSystemAbility(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
-    sptr<IpcRemoteBroker> dmInterface = iface_cast<IpcRemoteBroker>(object);
+    sptr<IpcRemoteBroker> dmInterface = sptr<IpcClientStub>(new IpcClientStub());
     std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
     instance->dmInterface_ = dmInterface;
     instance->dmRecipient_ = sptr<DmDeathRecipient>(new DmDeathRecipient());
