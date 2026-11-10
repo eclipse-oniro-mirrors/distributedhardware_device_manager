@@ -31,6 +31,7 @@ namespace OHOS::DistributedHardware {
 bool ResetUiStateForTest();
 }
 
+using namespace testing::ext;
 using namespace OHOS;
 using namespace OHOS::DistributedHardware;
 namespace {
@@ -433,7 +434,7 @@ void VerifyClientReleaseAndPinWork()
 }
 } // namespace
 
-TEST_F(DmUiLifecycle, ReleaseAndReloadWithLateAndConcurrentCallbacks)
+HWTEST_F(DmUiLifecycle, ReleaseAndReloadWithLateAndConcurrentCallbacks001, TestSize.Level1)
 {
     ASSERT_NO_FATAL_FAILURE(VerifyInitializationAndReload());
     ASSERT_NO_FATAL_FAILURE(VerifyShowQueuedDuringClose());
@@ -441,7 +442,7 @@ TEST_F(DmUiLifecycle, ReleaseAndReloadWithLateAndConcurrentCallbacks)
     ASSERT_NO_FATAL_FAILURE(VerifyClientReleaseAndPinWork());
 }
 
-TEST_F(DmUiLifecycle, CloseFailureUsesResidentBackendWithoutDestroyOrUnload)
+HWTEST_F(DmUiLifecycle, CloseFailureUsesResidentBackendWithoutDestroyOrUnload001, TestSize.Level1)
 {
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     g_closeResult = DISCONNECT_ERROR;
@@ -459,7 +460,7 @@ TEST_F(DmUiLifecycle, CloseFailureUsesResidentBackendWithoutDestroyOrUnload)
     EXPECT_EQ(g_opens.load(), 1);
 }
 
-TEST_F(DmUiLifecycle, MissingDisconnectCallbackReplaysPendingOnTimeout)
+HWTEST_F(DmUiLifecycle, MissingDisconnectCallbackReplaysPendingOnTimeout001, TestSize.Level1)
 {
     g_deferClose = true;
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
@@ -472,7 +473,7 @@ TEST_F(DmUiLifecycle, MissingDisconnectCallbackReplaysPendingOnTimeout)
     EXPECT_EQ(g_destroys.load(), 0);
 }
 
-TEST_F(DmUiLifecycle, FailedDisconnectCallbackRecoversImmediately)
+HWTEST_F(DmUiLifecycle, FailedDisconnectCallbackRecoversImmediately001, TestSize.Level1)
 {
     g_disconnectResult = DISCONNECT_ERROR;
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
@@ -483,7 +484,7 @@ TEST_F(DmUiLifecycle, FailedDisconnectCallbackRecoversImmediately)
     EXPECT_EQ(g_destroys.load(), 0);
 }
 
-TEST_F(DmUiLifecycle, StaleWatchdogCannotRecoverNewGeneration)
+HWTEST_F(DmUiLifecycle, StaleWatchdogCannotRecoverNewGeneration001, TestSize.Level1)
 {
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     EXPECT_EQ(InvokeDmUi(DM_UI_CLOSE, nullptr, 0), 0);
@@ -513,7 +514,7 @@ TEST_F(DmUiLifecycle, StaleWatchdogCannotRecoverNewGeneration)
     EXPECT_EQ(g_closes.load(), THREE_SESSIONS);
 }
 
-TEST_F(DmUiLifecycle, RepeatedCloseCancelsDeferredDisplay)
+HWTEST_F(DmUiLifecycle, RepeatedCloseCancelsDeferredDisplay001, TestSize.Level1)
 {
     g_deferClose = true;
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
@@ -526,7 +527,7 @@ TEST_F(DmUiLifecycle, RepeatedCloseCancelsDeferredDisplay)
     EXPECT_EQ(g_residentCalls.load(), 1);
 }
 
-TEST_F(DmUiLifecycle, QueueCapacityIsBoundedAndRecoveryDrainsIt)
+HWTEST_F(DmUiLifecycle, QueueCapacityIsBoundedAndRecoveryDrainsIt001, TestSize.Level1)
 {
     g_deferClose = true;
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
@@ -540,7 +541,7 @@ TEST_F(DmUiLifecycle, QueueCapacityIsBoundedAndRecoveryDrainsIt)
     EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
 }
 
-TEST_F(DmUiLifecycle, RecoveryWaitsForExecutingModuleCall)
+HWTEST_F(DmUiLifecycle, RecoveryWaitsForExecutingModuleCall001, TestSize.Level1)
 {
     g_deferClose = true;
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
@@ -574,7 +575,7 @@ TEST_F(DmUiLifecycle, RecoveryWaitsForExecutingModuleCall)
     EXPECT_EQ(g_destroys.load(), 0);
 }
 
-TEST_F(DmUiLifecycle, LateCallbackCannotUnloadResidentBackend)
+HWTEST_F(DmUiLifecycle, LateCallbackCannotUnloadResidentBackend001, TestSize.Level1)
 {
     g_deferClose = true;
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
@@ -597,7 +598,7 @@ TEST_F(DmUiLifecycle, LateCallbackCannotUnloadResidentBackend)
     EXPECT_EQ(g_residentCalls.load(), callsBeforeInvalid);
 }
 
-TEST_F(DmUiLifecycle, RegisteredUiCloseFailureAlsoRecovers)
+HWTEST_F(DmUiLifecycle, RegisteredUiCloseFailureAlsoRecovers001, TestSize.Level1)
 {
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     g_closeResult = DISCONNECT_ERROR;
@@ -607,7 +608,7 @@ TEST_F(DmUiLifecycle, RegisteredUiCloseFailureAlsoRecovers)
     EXPECT_EQ(g_destroys.load(), 0);
 }
 
-TEST_F(DmUiLifecycle, MissingResidentApiAndCreateFailureCanRetry)
+HWTEST_F(DmUiLifecycle, MissingResidentApiAndCreateFailureCanRetry001, TestSize.Level1)
 {
     g_failResidentApi = true;
     EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
@@ -620,7 +621,7 @@ TEST_F(DmUiLifecycle, MissingResidentApiAndCreateFailureCanRetry)
     EXPECT_EQ(g_destroys.load(), 1);
 }
 
-TEST_F(DmUiLifecycle, MissingUnloadCapabilityIsRejectedAndCanRetry)
+HWTEST_F(DmUiLifecycle, MissingUnloadCapabilityIsRejectedAndCanRetry001, TestSize.Level1)
 {
     g_sessionFlags = 0;
     EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
@@ -684,7 +685,7 @@ void VerifySuccessfulDisconnectBeforeDrain(bool acknowledgeBeforeTimeout)
     running.join();
 }
 
-TEST_F(DmUiLifecycle, TargetTerminationReleasesWithoutExplicitClose)
+HWTEST_F(DmUiLifecycle, TargetTerminationReleasesWithoutExplicitClose001, TestSize.Level1)
 {
     EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
     ASSERT_FALSE(g_connections.empty());
@@ -703,7 +704,7 @@ TEST_F(DmUiLifecycle, TargetTerminationReleasesWithoutExplicitClose)
 
 } // namespace
 
-TEST_F(DmUiLifecycle, SuccessfulDisconnectBeforeTimeoutKeepsReleasePath)
+HWTEST_F(DmUiLifecycle, SuccessfulDisconnectBeforeTimeoutKeepsReleasePath001, TestSize.Level1)
 {
     ASSERT_NO_FATAL_FAILURE(VerifySuccessfulDisconnectBeforeDrain(true));
     EXPECT_EQ(g_destroys.load(), 1);
@@ -715,7 +716,7 @@ TEST_F(DmUiLifecycle, SuccessfulDisconnectBeforeTimeoutKeepsReleasePath)
     EXPECT_EQ(g_closes.load(), TWO_SESSIONS);
 }
 
-TEST_F(DmUiLifecycle, SuccessfulDisconnectCancelsRecoveryBeforeLastCallReturns)
+HWTEST_F(DmUiLifecycle, SuccessfulDisconnectCancelsRecoveryBeforeLastCallReturns001, TestSize.Level1)
 {
     ASSERT_NO_FATAL_FAILURE(VerifySuccessfulDisconnectBeforeDrain(false));
     EXPECT_EQ(g_destroys.load(), 1);
@@ -727,7 +728,7 @@ TEST_F(DmUiLifecycle, SuccessfulDisconnectCancelsRecoveryBeforeLastCallReturns)
     EXPECT_EQ(g_closes.load(), TWO_SESSIONS);
 }
 
-TEST_F(DmUiLifecycle, CloseDuringReplayCancelsRemainingRequests)
+HWTEST_F(DmUiLifecycle, CloseDuringReplayCancelsRemainingRequests001, TestSize.Level1)
 {
     g_deferClose = true;
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
@@ -746,7 +747,7 @@ TEST_F(DmUiLifecycle, CloseDuringReplayCancelsRemainingRequests)
     EXPECT_EQ(g_closes.load(), 0);
 }
 
-TEST_F(DmUiLifecycle, AllDialogTypesReleaseAndReload)
+HWTEST_F(DmUiLifecycle, AllDialogTypesReleaseAndReload001, TestSize.Level1)
 {
     constexpr uint32_t operations[] = { DM_UI_CONFIRM, DM_UI_SERVICE_CONFIRM, DM_UI_PIN, DM_UI_INPUT };
     int expected = 0;
@@ -760,7 +761,7 @@ TEST_F(DmUiLifecycle, AllDialogTypesReleaseAndReload)
     EXPECT_EQ(g_workCalls.load(), 1);
 }
 
-TEST_F(DmUiLifecycle, QueuedPinWorkKeepsLeaseUntilCancelledTaskReturns)
+HWTEST_F(DmUiLifecycle, QueuedPinWorkKeepsLeaseUntilCancelledTaskReturns001, TestSize.Level1)
 {
     ASSERT_EQ(InvokeDmUi(DM_UI_PIN, TEST_PIN, TEST_PIN_SIZE), 0);
     EXPECT_EQ(g_workCalls.load(), 0);
@@ -773,7 +774,7 @@ TEST_F(DmUiLifecycle, QueuedPinWorkKeepsLeaseUntilCancelledTaskReturns)
     EXPECT_EQ(g_closes.load(), 1);
 }
 
-TEST_F(DmUiLifecycle, ExecutingPinWorkPreventsUnload)
+HWTEST_F(DmUiLifecycle, ExecutingPinWorkPreventsUnload001, TestSize.Level1)
 {
     g_blockWork = true;
     ASSERT_EQ(InvokeDmUi(DM_UI_PIN, TEST_PIN, TEST_PIN_SIZE), 0);
@@ -798,7 +799,7 @@ TEST_F(DmUiLifecycle, ExecutingPinWorkPreventsUnload)
     EXPECT_EQ(g_residentCalls.load(), 0);
 }
 
-TEST_F(DmUiLifecycle, DifferentDialogCancellationCannotCloseCurrentDialog)
+HWTEST_F(DmUiLifecycle, DifferentDialogCancellationCannotCloseCurrentDialog001, TestSize.Level1)
 {
     ASSERT_EQ(InvokeDmUi(DM_UI_INPUT, TEST_PAYLOAD, TEST_PAYLOAD_SIZE), 0);
     int dispatched = g_calls.load();
@@ -813,7 +814,7 @@ TEST_F(DmUiLifecycle, DifferentDialogCancellationCannotCloseCurrentDialog)
     EXPECT_EQ(g_closes.load(), TWO_SESSIONS);
 }
 
-TEST_F(DmUiLifecycle, TypedCancelPreservesOtherQueuedDialogs)
+HWTEST_F(DmUiLifecycle, TypedCancelPreservesOtherQueuedDialogs001, TestSize.Level1)
 {
     g_deferClose = true;
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
@@ -834,7 +835,7 @@ TEST_F(DmUiLifecycle, TypedCancelPreservesOtherQueuedDialogs)
     EXPECT_EQ(g_closes.load(), TWO_SESSIONS);
 }
 
-TEST_F(DmUiLifecycle, SupersededPinWorkDoesNotConnectAfterInput)
+HWTEST_F(DmUiLifecycle, SupersededPinWorkDoesNotConnectAfterInput001, TestSize.Level1)
 {
     ASSERT_EQ(InvokeDmUi(DM_UI_PIN, TEST_PIN, TEST_PIN_SIZE), 0);
     ASSERT_EQ(InvokeDmUi(DM_UI_INPUT, TEST_PAYLOAD, TEST_PAYLOAD_SIZE), 0);
@@ -846,7 +847,7 @@ TEST_F(DmUiLifecycle, SupersededPinWorkDoesNotConnectAfterInput)
     EXPECT_EQ(g_closes.load(), 1);
 }
 
-TEST_F(DmUiLifecycle, PinWorkDrainsBeforeFailureRecovery)
+HWTEST_F(DmUiLifecycle, PinWorkDrainsBeforeFailureRecovery001, TestSize.Level1)
 {
     ASSERT_EQ(InvokeDmUi(DM_UI_PIN, TEST_PIN, TEST_PIN_SIZE), 0);
     g_closeResult = DISCONNECT_ERROR;
@@ -865,7 +866,7 @@ TEST_F(DmUiLifecycle, PinWorkDrainsBeforeFailureRecovery)
     EXPECT_EQ(g_lastResidentOperation.load(), DM_UI_CLOSE);
 }
 
-TEST_F(DmUiLifecycle, MissingV2SymbolAndOldApiVersionAreRejected)
+HWTEST_F(DmUiLifecycle, MissingV2SymbolAndOldApiVersionAreRejected001, TestSize.Level1)
 {
     g_failSessionSymbol = true;
     EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), -1);
@@ -884,7 +885,7 @@ TEST_F(DmUiLifecycle, MissingV2SymbolAndOldApiVersionAreRejected)
 // @tc.name: RepeatedGlobalClose001
 // @tc.desc: Repeated closes cancel queued displays without disconnecting twice.
 // @tc.type: FUNC
-TEST_F(DmUiLifecycle, RepeatedGlobalClose001)
+HWTEST_F(DmUiLifecycle, RepeatedGlobalClose001, TestSize.Level1)
 {
     g_deferClose = true;
     ASSERT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0);
@@ -911,7 +912,7 @@ TEST_F(DmUiLifecycle, RepeatedGlobalClose001)
 // @tc.name: ConcurrentShowCancellation001
 // @tc.desc: Typed cancellation follows actual serialized display order.
 // @tc.type: FUNC
-TEST_F(DmUiLifecycle, ConcurrentShowCancellation001)
+HWTEST_F(DmUiLifecycle, ConcurrentShowCancellation001, TestSize.Level1)
 {
     g_blockShow = true;
     std::thread first([] { EXPECT_EQ(InvokeDmUi(DM_UI_CONFIRM, EMPTY_JSON, EMPTY_JSON_SIZE), 0); });
@@ -948,7 +949,7 @@ TEST_F(DmUiLifecycle, ConcurrentShowCancellation001)
 // @tc.name: MissingFunctionPointers001
 // @tc.desc: Incomplete function tables must never be dereferenced.
 // @tc.type: FUNC
-TEST_F(DmUiLifecycle, MissingFunctionPointers001)
+HWTEST_F(DmUiLifecycle, MissingFunctionPointers001, TestSize.Level1)
 {
     const DmUiSessionApi saved = g_api;
     g_api.create = nullptr;

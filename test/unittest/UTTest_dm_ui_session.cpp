@@ -34,6 +34,7 @@ sptr<ISystemAbilityManager> SystemAbilityManagerClient::GetSystemAbilityManager(
 }
 } // namespace OHOS
 
+using namespace testing::ext;
 using namespace OHOS;
 using namespace OHOS::DistributedHardware;
 using namespace testing;
@@ -163,7 +164,7 @@ protected:
 // @tc.name: NullArguments001
 // @tc.desc: Private module boundaries reject null contexts and invalid host callbacks.
 // @tc.type: FUNC
-TEST_F(DmUiSession, NullArguments001)
+HWTEST_F(DmUiSession, NullArguments001, TestSize.Level1)
 {
     EXPECT_EQ(api_->create(nullptr, connection_.GetRefPtr()), nullptr);
     EXPECT_EQ(api_->create(&host_, nullptr), nullptr);
@@ -184,7 +185,7 @@ TEST_F(DmUiSession, NullArguments001)
 // @tc.name: CloseBeforeConnect001
 // @tc.desc: A close during connection waits for completion and disconnects only once.
 // @tc.type: FUNC
-TEST_F(DmUiSession, CloseBeforeConnect001)
+HWTEST_F(DmUiSession, CloseBeforeConnect001, TestSize.Level1)
 {
     ASSERT_EQ(api_->invoke(context_, DM_UI_CONFIRM, PARAMS, PARAMS_SIZE), 0);
     ASSERT_EQ(ability_->connects.load(), 1);
@@ -203,7 +204,7 @@ TEST_F(DmUiSession, CloseBeforeConnect001)
 // @tc.name: RepeatedShowDuringConnect001
 // @tc.desc: Pending shows reuse one connection request.
 // @tc.type: FUNC
-TEST_F(DmUiSession, RepeatedShowDuringConnect001)
+HWTEST_F(DmUiSession, RepeatedShowDuringConnect001, TestSize.Level1)
 {
     ASSERT_EQ(api_->invoke(context_, DM_UI_CONFIRM, PARAMS, PARAMS_SIZE), 0);
     ASSERT_EQ(api_->invoke(context_, DM_UI_INPUT, PARAMS, PARAMS_SIZE), 0);
@@ -219,7 +220,7 @@ TEST_F(DmUiSession, RepeatedShowDuringConnect001)
 // @tc.name: ConcurrentClose001
 // @tc.desc: Concurrent module closes cannot issue two disconnect requests.
 // @tc.type: FUNC
-TEST_F(DmUiSession, ConcurrentClose001)
+HWTEST_F(DmUiSession, ConcurrentClose001, TestSize.Level1)
 {
     ASSERT_EQ(api_->invoke(context_, DM_UI_CONFIRM, PARAMS, PARAMS_SIZE), 0);
     api_->connected(context_, static_cast<IRemoteObject *>(dialog_.GetRefPtr()), 0);
@@ -235,7 +236,7 @@ TEST_F(DmUiSession, ConcurrentClose001)
 // @tc.name: DisconnectFailureCanRetry001
 // @tc.desc: A failed disconnect must not be treated as successful retirement.
 // @tc.type: FUNC
-TEST_F(DmUiSession, DisconnectFailureCanRetry001)
+HWTEST_F(DmUiSession, DisconnectFailureCanRetry001, TestSize.Level1)
 {
     ASSERT_EQ(api_->invoke(context_, DM_UI_CONFIRM, PARAMS, PARAMS_SIZE), 0);
     api_->connected(context_, static_cast<IRemoteObject *>(dialog_.GetRefPtr()), 0);
@@ -253,7 +254,7 @@ TEST_F(DmUiSession, DisconnectFailureCanRetry001)
 // @tc.name: RetiredSessionCannotReconnect001
 // @tc.desc: A disconnect completion is terminal even before host destruction.
 // @tc.type: FUNC
-TEST_F(DmUiSession, RetiredSessionCannotReconnect001)
+HWTEST_F(DmUiSession, RetiredSessionCannotReconnect001, TestSize.Level1)
 {
     ASSERT_EQ(api_->invoke(context_, DM_UI_CONFIRM, PARAMS, PARAMS_SIZE), 0);
     api_->connected(context_, static_cast<IRemoteObject *>(dialog_.GetRefPtr()), 0);
@@ -267,7 +268,7 @@ TEST_F(DmUiSession, RetiredSessionCannotReconnect001)
 // @tc.name: AllFourDialogs001
 // @tc.desc: Each real module display uses one connection and retires after closure.
 // @tc.type: FUNC
-TEST_F(DmUiSession, AllFourDialogs001)
+HWTEST_F(DmUiSession, AllFourDialogs001, TestSize.Level1)
 {
     constexpr uint32_t operations[] = { DM_UI_CONFIRM, DM_UI_SERVICE_CONFIRM, DM_UI_PIN, DM_UI_INPUT };
     int expected = 0;
