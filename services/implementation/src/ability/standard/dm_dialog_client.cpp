@@ -103,6 +103,26 @@ void CancelPending(UiState &state, uint32_t operation)
         state.pending.end());
 }
 
+void RunSessionWork(uint64_t generation, uint64_t epoch, void (*work)(void *), void *context)
+{
+    UiCallGuard call;
+    auto *statePtr = State();
+    if (statePtr == nullptr) {
+        LOGE("UI host state is unavailable");
+        return;
+    }
+    auto &state = *statePtr;
+    {
+        std::lock_guard<std::mutex> lock(state.mutex);
+        if (work == nullptr || context == nullptr || generation != state.generation || context != state.context ||
+            state.closing || state.retired || state.residentMode || state.currentOperation != DM_UI_PIN ||
+            epoch != state.cancelEpoch[DM_UI_PIN]) {
+            return;
+        }
+    }
+    work(context);
+}
+
 int32_t SubmitSessionWork(uint64_t generation, void (*work)(void *), void *context)
 {
     auto *statePtr = State();
@@ -124,27 +144,8 @@ int32_t SubmitSessionWork(uint64_t generation, void (*work)(void *), void *conte
     }
     // Both the task body and its destructor stay in the resident host. A module
     // function pointer is called only while this queued/running lease is held.
-    ffrt::submit(
-        [generation, epoch, work, context]() {
-            UiCallGuard call;
-            auto *statePtr = State();
-            if (statePtr == nullptr) {
-                LOGE("UI host state is unavailable");
-                return;
-            }
-            auto &state = *statePtr;
-            {
-                std::lock_guard<std::mutex> lock(state.mutex);
-                if (work == nullptr || context == nullptr || generation != state.generation ||
-                    context != state.context || state.closing || state.retired ||
-                    state.residentMode || state.currentOperation != DM_UI_PIN ||
-                    epoch != state.cancelEpoch[DM_UI_PIN]) {
-                    return;
-                }
-            }
-            work(context);
-        },
-        ffrt::task_attr().name("DmUiSessionWork"));
+    ffrt::submit([generation, epoch, work, context]() { RunSessionWork(generation, epoch, work, context); },
+                 ffrt::task_attr().name("DmUiSessionWork"));
     return 0;
 }
 
@@ -301,6 +302,17 @@ void ReleaseCall()
     TryFinishSession();
 }
 
+void ReplayPendingUiRequests(const std::deque<UiRequest> &requests)
+{
+    for (const auto &request : requests) {
+        int32_t result =
+            InvokeUiRequest(request.operation, request.data.data(), request.data.size(), true, request.cancelEpoch);
+        if (result != 0) {
+            LOGE("Deferred UI operation %{public}u failed: %{public}d", request.operation, result);
+        }
+    }
+}
+
 void TryFinishSession()
 {
     auto *statePtr = State();
@@ -351,13 +363,7 @@ void TryFinishSession()
     requests.swap(state.pending);
     state.changed.notify_all();
     lock.unlock();
-    for (const auto &request : requests) {
-        int32_t result =
-            InvokeUiRequest(request.operation, request.data.data(), request.data.size(), true, request.cancelEpoch);
-        if (result != 0) {
-            LOGE("Deferred UI operation %{public}u failed: %{public}d", request.operation, result);
-        }
-    }
+    ReplayPendingUiRequests(requests);
 }
 
 void DeliverConnection(uint64_t generation, IRemoteObject *remote, int32_t result, bool connected)
