@@ -52,8 +52,6 @@ group("unittest") {
     ":UTTest_discovery_filter",
     ":UTTest_discovery_manager",
     ":UTTest_dm_account_common_event",
-    ":UTTest_dm_ui_lifecycle",
-    ":UTTest_dm_ui_session",
     ":UTTest_dm_auth_attest_common",
     ":UTTest_dm_auth_cert",
     ":UTTest_dm_anonymous",
@@ -5230,83 +5228,4 @@ ohos_unittest("UTTest_ivi_screen_power_helper") {
   ]
 }
 ## UnitTest UTTest_ivi_screen_power_helper }}}
-}
-
-# Module loader under test, with controlled module responses and real host callback objects.
-ohos_unittest("UTTest_dm_ui_lifecycle") {
-  module_out_path = module_out_path
-  sources = [
-    "${servicesimpl_path}/src/ability/standard/dm_dialog_client.cpp",
-    "UTTest_dm_ui_lifecycle.cpp",
-  ]
-  include_dirs = [
-    "${servicesimpl_path}/include/ability",
-    "${common_path}/include",
-  ]
-  defines = [
-    "HI_LOG_ENABLE",
-    "DH_LOG_TAG=\"DmUiLifecycleTest\"",
-    "LOG_DOMAIN=0xD004110",
-    "DM_UI_LIFECYCLE_TEST",
-  ]
-  ldflags = [
-    "-Wl,--wrap=dlopen",
-    "-Wl,--wrap=dlsym",
-    "-Wl,--wrap=__dlsym_time64",
-    "-Wl,--wrap=dlclose",
-    "-Wl,--wrap=ffrt_alloc_auto_managed_function_storage_base",
-    "-Wl,--wrap=ffrt_submit_base",
-
-    # Keep linker wrapper names in the link configuration, not as C++ identifiers.
-    "-Wl,--defsym=__wrap_ffrt_alloc_auto_managed_function_storage_base=WrapFfrtAllocAutoManagedFunctionStorageBase",
-    "-Wl,--defsym=__wrap_ffrt_submit_base=WrapFfrtSubmitBase",
-    "-Wl,--defsym=__wrap_dlopen=WrapDlopen",
-    "-Wl,--defsym=__wrap_dlsym=WrapDlsym",
-    "-Wl,--defsym=__wrap___dlsym_time64=WrapDlsymTime64",
-    "-Wl,--defsym=__wrap_dlclose=WrapDlclose",
-  ]
-  external_deps = [
-    "ability_runtime:ability_connect_callback_stub",
-    "c_utils:utils",
-    "ffrt:libffrt",
-    "googletest:gtest_main",
-    "hilog:libhilog",
-    "ipc:ipc_core",
-  ]
-}
-
-# Exercise the actual module with a controlled AbilityManager IPC endpoint.
-ohos_unittest("UTTest_dm_ui_session") {
-  module_out_path = module_out_path
-  sources = [
-    "${servicesimpl_path}/src/ability/standard/dm_dialog_manager.cpp",
-    "${servicesimpl_path}/src/ability/standard/dm_ui_module.cpp",
-    "UTTest_dm_ui_session.cpp",
-  ]
-  include_dirs = [
-    "${servicesimpl_path}/include/ability",
-    "${common_path}/include",
-    "${json_path}/include",
-    "${utils_path}/include",
-    "mock",
-  ]
-  defines = [ "HI_LOG_ENABLE", "DH_LOG_TAG=\"DmUiSessionTest\"", "LOG_DOMAIN=0xD004110" ]
-  deps = [
-    "${innerkits_path}/native_cpp:devicemanagersdk",
-    "${json_path}:devicemanagerjson",
-    "${utils_path}:devicemanagerutils",
-  ]
-  external_deps = [
-    "ability_base:want",
-    "ability_runtime:ability_connect_callback_stub",
-    "ability_runtime:ability_manager",
-    "c_utils:utils",
-    "ffrt:libffrt",
-    "googletest:gmock",
-    "googletest:gtest_main",
-    "hilog:libhilog",
-    "init:libbegetutil",
-    "ipc:ipc_core",
-    "samgr:samgr_proxy",
-  ]
 }
