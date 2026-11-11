@@ -213,7 +213,20 @@ int32_t AuthCredSinkFinishState::Action(std::shared_ptr<DmAuthCredContext> conte
 {
     LOGI("Action start");
     CHECK_NULL_RETURN(context, ERR_DM_POINT_NULL);
-    LOGI("reason: %{public}d", context->reason);
+    LOGI("reason: %{public}d, state: %{public}d", context->reason, context->state);
+    if (context->reason == DM_OK &&
+        context->state == static_cast<int32_t>(DmAuthStateType::CRED_SRC_CREDENTIAL_AUTH_NEGOTIATE_STATE)) {
+        LOGI("reason is DM_OK and prev state is CRED_SRC_CREDENTIAL_AUTH_NEGOTIATE_STATE, "
+             "wait for ON_SESSION_KEY_RETURNED");
+        CHECK_NULL_RETURN(context->authStateMachine, ERR_DM_POINT_NULL);
+        DmEventType event = context->authStateMachine->WaitExpectEvent(
+            DmEventType::ON_SESSION_KEY_RETURNED);
+        if (event != DmEventType::ON_SESSION_KEY_RETURNED) {
+            LOGE("Wait ON_SESSION_KEY_RETURNED ended, event: %{public}d", event);
+        } else {
+            LOGI("ON_SESSION_KEY_RETURNED received");
+        }
+    }
     context->state = static_cast<int32_t>(GetStateType());
     SinkFinish(context);
     LOGI("Action ok");
