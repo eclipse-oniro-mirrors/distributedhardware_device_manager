@@ -17,7 +17,7 @@
 
 #include "dm_log.h"        // for LOGE
 #include "hisysevent.h"    // for HiSysEvent, HiSysEvent::Domain, HiSysEvent...
-#include "unistd.h"        // for getpid, getuid
+#include "unistd.h"        // for getpid, getappuid
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -26,7 +26,7 @@ void SysEventWrite(const std::string &status, int32_t eventType, const std::stri
 {
     HiSysEventParam params[] = {
         {.name = "PID", .t = HISYSEVENT_INT32, .v = { .i32 = getpid() }, .arraySize = 0, },
-        {.name = "UID", .t = HISYSEVENT_INT32, .v = { .i32 = getuid() }, .arraySize = 0, },
+        {.name = "UID", .t = HISYSEVENT_INT32, .v = { .i32 = getappuid() }, .arraySize = 0, },
         {.name = "MSG", .t = HISYSEVENT_STRING, .v = { .s = (char *)msg.c_str() }, .arraySize = 0, },
     };
     size_t len = sizeof(params) / sizeof(params[0]);

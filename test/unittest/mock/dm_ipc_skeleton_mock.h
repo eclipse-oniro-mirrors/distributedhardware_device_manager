@@ -26,7 +26,7 @@ class DMIPCSkeleton {
 public:
     virtual ~DMIPCSkeleton() = default;
 
-    virtual pid_t GetCallingUid() = 0;
+    virtual pid_t GetCallingAppUid() = 0;
     virtual uint32_t GetCallingTokenID() = 0;
 public:
     static inline std::shared_ptr<DMIPCSkeleton> dmIpcSkeleton_ = nullptr;
@@ -34,7 +34,7 @@ public:
 
 class DMIPCSkeletonMock : public DMIPCSkeleton {
 public:
-    MOCK_METHOD(pid_t, GetCallingUid, ());
+    MOCK_METHOD(pid_t, GetCallingAppUid, ());
     MOCK_METHOD(uint32_t, GetCallingTokenID, ());
 };
 } // namespace DistributedHardware

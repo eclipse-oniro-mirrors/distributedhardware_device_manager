@@ -295,7 +295,7 @@ int32_t DeviceManagerServiceImpl3rd::ImportPinCode3rd(const std::string &busines
 
     ProcessInfo3rd processInfo3rd;
     processInfo3rd.tokenId = OHOS::IPCSkeleton::GetCallingTokenID();
-    processInfo3rd.uid = OHOS::IPCSkeleton::GetCallingUid();
+    processInfo3rd.uid = OHOS::IPCSkeleton::GetCallingAppUid();
     processInfo3rd.processName = processName;
     processInfo3rd.businessName = businessName;
     int32_t userId = MultipleUserConnector3rd::GetCurrentAccountUserID();
@@ -325,7 +325,7 @@ bool DeviceManagerServiceImpl3rd::IsInvalidPeerTargetId(const PeerTargetId3rd &t
 
 void DeviceManagerServiceImpl3rd::GetBindCallerInfo(DmAuthCallerInfo3rd &authCallerInfo3rd, ProcessInfo3rd &processInfo)
 {
-    int32_t uid = OHOS::IPCSkeleton::GetCallingUid();
+    int32_t uid = OHOS::IPCSkeleton::GetCallingAppUid();
     int32_t userId = MultipleUserConnector3rd::GetCurrentAccountUserID();
     uint32_t callingTokenId = 0;
     MultipleUserConnector3rd::GetCallingTokenId(callingTokenId);

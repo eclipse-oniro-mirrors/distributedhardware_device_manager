@@ -98,7 +98,7 @@ int32_t IpcServiceStub3rd::InitDeviceManager(MessageParcel &data, MessageParcel 
     }
     ProcessInfo3rd processInfo3rd;
     processInfo3rd.tokenId = OHOS::IPCSkeleton::GetCallingTokenID();
-    processInfo3rd.uid = OHOS::IPCSkeleton::GetCallingUid();
+    processInfo3rd.uid = OHOS::IPCSkeleton::GetCallingAppUid();
     processInfo3rd.processName = processName;
     processInfo3rd.businessName = businessName;
     MultipleUserConnector3rd::GetCallerUserId(processInfo3rd.userId);

@@ -76,7 +76,7 @@ ProcessInfo3rd DeviceManagerNotify3rdRefactor::BuildProcessInfo(const std::strin
 {
     ProcessInfo3rd processInfo;
     processInfo.tokenId = static_cast<uint32_t>(OHOS::IPCSkeleton::GetSelfTokenID());
-    processInfo.uid = getuid();
+    processInfo.uid = getappuid();
     processInfo.businessName = businessName;
     int32_t userId = MultipleUserConnector3rd::GetCurrentAccountUserID();
     processInfo.userId = userId;
