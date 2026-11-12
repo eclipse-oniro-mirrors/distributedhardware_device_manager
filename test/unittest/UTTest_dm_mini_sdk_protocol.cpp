@@ -145,7 +145,7 @@ protected:
     }
 };
 
-TEST_F(DmMiniSdkProtocolTest, PrivateConstantsMatchProtocolContract)
+HWTEST_F(DmMiniSdkProtocolTest, PrivateConstantsMatchProtocolContract_001, testing::ext::TestSize.Level1)
 {
     EXPECT_EQ(MiniSdk::BT_EVENT_STATE_ON, BLUETOOTH_EVENT_ON);
     EXPECT_EQ(MiniSdk::BT_EVENT_STATE_OFF, BLUETOOTH_EVENT_OFF);
@@ -156,7 +156,7 @@ TEST_F(DmMiniSdkProtocolTest, PrivateConstantsMatchProtocolContract)
     EXPECT_EQ(MiniSdk::POWER_ERR_CONNECTION_FAIL, CONNECTION_FAILED);
 }
 
-TEST_F(DmMiniSdkProtocolTest, BluetoothStatesMatchProtocolContract)
+HWTEST_F(DmMiniSdkProtocolTest, BluetoothStatesMatchProtocolContract_001, testing::ext::TestSize.Level1)
 {
     Prepare(BLUETOOTH_HOST_SYS_ABILITY_ID, BLUETOOTH_CMD_GET_STATE, u"ohos.ipc.IBluetoothHost", {});
     for (int32_t state : { BLUETOOTH_STATE_TURNING_ON, BLUETOOTH_STATE_ON, BLUETOOTH_STATE_TURNING_OFF,
@@ -172,7 +172,7 @@ TEST_F(DmMiniSdkProtocolTest, BluetoothStatesMatchProtocolContract)
     EXPECT_EQ(stub->requests, BLUETOOTH_STATE_REQUEST_COUNT);
 }
 
-TEST_F(DmMiniSdkProtocolTest, BluetoothRejectsFailedAndTruncatedReplies)
+HWTEST_F(DmMiniSdkProtocolTest, BluetoothRejectsFailedAndTruncatedReplies_001, testing::ext::TestSize.Level1)
 {
     Prepare(BLUETOOTH_HOST_SYS_ABILITY_ID, BLUETOOTH_CMD_GET_STATE, u"ohos.ipc.IBluetoothHost", {});
     for (const auto &values : std::vector<std::vector<int32_t>>{ {}, { 0 }, { -1, BLUETOOTH_STATE_ON } }) {
@@ -186,7 +186,7 @@ TEST_F(DmMiniSdkProtocolTest, BluetoothRejectsFailedAndTruncatedReplies)
     EXPECT_FALSE(IsBleEnabled());
 }
 
-TEST_F(DmMiniSdkProtocolTest, WifiChecksExceptionReturnValueAndPayload)
+HWTEST_F(DmMiniSdkProtocolTest, WifiChecksExceptionReturnValueAndPayload_001, testing::ext::TestSize.Level1)
 {
     Prepare(WIFI_DEVICE_SYS_ABILITY_ID, WIFI_CMD_IS_ACTIVE, u"ohos.wifi.IWifiDeviceService", { 0, 0, 1 });
     EXPECT_TRUE(IsWifiActive());
@@ -202,7 +202,7 @@ TEST_F(DmMiniSdkProtocolTest, WifiChecksExceptionReturnValueAndPayload)
     EXPECT_FALSE(IsWifiActive());
 }
 
-TEST_F(DmMiniSdkProtocolTest, ScreenChecksStatusAndPayload)
+HWTEST_F(DmMiniSdkProtocolTest, ScreenChecksStatusAndPayload_001, testing::ext::TestSize.Level1)
 {
     Prepare(POWER_MANAGER_SERVICE_ID, POWER_CMD_IS_SCREEN_ON, u"OHOS.PowerMgr.IPowerMgr", { 0, 1 });
     EXPECT_TRUE(IsScreenOn());
@@ -218,7 +218,7 @@ TEST_F(DmMiniSdkProtocolTest, ScreenChecksStatusAndPayload)
     EXPECT_FALSE(IsScreenOn());
 }
 
-TEST_F(DmMiniSdkProtocolTest, WifiRejectsMissingDeviceAndManagerFailure)
+HWTEST_F(DmMiniSdkProtocolTest, WifiRejectsMissingDeviceAndManagerFailure_001, testing::ext::TestSize.Level1)
 {
     Prepare(WIFI_DEVICE_SYS_ABILITY_ID, WIFI_CMD_IS_ACTIVE, u"ohos.wifi.IWifiDeviceService", { 0, 0, 1 });
     wifiManager->returnDevice = false;
@@ -230,7 +230,7 @@ TEST_F(DmMiniSdkProtocolTest, WifiRejectsMissingDeviceAndManagerFailure)
     EXPECT_EQ(stub->requests, 0);
 }
 
-TEST_F(DmMiniSdkProtocolTest, WakeupMatchesCurrentIdlAndClientFailureMapping)
+HWTEST_F(DmMiniSdkProtocolTest, WakeupMatchesCurrentIdlAndClientFailureMapping_001, testing::ext::TestSize.Level1)
 {
     Prepare(POWER_MANAGER_SERVICE_ID, POWER_CMD_WAKEUP_DEVICE, u"OHOS.PowerMgr.IPowerMgr", { 0, 0 });
     EXPECT_EQ(WakeupDevice(END_DREAM), 0);
@@ -247,7 +247,7 @@ TEST_F(DmMiniSdkProtocolTest, WakeupMatchesCurrentIdlAndClientFailureMapping)
     EXPECT_EQ(WakeupDevice(END_DREAM), CONNECTION_FAILED);
 }
 
-TEST_F(DmMiniSdkProtocolTest, ScreenlockReturnsLockedAndUnlocked)
+HWTEST_F(DmMiniSdkProtocolTest, ScreenlockReturnsLockedAndUnlocked_001, testing::ext::TestSize.Level1)
 {
     Prepare(
         SCREENLOCK_SERVICE_ID, SCREENLOCK_CMD_IS_SCREEN_LOCKED, u"ohos.screenlock.ScreenLockManagerInterface", { 1 });
@@ -258,14 +258,14 @@ TEST_F(DmMiniSdkProtocolTest, ScreenlockReturnsLockedAndUnlocked)
     EXPECT_EQ(stub->requests, SCREENLOCK_STATE_QUERY_COUNT);
 }
 
-TEST_F(DmMiniSdkProtocolTest, ScreenlockRejectsEmptyReply)
+HWTEST_F(DmMiniSdkProtocolTest, ScreenlockRejectsEmptyReply_001, testing::ext::TestSize.Level1)
 {
     Prepare(SCREENLOCK_SERVICE_ID, SCREENLOCK_CMD_IS_SCREEN_LOCKED, u"ohos.screenlock.ScreenLockManagerInterface", {});
     EXPECT_FALSE(IsScreenLocked());
     EXPECT_EQ(stub->requests, 1);
 }
 
-TEST_F(DmMiniSdkProtocolTest, ScreenlockFailedRequestRecoversNextCall)
+HWTEST_F(DmMiniSdkProtocolTest, ScreenlockFailedRequestRecoversNextCall_001, testing::ext::TestSize.Level1)
 {
     Prepare(
         SCREENLOCK_SERVICE_ID, SCREENLOCK_CMD_IS_SCREEN_LOCKED, u"ohos.screenlock.ScreenLockManagerInterface", { 1 });
@@ -277,7 +277,7 @@ TEST_F(DmMiniSdkProtocolTest, ScreenlockFailedRequestRecoversNextCall)
     EXPECT_EQ(stub->requests, SCREENLOCK_STATE_QUERY_COUNT);
 }
 
-TEST_F(DmMiniSdkProtocolTest, ScreenlockServiceRecoveryUsesFreshRemote)
+HWTEST_F(DmMiniSdkProtocolTest, ScreenlockServiceRecoveryUsesFreshRemote_001, testing::ext::TestSize.Level1)
 {
     Prepare(
         SCREENLOCK_SERVICE_ID, SCREENLOCK_CMD_IS_SCREEN_LOCKED, u"ohos.screenlock.ScreenLockManagerInterface", { 1 });
@@ -298,7 +298,8 @@ TEST_F(DmMiniSdkProtocolTest, ScreenlockServiceRecoveryUsesFreshRemote)
     EXPECT_EQ(g_screenlockLookups, SCREENLOCK_RECOVERY_QUERY_COUNT);
 }
 
-TEST_F(DmMiniSdkProtocolTest, LoaderReturnsCallerFallbackForMissingLibraryAndSymbol)
+HWTEST_F(
+    DmMiniSdkProtocolTest, LoaderReturnsCallerFallbackForMissingLibraryAndSymbol_001, testing::ext::TestSize.Level1)
 {
     EXPECT_FALSE(MiniSdk::Call("libdm_mini_sdk_missing_for_test.so", "IsScreenOn", false));
     EXPECT_EQ(MiniSdk::Call("libdm_mini_sdk_missing_for_test.so", "WakeupDevice", CONNECTION_FAILED, END_DREAM),
