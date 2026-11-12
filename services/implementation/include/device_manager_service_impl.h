@@ -238,7 +238,6 @@ private:
         const std::string &requestDeviceId, DmDeviceInfo &devInfo, ProcessInfo &processInfo, DmDeviceState &devState);
     void HandleOffline(DmDeviceState devState, DmDeviceInfo &devInfo, const bool isOnline);
     void HandleOnline(DmDeviceState devState, DmDeviceInfo &devInfo, const bool isOnline);
-    bool CheckSharePeerSrc(const std::string &peerUdid, const std::string &localUdid);
     std::map<std::string, int32_t> GetDeviceIdAndBindLevel(int32_t userId);
     std::multimap<std::string, int32_t> GetDeviceIdAndUserId(int32_t userId, const std::string &accountId);
     void HandleAccountLogoutEvent(int32_t remoteUserId, const std::string &remoteAccountHash,

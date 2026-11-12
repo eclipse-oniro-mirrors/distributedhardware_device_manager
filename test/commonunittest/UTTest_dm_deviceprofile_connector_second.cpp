@@ -560,172 +560,6 @@ HWTEST_F(DeviceProfileConnectorSecondTest, HandleDmAuthForm_011, testing::ext::T
     EXPECT_EQ(ret, DmAuthForm::INVALID_TYPE);
 }
 
-HWTEST_F(DeviceProfileConnectorSecondTest, CheckSinkShareType_001, testing::ext::TestSize.Level1)
-{
-    DistributedDeviceProfile::AccessControlProfile profile;
-    int32_t userId = 123456;
-    std::string deviceId = "deviceId";
-    std::string trustDeviceId = "trustDeviceId";
-    int32_t bindType = DmAuthForm::SHARE;
-
-    DistributedDeviceProfile::Accessee accessee;
-    accessee.SetAccesseeUserId(userId);
-    accessee.SetAccesseeDeviceId(deviceId);
-    profile.SetAccessee(accessee);
-
-    DistributedDeviceProfile::Accesser accesser;
-    accesser.SetAccesserDeviceId(trustDeviceId);
-    profile.SetAccesser(accesser);
-
-    bool ret = DeviceProfileConnector::GetInstance().CheckSinkShareType(
-        profile, userId, deviceId, trustDeviceId, bindType);
-    EXPECT_TRUE(ret);
-}
-
-HWTEST_F(DeviceProfileConnectorSecondTest, CheckSinkShareType_002, testing::ext::TestSize.Level1)
-{
-    DistributedDeviceProfile::AccessControlProfile profile;
-    int32_t userId = 123456;
-    std::string deviceId = "deviceId";
-    std::string trustDeviceId = "trustDeviceId";
-    int32_t bindType = DmAuthForm::SHARE;
-
-    DistributedDeviceProfile::Accessee accessee;
-    accessee.SetAccesseeUserId(0);
-    accessee.SetAccesseeDeviceId(deviceId);
-    profile.SetAccessee(accessee);
-
-    DistributedDeviceProfile::Accesser accesser;
-    accesser.SetAccesserDeviceId(trustDeviceId);
-    profile.SetAccesser(accesser);
-
-    bool ret = DeviceProfileConnector::GetInstance().CheckSinkShareType(
-        profile, userId, deviceId, trustDeviceId, bindType);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(DeviceProfileConnectorSecondTest, CheckSinkShareType_003, testing::ext::TestSize.Level1)
-{
-    DistributedDeviceProfile::AccessControlProfile profile;
-    int32_t userId = 123456;
-    std::string deviceId = "deviceId";
-    std::string trustDeviceId = "trustDeviceId";
-    int32_t bindType = DmAuthForm::SHARE;
-
-    DistributedDeviceProfile::Accessee accessee;
-    accessee.SetAccesseeUserId(-1);
-    accessee.SetAccesseeDeviceId(deviceId);
-    profile.SetAccessee(accessee);
-
-    DistributedDeviceProfile::Accesser accesser;
-    accesser.SetAccesserDeviceId(trustDeviceId);
-    profile.SetAccesser(accesser);
-    bool ret = DeviceProfileConnector::GetInstance().CheckSinkShareType(
-        profile, userId, deviceId, trustDeviceId, bindType);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(DeviceProfileConnectorSecondTest, CheckSinkShareType_004, testing::ext::TestSize.Level1)
-{
-    DistributedDeviceProfile::AccessControlProfile profile;
-    int32_t userId = 123456;
-    std::string deviceId = "deviceId";
-    std::string trustDeviceId = "trustDeviceId";
-    int32_t bindType = DmAuthForm::ACROSS_ACCOUNT;
-
-    DistributedDeviceProfile::Accessee accessee;
-    accessee.SetAccesseeUserId(userId);
-    accessee.SetAccesseeDeviceId("wrongDeviceId");
-    profile.SetAccessee(accessee);
-
-    DistributedDeviceProfile::Accesser accesser;
-    accesser.SetAccesserDeviceId(trustDeviceId);
-    profile.SetAccesser(accesser);
-
-    bool ret = DeviceProfileConnector::GetInstance().CheckSinkShareType(
-        profile, userId, deviceId, trustDeviceId, bindType);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(DeviceProfileConnectorSecondTest, CheckSinkShareType_005, testing::ext::TestSize.Level1)
-{
-    DistributedDeviceProfile::AccessControlProfile profile;
-    int32_t userId = 123456;
-    std::string deviceId = "deviceId";
-    std::string trustDeviceId = "trustDeviceId";
-    int32_t bindType = DmAuthForm::ACROSS_ACCOUNT;
-
-    DistributedDeviceProfile::Accessee accessee;
-    accessee.SetAccesseeUserId(userId);
-    accessee.SetAccesseeDeviceId(deviceId);
-    profile.SetAccessee(accessee);
-
-    DistributedDeviceProfile::Accesser accesser;
-    accesser.SetAccesserDeviceId("wrongTrustDeviceId");
-    profile.SetAccesser(accesser);
-
-    bool ret = DeviceProfileConnector::GetInstance().CheckSinkShareType(
-        profile, userId, deviceId, trustDeviceId, bindType);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(DeviceProfileConnectorSecondTest, CheckSinkShareType_006, testing::ext::TestSize.Level1)
-{
-    DistributedDeviceProfile::AccessControlProfile profile;
-    int32_t userId = 123456;
-    std::string deviceId = "deviceId";
-    std::string trustDeviceId = "trustDeviceId";
-    int32_t bindType = DmAuthForm::PEER_TO_PEER; // Wrong bind type
-
-    DistributedDeviceProfile::Accessee accessee;
-    accessee.SetAccesseeUserId(userId);
-    accessee.SetAccesseeDeviceId(deviceId);
-    profile.SetAccessee(accessee);
-
-    DistributedDeviceProfile::Accesser accesser;
-    accesser.SetAccesserDeviceId(trustDeviceId);
-    profile.SetAccesser(accesser);
-
-    bool ret = DeviceProfileConnector::GetInstance().CheckSinkShareType(
-        profile, userId, deviceId, trustDeviceId, bindType);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(DeviceProfileConnectorSecondTest, CheckSinkShareType_007, testing::ext::TestSize.Level1)
-{
-    DistributedDeviceProfile::AccessControlProfile profile;
-    int32_t userId = 123456;
-    std::string deviceId = "deviceId";
-    std::string trustDeviceId = "trustDeviceId";
-    int32_t bindType = DmAuthForm::ACROSS_ACCOUNT;
-
-    DistributedDeviceProfile::Accessee accessee;
-    accessee.SetAccesseeUserId(999999); // Different user ID
-    accessee.SetAccesseeDeviceId(deviceId);
-    profile.SetAccessee(accessee);
-
-    DistributedDeviceProfile::Accesser accesser;
-    accesser.SetAccesserDeviceId(trustDeviceId);
-    profile.SetAccesser(accesser);
-    bool ret = DeviceProfileConnector::GetInstance().CheckSinkShareType(
-        profile, userId, deviceId, trustDeviceId, bindType);
-    EXPECT_FALSE(ret);
-}
-
-HWTEST_F(DeviceProfileConnectorSecondTest, CheckSinkShareType_008, testing::ext::TestSize.Level1)
-{
-    DistributedDeviceProfile::AccessControlProfile profile;
-    int32_t userId = 123456;
-    std::string deviceId = "deviceId";
-    std::string trustDeviceId = "trustDeviceId";
-    int32_t bindType = DmAuthForm::ACROSS_ACCOUNT;
-
-    // Empty profile (no accessee/accesser set)
-    bool ret = DeviceProfileConnector::GetInstance().CheckSinkShareType(
-        profile, userId, deviceId, trustDeviceId, bindType);
-    EXPECT_FALSE(ret);
-}
-
 HWTEST_F(DeviceProfileConnectorSecondTest, GetAuthFormMap_001, testing::ext::TestSize.Level1)
 {
     // Test case 1: Empty input - should return empty map
@@ -814,7 +648,7 @@ HWTEST_F(DeviceProfileConnectorSecondTest, GetAuthFormMap_005, testing::ext::Tes
 
 HWTEST_F(DeviceProfileConnectorSecondTest, GetAuthFormMap_006, testing::ext::TestSize.Level1)
 {
-    // Test case 6: CheckSinkShareType returns true - should skip adding to map
+    // Test case 6: share-form profile without bind level - should skip adding to map
     std::string pkgName = "testPkg";
     std::string deviceId = "deviceId1";
     std::string trustDeviceId = "trustDeviceId1";
@@ -824,7 +658,7 @@ HWTEST_F(DeviceProfileConnectorSecondTest, GetAuthFormMap_006, testing::ext::Tes
     DistributedDeviceProfile::AccessControlProfile profile;
     profile.SetTrustDeviceId(trustDeviceId);
     profile.SetStatus(ACTIVE);
-    // Set up accessee/accesser to make CheckSinkShareType return true
+    // Set up accessee/accesser pair for the share-form profile
     DistributedDeviceProfile::Accessee accessee;
     accessee.SetAccesseeUserId(userId);
     accessee.SetAccesseeDeviceId(deviceId);

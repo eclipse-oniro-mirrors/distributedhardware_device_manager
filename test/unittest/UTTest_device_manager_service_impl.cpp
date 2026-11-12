@@ -1684,6 +1684,21 @@ HWTEST_F(DeviceManagerServiceImplTest, HandleOnline_003, testing::ext::TestSize.
     EXPECT_NE(deviceManagerServiceImpl_->softbusConnector_, nullptr);
 }
 
+HWTEST_F(DeviceManagerServiceImplTest, HandleOnlineShareSinkSide_001, testing::ext::TestSize.Level1)
+{
+    DmDeviceState devState = DmDeviceState::DEVICE_STATE_ONLINE;
+    DmDeviceInfo devInfo;
+    if (deviceManagerServiceImpl_->softbusConnector_ == nullptr) {
+        deviceManagerServiceImpl_->Initialize(listener_);
+    }
+    strcpy_s(devInfo.networkId, sizeof(devInfo.networkId) - 1, testID.c_str());
+    devInfo.networkId[sizeof(devInfo.networkId) - 1] = '\0';
+    EXPECT_CALL(*softbusConnectorMock_, GetUdidByNetworkId(_, _)).WillOnce(Return(DM_OK));
+    EXPECT_CALL(*deviceProfileConnectorMock_, CheckBindType(_, _)).WillOnce(Return(SHARE_TYPE));
+    EXPECT_CALL(*dmDeviceStateManagerMock_, HandleDeviceStatusChange(_, _, _, _, _)).Times(1);
+    deviceManagerServiceImpl_->HandleOnline(devState, devInfo, true);
+}
+
 HWTEST_F(DeviceManagerServiceImplTest, HandleOffline_003, testing::ext::TestSize.Level1)
 {
     DmDeviceState devState = DmDeviceState::DEVICE_INFO_READY;

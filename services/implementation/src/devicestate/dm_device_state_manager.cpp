@@ -278,6 +278,9 @@ void DmDeviceStateManager::SetOnlineProcessInfo(const uint32_t &bindType, Proces
         std::set<ProcessInfo> processInfoSet(processInfoVec.begin(), processInfoVec.end());
         processInfoVec.assign(processInfoSet.begin(), processInfoSet.end());
         devInfo.authForm = DmAuthForm::ACROSS_ACCOUNT;
+    } else if (bindType == SHARE_TYPE) {
+        devInfo.authForm = DmAuthForm::SHARE;
+        processInfoVec.push_back(processInfo);
     } else if (bindType == INVALIED_TYPE) {
         LOGE("bindType is invaild.");
         return;

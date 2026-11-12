@@ -946,35 +946,12 @@ void DeviceManagerServiceImpl::SetOnlineProcessInfo(const uint32_t &bindType, Pr
         processInfoVec.assign(processInfoSet.begin(), processInfoSet.end());
         devInfo.authForm = DmAuthForm::ACROSS_ACCOUNT;
     } else if (bindType == SHARE_TYPE) {
-        if (CheckSharePeerSrc(trustDeviceId, requestDeviceId)) {
-            LOGI("ProcessDeviceStateChange authForm is share, peer is src.");
-            return;
-        }
         devInfo.authForm = DmAuthForm::SHARE;
         processInfoVec.push_back(processInfo);
     }
     LOGI("devInfo AF: %{public}d", devInfo.authForm);   // AF: authForm
     deviceStateMgr_->HandleDeviceStatusChange(devState, devInfo, processInfoVec, trustDeviceId, isOnline);
     return;
-}
-
-bool DeviceManagerServiceImpl::CheckSharePeerSrc(const std::string &peerUdid, const std::string &localUdid)
-{
-    std::vector<DistributedDeviceProfile::AccessControlProfile> profiles =
-        DeviceProfileConnector::GetInstance().GetAccessControlProfile();
-    for (auto &aclItem : profiles) {
-        if (aclItem.GetBindType() == DM_SHARE && aclItem.GetTrustDeviceId() == peerUdid) {
-            if (aclItem.GetAccesser().GetAccesserDeviceId() == peerUdid &&
-                aclItem.GetAccessee().GetAccesseeDeviceId() == localUdid) {
-                return true;
-            }
-            if (aclItem.GetAccesser().GetAccesserDeviceId() == localUdid &&
-                aclItem.GetAccessee().GetAccesseeDeviceId() == peerUdid) {
-                return false;
-            }
-        }
-    }
-    return false;
 }
 
 void DeviceManagerServiceImpl::HandleDeviceStatusChange(DmDeviceState devState, DmDeviceInfo &devInfo,

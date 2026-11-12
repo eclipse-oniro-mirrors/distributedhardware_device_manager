@@ -486,8 +486,6 @@ private:
         uint32_t index, std::string targetDeviceId);
     bool CheckAppLevelAccess(const DistributedDeviceProfile::AccessControlProfile &profile,
         const DmAccessCaller &caller, const DmAccessCallee &callee);
-    bool CheckSinkShareType(const DistributedDeviceProfile::AccessControlProfile &profile,
-        const int32_t &userId, const std::string &deviceId, const std::string &trustDeviceId, const int32_t &bindType);
 #ifdef CAR_DEVICE_ENABLE
     struct LocalDeviceInfo {
         int32_t userId;

@@ -892,30 +892,6 @@ HWTEST_F(DeviceManagerServiceImplFirstTest, UnBindDevice_02, testing::ext::TestS
     EXPECT_EQ(ret, ERR_DM_FAILED);
 }
 
-HWTEST_F(DeviceManagerServiceImplFirstTest, CheckSharePeerSrc_006, testing::ext::TestSize.Level1)
-{
-    std::string peerUdid = "peerUdid";
-    std::string localUdid = "localUdid";
-    
-    std::vector<DistributedDeviceProfile::AccessControlProfile> profiles;
-    AccessControlProfile profile;
-    profile.SetBindType(DM_SHARE);
-    profile.SetTrustDeviceId(peerUdid);
-    Accesser accesser;
-    accesser.SetAccesserDeviceId(peerUdid);
-    profile.SetAccesser(accesser);
-    Accessee accessee;
-    accessee.SetAccesseeDeviceId(localUdid);
-    profile.SetAccessee(accessee);
-    profiles.push_back(profile);
-    
-    EXPECT_CALL(*deviceProfileConnectorMock_, GetAccessControlProfile())
-        .WillOnce(Return(profiles));
-    
-    bool result = deviceManagerServiceImpl_->CheckSharePeerSrc(peerUdid, localUdid);
-    EXPECT_TRUE(result);
-}
-
 HWTEST_F(DeviceManagerServiceImplFirstTest, GetLogicalIdAndTokenIdBySessionId_001, testing::ext::TestSize.Level1)
 {
     int32_t sessionId = 10001;
