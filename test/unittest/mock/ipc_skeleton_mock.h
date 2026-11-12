@@ -27,7 +27,7 @@ public:
     IPCSkeletonInterface() = default;
     virtual ~IPCSkeletonInterface() = default;
 
-    virtual pid_t GetCallingUid() = 0;
+    virtual pid_t GetCallingAppUid() = 0;
     virtual uint32_t GetCallingTokenID() = 0;
     virtual uint64_t GetCallingFullTokenID() = 0;
     static std::shared_ptr<IPCSkeletonInterface> GetOrCreateIPCSkeleton();
@@ -41,7 +41,7 @@ public:
     IPCSkeletonMock() = default;
     ~IPCSkeletonMock() override = default;
 
-    MOCK_METHOD(pid_t, GetCallingUid, ());
+    MOCK_METHOD(pid_t, GetCallingAppUid, ());
     MOCK_METHOD(uint32_t, GetCallingTokenID, ());
     MOCK_METHOD(uint64_t, GetCallingFullTokenID, ());
 };

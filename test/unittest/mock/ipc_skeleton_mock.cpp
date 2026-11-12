@@ -18,9 +18,9 @@
 using namespace OHOS::DistributedHardware;
 
 namespace OHOS {
-pid_t IPCSkeleton::GetCallingUid()
+pid_t IPCSkeleton::GetCallingAppUid()
 {
-    return IPCSkeletonInterface::GetOrCreateIPCSkeleton()->GetCallingUid();
+    return IPCSkeletonInterface::GetOrCreateIPCSkeleton()->GetCallingAppUid();
 }
 
 uint32_t IPCSkeleton::GetCallingTokenID()

@@ -77,7 +77,7 @@ int32_t DeviceManagerNotify3rd::RegisterAuthCallback(const std::string &business
     }
     ProcessInfo3rd processInfo3rd;
     processInfo3rd.tokenId = static_cast<uint32_t>(OHOS::IPCSkeleton::GetSelfTokenID());
-    processInfo3rd.uid = getuid();
+    processInfo3rd.uid = getappuid();
     processInfo3rd.businessName = businessName;
     int32_t userId = MultipleUserConnector3rd::GetCurrentAccountUserID();
     processInfo3rd.userId = userId;
@@ -101,7 +101,7 @@ int32_t DeviceManagerNotify3rd::UnRegisterAuthCallback(const std::string &busine
     }
     ProcessInfo3rd processInfo3rd;
     processInfo3rd.tokenId = static_cast<uint32_t>(OHOS::IPCSkeleton::GetSelfTokenID());
-    processInfo3rd.uid = getuid();
+    processInfo3rd.uid = getappuid();
     processInfo3rd.businessName = businessName;
     int32_t userId = MultipleUserConnector3rd::GetCurrentAccountUserID();
     processInfo3rd.userId = userId;

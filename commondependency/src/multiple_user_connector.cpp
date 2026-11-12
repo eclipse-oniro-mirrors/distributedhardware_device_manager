@@ -179,7 +179,7 @@ DM_EXPORT void MultipleUserConnector::GetTokenId(uint32_t &tokenId)
 
 void MultipleUserConnector::GetCallerUserId(int32_t &userId)
 {
-    int32_t uid = OHOS::IPCSkeleton::GetCallingUid();
+    int32_t uid = OHOS::IPCSkeleton::GetCallingAppUid();
     ErrCode ret = OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
     if (ret != 0) {
         LOGE("GetOsAccountLocalIdFromUid error ret: %{public}d", ret);

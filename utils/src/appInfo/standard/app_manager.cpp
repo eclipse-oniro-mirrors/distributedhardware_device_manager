@@ -62,7 +62,7 @@ const std::string AppManager::GetAppId()
         return appId;
     }
     std::string BundleName = "";
-    bundleManager->GetNameForUid(IPCSkeleton::GetCallingUid(), BundleName);
+    bundleManager->GetNameForUid(IPCSkeleton::GetCallingAppUid(), BundleName);
     AppExecFwk::BundleInfo bundleInfo;
     int32_t ret = bundleManager->GetBundleInfoV9(
         BundleName, static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO),

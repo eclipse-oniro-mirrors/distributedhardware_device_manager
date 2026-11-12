@@ -36,7 +36,7 @@ void MultipleUserConnector3rd::GetCallingTokenId(uint32_t &tokenId)
 const int32_t DEFAULT_OS_ACCOUNT_ID = 0;
 void MultipleUserConnector3rd::GetCallerUserId(int32_t &userId)
 {
-    int32_t uid = OHOS::IPCSkeleton::GetCallingUid();
+    int32_t uid = OHOS::IPCSkeleton::GetCallingAppUid();
     ErrCode ret = OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
     if (ret != 0) {
         LOGE("GetOsAccountLocalIdFromUid error ret: %{public}d", ret);
