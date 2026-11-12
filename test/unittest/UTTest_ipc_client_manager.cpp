@@ -15,6 +15,8 @@
 
 #include "UTTest_ipc_client_manager.h"
 
+#include <chrono>
+#include <thread>
 #include "device_manager_ipc_interface_code.h"
 #include "device_manager_notify.h"
 #include "dm_device_info.h"
@@ -50,6 +52,7 @@ void IpcClientManagerTest::TearDownTestCase()
 }
 
 namespace {
+constexpr int32_t SHORT_DELAY_MS = 200;
     /**
  * @tc.name: OnRemoteDied_001
  * @tc.desc: 1. new a dmInterface
@@ -118,6 +121,49 @@ HWTEST_F(IpcClientManagerTest, ClientInit_002, testing::ext::TestSize.Level0)
     int ret = instance->ClientInit();
     // 4. check ret is not ERR_DM_FAILED
     ASSERT_NE(ret, ERR_DM_FAILED);
+}
+
+/**
+ * @tc.name: ClientInit_003
+ * @tc.desc: 1. mock samgr so DM SA is null before LoadDMService, then available after
+ *           2. set IpcClientManager dmInterface_ null (triggers ClientInit full path)
+ *           3. call ClientInit
+ *           4. check ret is DM_OK and dmInterface_ is set
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcClientManagerTest, ClientInit_003, testing::ext::TestSize.Level0)
+{
+    // 1. mock samgr: first CheckSystemAbility returns nullptr (trigger LoadDMService),
+    //    then returns a valid object (re-check succeeds after load)
+    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
+        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
+    auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
+    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(mockAbilityMgr));
+    sptr<IRemoteObject> stubObj = sptr<IpcClientStub>(new IpcClientStub());
+    EXPECT_CALL(*mockAbilityMgr, CheckSystemAbility(testing::_))
+        .WillOnce(testing::Return(nullptr))
+        .WillOnce(testing::Return(stubObj));
+    EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(testing::_, testing::An<const sptr<ISystemAbilityLoadCallback>&>()))
+        .WillOnce(testing::Invoke([](int32_t, const sptr<ISystemAbilityLoadCallback> &callback) {
+            // simulate async load success by invoking the callback
+            std::thread([callback]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_DELAY_MS));
+                callback->OnLoadSystemAbilitySuccess(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID, nullptr);
+            }).detach();
+            return DM_OK;
+        }));
+
+    // 2. set IpcClientManager dmInterface_ null (triggers ClientInit full path)
+    std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
+    instance->dmInterface_ = nullptr;
+    // 3. call ClientInit
+    int ret = instance->ClientInit();
+    // 4. check ret is DM_OK and dmInterface_ is set
+    ASSERT_EQ(ret, DM_OK);
+    ASSERT_NE(instance->dmInterface_, nullptr);
+
+    ISystemAbilityManagerClient::ReleaseSAMgrClient();
 }
 
 /**
@@ -436,6 +482,51 @@ HWTEST_F(IpcClientManagerTest, SendRequest_001, testing::ext::TestSize.Level0)
 }
 
 /**
+ * @tc.name: SendRequest_010
+ * @tc.desc:  1. mock samgr so DM SA is null before LoadDMService, then available after
+ *            2. set IpcClientManager dmInterface_ null (triggers re-init)
+ *            3. call SendRequest with parameter
+ *            4. check re-init path is taken: dmInterface_ is set and ret is not ERR_DM_INIT_FAILED
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcClientManagerTest, SendRequest_010, testing::ext::TestSize.Level0)
+{
+    // 1. mock samgr: first CheckSystemAbility returns nullptr (trigger LoadDMService),
+    //    then returns a valid proxy object (re-check succeeds after load)
+    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
+        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
+    auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
+    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(mockAbilityMgr));
+    sptr<IRemoteObject> stubObj = sptr<IpcClientStub>(new IpcClientStub());
+    EXPECT_CALL(*mockAbilityMgr, CheckSystemAbility(testing::_))
+        .WillOnce(testing::Return(nullptr))
+        .WillOnce(testing::Return(stubObj));
+    EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(testing::_, testing::An<const sptr<ISystemAbilityLoadCallback>&>()))
+        .WillOnce(testing::Invoke([](int32_t, const sptr<ISystemAbilityLoadCallback> &callback) {
+            std::thread([callback]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_DELAY_MS));
+                callback->OnLoadSystemAbilitySuccess(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID, nullptr);
+            }).detach();
+            return DM_OK;
+        }));
+
+    // 2. set IpcClientManager dmInterface_ null (triggers re-init)
+    std::shared_ptr<IpcReq> req = std::make_shared<IpcReq>();
+    std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
+    req->SetPkgName("com.ohos.test");
+    std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
+    instance->dmInterface_ = nullptr;
+    // 3. call SendRequest with parameter
+    int ret = instance->SendRequest(0, req, rsp);
+    // 4. check re-init path is taken: dmInterface_ is set and ret is not ERR_DM_INIT_FAILED
+    ASSERT_NE(instance->dmInterface_, nullptr);
+    ASSERT_NE(ret, ERR_DM_INIT_FAILED);
+
+    ISystemAbilityManagerClient::ReleaseSAMgrClient();
+}
+
+/**
  * @tc.name: SendRequest_002
  * @tc.desc:  1. set pkgName not null
  *            2. Mock IpcClientServerProxy SendCmd return ERR_DM_FAILED
@@ -694,6 +785,207 @@ HWTEST_F(IpcClientManagerTest, OnDmServiceDied_003, testing::ext::TestSize.Level
     int32_t ret = instance->OnDmServiceDied();
     // 3. check ret is DM_OK
     ASSERT_EQ(ret, DM_OK);
+}
+
+/**
+ * @tc.name: SendRequest_011
+ * @tc.desc:  1. set IpcClientManager dmInterface_ not null (already init)
+ *            2. mock dmInterface_ SendCmd return DM_OK
+ *            3. call SendRequest with valid cmdCode
+ *            4. check ret is DM_OK (no re-init path taken)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcClientManagerTest, SendRequest_011, testing::ext::TestSize.Level0)
+{
+    std::string pkgName = "com.ohos.test";
+    std::shared_ptr<IpcReq> req = std::make_shared<IpcReq>();
+    std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
+    req->SetPkgName(pkgName);
+    sptr<IRemoteObject> remoteObject = nullptr;
+    auto mockInstance = new MockIpcClientManager(remoteObject);
+    EXPECT_CALL(*mockInstance, SendCmd(testing::_, testing::_, testing::_))
+        .Times(1).WillOnce(testing::Return(DM_OK));
+    std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
+    instance->dmInterface_ = mockInstance;
+    int ret = instance->SendRequest(0, req, rsp);
+    ASSERT_EQ(ret, DM_OK);
+}
+
+/**
+ * @tc.name: ClientInit_004
+ * @tc.desc: 1. set dmInterface_ to a valid proxy (already initialized)
+ *           2. call ClientInit
+ *           3. verify early return DM_OK without touching samgr
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcClientManagerTest, ClientInit_004, testing::ext::TestSize.Level0)
+{
+    sptr<IpcRemoteBroker> dmInterface = sptr<IpcClientStub>(new IpcClientStub());
+    std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
+    instance->dmInterface_ = dmInterface;
+    int ret = instance->ClientInit();
+    ASSERT_EQ(ret, DM_OK);
+    ASSERT_NE(instance->dmInterface_, nullptr);
+}
+
+/**
+ * @tc.name: ClientInit_005
+ * @tc.desc: 1. mock samgr returning nullptr (samgr unavailable)
+ *           2. set dmInterface_ null
+ *           3. call ClientInit
+ *           4. check ret is ERR_DM_INIT_FAILED
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcClientManagerTest, ClientInit_005, testing::ext::TestSize.Level0)
+{
+    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
+        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
+    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(nullptr));
+
+    std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
+    instance->dmInterface_ = nullptr;
+    int ret = instance->ClientInit();
+    ASSERT_EQ(ret, ERR_DM_INIT_FAILED);
+
+    ISystemAbilityManagerClient::ReleaseSAMgrClient();
+}
+
+/**
+ * @tc.name: OnDmServiceDied_004
+ * @tc.desc: 1. set dmInterface_ to a valid proxy and dmRecipient_ to a valid recipient
+ *           2. call OnDmServiceDied
+ *           3. verify dmInterface_ is null and dmRecipient_ is null after call
+ *           4. check ret is DM_OK
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcClientManagerTest, OnDmServiceDied_004, testing::ext::TestSize.Level0)
+{
+    sptr<IRemoteObject> remoteObject = nullptr;
+    auto mockInstance = new MockIpcClientManager(remoteObject);
+    std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
+    instance->dmInterface_ = mockInstance;
+    instance->dmRecipient_ = sptr<DmDeathRecipient>(new DmDeathRecipient());
+    int32_t ret = instance->OnDmServiceDied();
+    ASSERT_EQ(ret, DM_OK);
+    ASSERT_EQ(instance->dmInterface_, nullptr);
+    ASSERT_EQ(instance->dmRecipient_, nullptr);
+}
+
+/**
+ * @tc.name: ClientInit_006
+ * @tc.desc: 1. mock samgr so DM SA is null, LoadDMService fails, re-check still null
+ *           2. set dmInterface_ null
+ *           3. call ClientInit
+ *           4. verify ret is ERR_DM_INIT_FAILED
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcClientManagerTest, ClientInit_006, testing::ext::TestSize.Level0)
+{
+    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
+        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
+    auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
+    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(mockAbilityMgr));
+    EXPECT_CALL(*mockAbilityMgr, CheckSystemAbility(testing::_)).WillRepeatedly(testing::Return(nullptr));
+    EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(testing::_, testing::An<const sptr<ISystemAbilityLoadCallback>&>()))
+        .WillRepeatedly(testing::Return(ERR_DM_FAILED));
+
+    std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
+    instance->dmInterface_ = nullptr;
+    int ret = instance->ClientInit();
+    ASSERT_EQ(ret, ERR_DM_INIT_FAILED);
+
+    ISystemAbilityManagerClient::ReleaseSAMgrClient();
+}
+
+/**
+ * @tc.name: SendRequest_012
+ * @tc.desc:  1. set IpcClientManager dmInterface_ null
+ *            2. mock samgr so DM SA is null, LoadSystemAbility succeeds and callback fires
+ *            3. re-check SA available (returns stub object)
+ *            4. call SendRequest with valid cmdCode
+ *            5. verify re-init path taken: dmInterface_ is set, ret is not ERR_DM_INIT_FAILED
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcClientManagerTest, SendRequest_012, testing::ext::TestSize.Level0)
+{
+    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
+        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
+    auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
+    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(mockAbilityMgr));
+    sptr<IRemoteObject> stubObj = sptr<IpcClientStub>(new IpcClientStub());
+    EXPECT_CALL(*mockAbilityMgr, CheckSystemAbility(testing::_))
+        .WillOnce(testing::Return(nullptr))
+        .WillOnce(testing::Return(stubObj));
+    EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(testing::_, testing::An<const sptr<ISystemAbilityLoadCallback>&>()))
+        .WillOnce(testing::Invoke([](int32_t, const sptr<ISystemAbilityLoadCallback> &callback) {
+            std::thread([callback]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_DELAY_MS));
+                callback->OnLoadSystemAbilitySuccess(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID, nullptr);
+            }).detach();
+            return DM_OK;
+        }));
+
+    std::shared_ptr<IpcReq> req = std::make_shared<IpcReq>();
+    std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
+    req->SetPkgName("com.ohos.test");
+    std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
+    instance->dmInterface_ = nullptr;
+    int ret = instance->SendRequest(REGISTER_DEVICE_MANAGER_LISTENER, req, rsp);
+    ASSERT_NE(instance->dmInterface_, nullptr);
+    ASSERT_NE(ret, ERR_DM_INIT_FAILED);
+
+    ISystemAbilityManagerClient::ReleaseSAMgrClient();
+}
+
+/**
+ * @tc.name: OnDmServiceDied_005
+ * @tc.desc: 1. set dmInterface_ to a real IpcClientStub and dmRecipient_ to nullptr
+ *           2. call OnDmServiceDied
+ *           3. verify ret is DM_OK and dmInterface_ is null
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcClientManagerTest, OnDmServiceDied_005, testing::ext::TestSize.Level0)
+{
+    sptr<IpcRemoteBroker> dmInterface = sptr<IpcClientStub>(new IpcClientStub());
+    std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
+    instance->dmInterface_ = dmInterface;
+    instance->dmRecipient_ = nullptr;
+    int32_t ret = instance->OnDmServiceDied();
+    ASSERT_EQ(ret, DM_OK);
+    ASSERT_EQ(instance->dmInterface_, nullptr);
+}
+
+/**
+ * @tc.name: SendRequest_013
+ * @tc.desc:  1. set IpcClientManager dmInterface_ null
+ *            2. mock samgr so GetSystemAbilityManager returns null
+ *            3. call SendRequest with valid cmdCode
+ *            4. verify ret is ERR_DM_INIT_FAILED (samgr null, re-init fails immediately)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcClientManagerTest, SendRequest_013, testing::ext::TestSize.Level0)
+{
+    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
+        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
+    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(nullptr));
+
+    std::shared_ptr<IpcReq> req = std::make_shared<IpcReq>();
+    std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
+    req->SetPkgName("com.ohos.test");
+    std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
+    instance->dmInterface_ = nullptr;
+    int ret = instance->SendRequest(0, req, rsp);
+    ASSERT_EQ(ret, ERR_DM_INIT_FAILED);
+
+    ISystemAbilityManagerClient::ReleaseSAMgrClient();
 }
 } // namespace
 

@@ -1212,6 +1212,29 @@ HWTEST_F(DeviceManagerImplTest, InitDeviceManager_005, testing::ext::TestSize.Le
 }
 
 /**
+ * @tc.name: InitDeviceManager_006
+ * @tc.desc: 1. mock IpcClientProxy Init to fail
+ *           2. call InitDeviceManager with valid params
+ *           3. verify Init is called exactly once (no retry loop)
+ *           4. verify ret is ERR_DM_INIT_FAILED
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(DeviceManagerImplTest, InitDeviceManager_006, testing::ext::TestSize.Level0)
+{
+    // 1. mock IpcClientProxy Init to fail exactly once (retry loop was removed)
+    std::string packName = "com.ohos.init.retry.test";
+    std::shared_ptr<DmInitCallbackTest> callback = std::make_shared<DmInitCallbackTest>();
+    EXPECT_CALL(*ipcClientProxyMock_, Init(testing::_))
+        .Times(1)
+        .WillOnce(testing::Return(ERR_DM_INIT_FAILED));
+    // 2. call InitDeviceManager with valid params
+    int32_t ret = DeviceManager::GetInstance().InitDeviceManager(packName, callback);
+    // 3. verify ret is ERR_DM_INIT_FAILED (Init called once, no retry)
+    ASSERT_EQ(ret, ERR_DM_INIT_FAILED);
+}
+
+/**
  * @tc.name: UnInitDeviceManager_001
  * @tc.desc: 1. call DeviceManagerImpl::InitDeviceManager with packName not null, dmInitCallback = nullprt
  *           2. check ret is ERR_DM_INPUT_PARA_INVALID
@@ -1312,6 +1335,64 @@ HWTEST_F(DeviceManagerImplTest, UnInitDeviceManager_005, testing::ext::TestSize.
     int32_t ret = DeviceManager::GetInstance().UnInitDeviceManager(packName);
     // 3. check ret is ERR_DM_FAILED
     ASSERT_EQ(ret, ERR_DM_FAILED);
+}
+
+/**
+ * @tc.name: InitDeviceManager_007
+ * @tc.desc: 1. set ipcClientProxy_ to null
+ *           2. call InitDeviceManager with valid params
+ *           3. verify ret is ERR_DM_POINT_NULL
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(DeviceManagerImplTest, InitDeviceManager_007, testing::ext::TestSize.Level0)
+{
+    std::string packName = "com.ohos.null.proxy.test";
+    std::shared_ptr<DmInitCallbackTest> callback = std::make_shared<DmInitCallbackTest>();
+    auto savedProxy = DeviceManagerImpl::GetInstance().ipcClientProxy_;
+    DeviceManagerImpl::GetInstance().ipcClientProxy_ = nullptr;
+    int32_t ret = DeviceManager::GetInstance().InitDeviceManager(packName, callback);
+    ASSERT_EQ(ret, ERR_DM_POINT_NULL);
+    DeviceManagerImpl::GetInstance().ipcClientProxy_ = savedProxy;
+}
+
+/**
+ * @tc.name: InitDeviceManager_008
+ * @tc.desc: 1. mock IpcClientProxy Init to succeed
+ *           2. call InitDeviceManager with valid params
+ *           3. verify Init is called exactly once (no retry loop)
+ *           4. verify ret is DM_OK
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(DeviceManagerImplTest, InitDeviceManager_008, testing::ext::TestSize.Level0)
+{
+    std::string packName = "com.ohos.init.ok.test";
+    std::shared_ptr<DmInitCallbackTest> callback = std::make_shared<DmInitCallbackTest>();
+    EXPECT_CALL(*ipcClientProxyMock_, Init(testing::_))
+        .Times(1)
+        .WillOnce(testing::Return(DM_OK));
+    int32_t ret = DeviceManager::GetInstance().InitDeviceManager(packName, callback);
+    ASSERT_EQ(ret, DM_OK);
+    DeviceManager::GetInstance().UnInitDeviceManager(packName);
+}
+
+/**
+ * @tc.name: UnInitDeviceManager_006
+ * @tc.desc: 1. set ipcClientProxy_ to null
+ *           2. call UnInitDeviceManager with valid packName
+ *           3. verify ret is ERR_DM_POINT_NULL
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(DeviceManagerImplTest, UnInitDeviceManager_006, testing::ext::TestSize.Level0)
+{
+    std::string packName = "com.ohos.uninit.null.test";
+    auto savedProxy = DeviceManagerImpl::GetInstance().ipcClientProxy_;
+    DeviceManagerImpl::GetInstance().ipcClientProxy_ = nullptr;
+    int32_t ret = DeviceManager::GetInstance().UnInitDeviceManager(packName);
+    ASSERT_EQ(ret, ERR_DM_POINT_NULL);
+    DeviceManagerImpl::GetInstance().ipcClientProxy_ = savedProxy;
 }
 
 /**
