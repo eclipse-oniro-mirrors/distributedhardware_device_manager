@@ -512,8 +512,8 @@ HWTEST_F(IpcClientManagerTest, SendRequest_010, testing::ext::TestSize.Level0)
         }));
 
     // 2. set IpcClientManager dmInterface_ null (triggers re-init)
-    std::shared_ptr<IpcReq> req = std::make_shared<IpcReq>();
-    std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
+    std::shared_ptr<IpcRegisterListenerReq> req = std::make_shared<IpcRegisterListenerReq>();
+    std::shared_ptr<IpcReq> rsp = std::make_shared<IpcRsp>();
     req->SetPkgName("com.ohos.test");
     std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
     instance->dmInterface_ = nullptr;
@@ -931,7 +931,7 @@ HWTEST_F(IpcClientManagerTest, SendRequest_012, testing::ext::TestSize.Level0)
             return DM_OK;
         }));
 
-    std::shared_ptr<IpcReq> req = std::make_shared<IpcReq>();
+    std::shared_ptr<IpcRegisterListenerReq> req = std::make_shared<IpcRegisterListenerReq>();
     std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
     req->SetPkgName("com.ohos.test");
     std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
