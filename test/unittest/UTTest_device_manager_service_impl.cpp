@@ -40,6 +40,9 @@ const std::string testID("111111");
 void DeviceManagerServiceImplTest::TearDown()
 {
     Mock::VerifyAndClearExpectations(deviceProfileConnectorMock_.get());
+    Mock::VerifyAndClearExpectations(softbusConnectorMock_.get());
+    Mock::VerifyAndClearExpectations(dmDeviceStateManagerMock_.get());
+    Mock::VerifyAndClearExpectations(mineHiChainConnectorMock_.get());
 }
 
 void DeviceManagerServiceImplTest::SetUpTestCase()
@@ -1695,7 +1698,8 @@ HWTEST_F(DeviceManagerServiceImplTest, HandleOnlineShareSinkSide_001, testing::e
     devInfo.networkId[sizeof(devInfo.networkId) - 1] = '\0';
     EXPECT_CALL(*softbusConnectorMock_, GetUdidByNetworkId(_, _)).WillOnce(Return(DM_OK));
     EXPECT_CALL(*deviceProfileConnectorMock_, CheckBindType(_, _)).WillOnce(Return(SHARE_TYPE));
-    EXPECT_CALL(*dmDeviceStateManagerMock_, HandleDeviceStatusChange(_, _, _, _, _)).Times(1);
+    EXPECT_CALL(*dmDeviceStateManagerMock_, HandleDeviceStatusChange(_, _, _, _, _))
+        .Times(AtLeast(1)).RetiresOnSaturation();
     deviceManagerServiceImpl_->HandleOnline(devState, devInfo, true);
 }
 

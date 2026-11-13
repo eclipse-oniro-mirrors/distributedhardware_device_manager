@@ -20,6 +20,7 @@
 
 #include "dm_constants.h"
 #include "dm_crypto.h"
+#include <openssl/sha.h>
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -311,6 +312,218 @@ HWTEST_F(DmCryptoTest, GetAccountIdHash_01, testing::ext::TestSize.Level1)
     // string overload returns first 16 bytes (32 chars)
     std::string hash16 = Crypto::GetAccountIdHash16(accountId);
     EXPECT_EQ(hash16.length(), static_cast<size_t>(32));
+}
+
+/**
+ * @tc.name: GetAccountIdHash7_01
+ * @tc.type: FUNC
+ * @tc.desc: Normal case - GetAccountIdHash7 returns DM_OK and 7-char hash
+ */
+HWTEST_F(DmCryptoTest, GetAccountIdHash7_01, testing::ext::TestSize.Level1)
+{
+    std::string accountId = "accountIdTest7";
+    unsigned char hash[8] = {0};
+    int32_t ret = Crypto::GetAccountIdHash7(accountId, hash);
+    EXPECT_EQ(ret, DM_OK);
+    std::string hashStr(reinterpret_cast<const char *>(hash));
+    EXPECT_EQ(hashStr.length(), static_cast<size_t>(7));
+    std::cout << "accountIdHash7: " << hashStr << std::endl;
+}
+
+/**
+ * @tc.name: GetAccountIdHash7_02
+ * @tc.type: FUNC
+ * @tc.desc: Different accountIds produce different hash7 values
+ */
+HWTEST_F(DmCryptoTest, GetAccountIdHash7_02, testing::ext::TestSize.Level1)
+{
+    unsigned char hash1[8] = {0};
+    unsigned char hash2[8] = {0};
+    Crypto::GetAccountIdHash7("accountA", hash1);
+    Crypto::GetAccountIdHash7("accountB", hash2);
+    std::string str1(reinterpret_cast<const char *>(hash1));
+    std::string str2(reinterpret_cast<const char *>(hash2));
+    EXPECT_STRNE(str1.c_str(), str2.c_str());
+}
+
+/**
+ * @tc.name: GetAccountIdHash7_03
+ * @tc.type: FUNC
+ * @tc.desc: Same accountId produces same hash7 (deterministic)
+ */
+HWTEST_F(DmCryptoTest, GetAccountIdHash7_03, testing::ext::TestSize.Level1)
+{
+    unsigned char hash1[8] = {0};
+    unsigned char hash2[8] = {0};
+    Crypto::GetAccountIdHash7("sameAccount", hash1);
+    Crypto::GetAccountIdHash7("sameAccount", hash2);
+    std::string str1(reinterpret_cast<const char *>(hash1));
+    std::string str2(reinterpret_cast<const char *>(hash2));
+    EXPECT_STREQ(str1.c_str(), str2.c_str());
+}
+
+/**
+ * @tc.name: DmGenerateStrHash_01
+ * @tc.type: FUNC
+ * @tc.desc: Null data param - early return without crash
+ */
+HWTEST_F(DmCryptoTest, DmGenerateStrHash_01, testing::ext::TestSize.Level1)
+{
+    unsigned char outBuf[SHA256_DIGEST_LENGTH] = {0};
+    Crypto::DmGenerateStrHash(nullptr, 32, outBuf, SHA256_DIGEST_LENGTH, 0);
+    bool unchanged = true;
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        if (outBuf[i] != 0) {
+            unchanged = false;
+            break;
+        }
+    }
+    EXPECT_TRUE(unchanged);
+}
+
+/**
+ * @tc.name: DmGenerateStrHash_02
+ * @tc.type: FUNC
+ * @tc.desc: Null outBuf param - early return without crash
+ */
+HWTEST_F(DmCryptoTest, DmGenerateStrHash_02, testing::ext::TestSize.Level1)
+{
+    std::string text = "testData";
+    Crypto::DmGenerateStrHash(text.data(), text.size(), nullptr, SHA256_DIGEST_LENGTH, 0);
+    EXPECT_TRUE(true);
+}
+
+/**
+ * @tc.name: DmGenerateStrHash_03
+ * @tc.type: FUNC
+ * @tc.desc: startIndex > outBufLen - early return without crash, outBuf unchanged
+ */
+HWTEST_F(DmCryptoTest, DmGenerateStrHash_03, testing::ext::TestSize.Level1)
+{
+    std::string text = "testData";
+    unsigned char outBuf[SHA256_DIGEST_LENGTH] = {0};
+    const uint32_t outBufLen = SHA256_DIGEST_LENGTH;
+    const uint32_t invalidStartIndex = outBufLen + 1;
+    Crypto::DmGenerateStrHash(text.data(), text.size(), outBuf, outBufLen, invalidStartIndex);
+    bool unchanged = true;
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        if (outBuf[i] != 0) {
+            unchanged = false;
+            break;
+        }
+    }
+    EXPECT_TRUE(unchanged);
+}
+
+/**
+ * @tc.name: DmGenerateStrHash_004
+ * @tc.type: FUNC
+ * @tc.desc: Normal case - hash is written to outBuf at startIndex offset
+ */
+HWTEST_F(DmCryptoTest, DmGenerateStrHash_004, testing::ext::TestSize.Level1)
+{
+    std::string text = "hello";
+    unsigned char hash[SHA256_DIGEST_LENGTH * 2] = {0};
+    Crypto::DmGenerateStrHash(text.data(), text.size(), hash, sizeof(hash), SHA256_DIGEST_LENGTH);
+    bool allZero = true;
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        if (hash[SHA256_DIGEST_LENGTH + i] != 0) {
+            allZero = false;
+            break;
+        }
+    }
+    EXPECT_FALSE(allZero);
+}
+
+/**
+ * @tc.name: ConvertHexStringToBytes_004
+ * @tc.type: FUNC
+ * @tc.desc: Invalid char in second position (c2) -> ERR_DM_FAILED
+ */
+HWTEST_F(DmCryptoTest, ConvertHexStringToBytes_004, testing::ext::TestSize.Level1)
+{
+    const char *hexInvalidC2 = "1g";
+    uint8_t out[1] = {0};
+    int32_t ret = Crypto::ConvertHexStringToBytes(out, 1, hexInvalidC2, 2);
+    EXPECT_EQ(ret, ERR_DM_FAILED);
+}
+
+/**
+ * @tc.name: ConvertHexStringToBytes_005
+ * @tc.type: FUNC
+ * @tc.desc: Valid mixed-case hex with letters in both positions -> DM_OK
+ */
+HWTEST_F(DmCryptoTest, ConvertHexStringToBytes_005, testing::ext::TestSize.Level1)
+{
+    const char *hexMixed = "Af";
+    uint8_t out[1] = {0};
+    int32_t ret = Crypto::ConvertHexStringToBytes(out, 1, hexMixed, 2);
+    EXPECT_EQ(ret, DM_OK);
+    EXPECT_EQ(out[0], 0xAF);
+}
+
+/**
+ * @tc.name: ConvertBytesToHexString_003
+ * @tc.type: FUNC
+ * @tc.desc: Zero-length input (inLen=0) -> DM_OK with empty output
+ */
+HWTEST_F(DmCryptoTest, ConvertBytesToHexString_003, testing::ext::TestSize.Level1)
+{
+    unsigned char in[1] = {0x00};
+    char out[1] = {0};
+    int32_t ret = Crypto::ConvertBytesToHexString(out, 1, in, 0);
+    EXPECT_EQ(ret, DM_OK);
+}
+
+/**
+ * @tc.name: ConvertBytesToHexString_004
+ * @tc.type: FUNC
+ * @tc.desc: Value exactly at DEC_MAX_NUM boundary (0x0A) -> letter branch
+ */
+HWTEST_F(DmCryptoTest, ConvertBytesToHexString_004, testing::ext::TestSize.Level1)
+{
+    unsigned char in[1] = {0x0A};
+    char out[3] = {0};
+    int32_t ret = Crypto::ConvertBytesToHexString(out, 3, in, 1);
+    EXPECT_EQ(ret, DM_OK);
+    EXPECT_STREQ(out, "0a");
+}
+
+/**
+ * @tc.name: GetUdidHash_03
+ * @tc.type: FUNC
+ * @tc.desc: int32_t overload with empty udid - should still return DM_OK
+ */
+HWTEST_F(DmCryptoTest, GetUdidHash_03, testing::ext::TestSize.Level1)
+{
+    char udidHash[DEVICE_UUID_LENGTH] = {0};
+    int32_t ret = Crypto::GetUdidHash("", reinterpret_cast<uint8_t *>(udidHash));
+    EXPECT_EQ(ret, DM_OK);
+}
+
+/**
+ * @tc.name: GetHashWithSalt_02
+ * @tc.type: FUNC
+ * @tc.desc: Empty text with salt - should return valid hash
+ */
+HWTEST_F(DmCryptoTest, GetHashWithSalt_02, testing::ext::TestSize.Level1)
+{
+    std::string salt = Crypto::GetSecSalt();
+    std::string hash = Crypto::GetHashWithSalt("", salt);
+    EXPECT_EQ(hash.length(), static_cast<size_t>(SHA256_HEX_LEN));
+}
+
+/**
+ * @tc.name: Sha256_02
+ * @tc.type: FUNC
+ * @tc.desc: Empty string input - should return 64-char hash
+ */
+HWTEST_F(DmCryptoTest, Sha256_02, testing::ext::TestSize.Level1)
+{
+    std::string hash = Crypto::Sha256("");
+    EXPECT_EQ(hash.length(), static_cast<size_t>(SHA256_HEX_LEN));
+    std::string hashUpper = Crypto::Sha256("", true);
+    EXPECT_EQ(hashUpper.length(), static_cast<size_t>(SHA256_HEX_LEN));
 }
 } // DistributedHardware
 } // OHOS
