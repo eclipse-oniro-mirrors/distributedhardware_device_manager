@@ -1947,5 +1947,41 @@ HWTEST_F(IpcCmdParserClientTest, TEST_REQUEST_NULL_003, testing::ext::TestSize.L
     EXPECT_EQ(TestIpcRequestNull(GET_OS_TYPE_BY_NETWORK), ERR_DM_FAILED);
 }
 } // namespace
+
+HWTEST_F(IpcCmdParserClientTest, SetIpcRequestFunc_Reg3rdDeviceInfo_002, testing::ext::TestSize.Level1)
+{
+    int32_t cmdCode = REG_3RD_DEVICE_INFO;
+    SetIpcRequestFunc ptr = GetIpcRequestFunc(cmdCode);
+    if (ptr == nullptr) {
+        GTEST_SKIP() << "REG_3RD_DEVICE_INFO handler not registered (LTO stripped)";
+    }
+    // encode failure: networkId longer than parcel default max capacity (200K) makes Encode3rdDeviceInfo fail
+    Dm3rdDeviceInfo info;
+    info.networkId = std::string(300 * 1024, 'n');
+    info.deviceName = "deviceName_reg3rd_cli_002";
+    info.deviceType = DmDeviceType::DEVICE_TYPE_PAD;
+    std::shared_ptr<IpcReg3rdDeviceReq> req = std::make_shared<IpcReg3rdDeviceReq>();
+    req->Set3rdDeviceInfo(info);
+    MessageParcel data;
+    int32_t ret = ptr(req, data);
+    ASSERT_EQ(ret, ERR_DM_IPC_WRITE_FAILED);
+}
+
+HWTEST_F(IpcCmdParserClientTest, SetIpcRequestFunc_Unreg3rdDeviceInfo_002, testing::ext::TestSize.Level1)
+{
+    int32_t cmdCode = UNREG_3RD_DEVICE_INFO;
+    SetIpcRequestFunc ptr = GetIpcRequestFunc(cmdCode);
+    if (ptr == nullptr) {
+        GTEST_SKIP() << "UNREG_3RD_DEVICE_INFO handler not registered (LTO stripped)";
+    }
+    // write failure: networkId longer than parcel default max capacity (200K) makes WriteString fail
+    std::shared_ptr<IpcCommonParamReq> req = std::make_shared<IpcCommonParamReq>();
+    req->SetFirstParam(std::string(300 * 1024, 'n'));
+    MessageParcel data;
+    int32_t ret = ptr(req, data);
+    ASSERT_EQ(ret, ERR_DM_IPC_WRITE_FAILED);
+}
+
+
 } // namespace DistributedHardware
 } // namespace OHOS

@@ -24,6 +24,7 @@
 #include "dm_device_info.h"
 #include "dm_single_instance.h"
 #include "ffrt.h"
+#include "i_dm_3rd_device_cache.h"
 
 namespace OHOS {
 namespace DistributedHardware {
@@ -34,44 +35,15 @@ struct Dm3rdCacheEntry {
     uint32_t registerTokenId = 0;
 };
 
-class Dm3rdDeviceCache {
+class Dm3rdDeviceCache : public IDm3rdDeviceCache {
     DM_DECLARE_SINGLE_INSTANCE(Dm3rdDeviceCache);
 
 public:
-    /**
-     * @brief Register or overwrite 3rd device info in memory cache.
-     * @param info 3rd device info, networkId and deviceName are required.
-     * @param tokenId caller tokenId from IPC context.
-     * @return Returns 0 if success.
-     */
-    int32_t Register3rdDevice(const Dm3rdDeviceInfo &info, uint32_t tokenId);
-
-    /**
-     * @brief UnRegister 3rd device info, only the registrant tokenId can unregister.
-     * @param networkId 3rd device networkId.
-     * @param tokenId caller tokenId from IPC context.
-     * @return Returns 0 if success.
-     */
-    int32_t UnRegister3rdDevice(const std::string &networkId, uint32_t tokenId);
-
-    /**
-     * @brief Get 3rd device info by networkId, fill DmDeviceInfo with extraData json.
-     * @param networkId 3rd device networkId.
-     * @param info output device info.
-     * @return Returns true if found.
-     */
-    bool Get3rdDeviceInfo(const std::string &networkId, DmDeviceInfo &info);
-
-    /**
-     * @brief Evict 3rd device info when a standard device with same networkId is online.
-     * @param networkId standard device networkId.
-     */
-    void OnStandardDeviceOnline(const std::string &networkId);
-
-    /**
-     * @brief Clear all 3rd device info, only for test or reset.
-     */
-    void DeleteAll3rdDeviceInfo();
+    int32_t Register3rdDevice(const Dm3rdDeviceInfo &info, uint32_t tokenId) override;
+    int32_t UnRegister3rdDevice(const std::string &networkId, uint32_t tokenId) override;
+    bool Get3rdDeviceInfo(const std::string &networkId, DmDeviceInfo &info) override;
+    void OnStandardDeviceOnline(const std::string &networkId) override;
+    void DeleteAll3rdDeviceInfo() override;
 
 private:
     int32_t CheckInputParam(const Dm3rdDeviceInfo &info) const;

@@ -1112,5 +1112,114 @@ HWTEST_F(DeviceManagerServiceTest, UnRegisterCallerAppId_002, testing::ext::Test
     EXPECT_EQ(DeviceManagerService::GetInstance().listener_, nullptr);
 }
 
+
+/**
+ * @tc.name: Register3rdDeviceInfo_006
+ * @tc.desc: register 3rd device success when caller is system app but not system SA
+ */
+HWTEST_F(DeviceManagerServiceTest, Register3rdDeviceInfo_006, testing::ext::TestSize.Level0)
+{
+    Dm3rdDeviceInfo info;
+    info.networkId = "networkId_3rd_svc_006";
+    info.deviceName = "deviceName_3rd_svc_006";
+    info.deviceType = DmDeviceType::DEVICE_TYPE_PAD;
+    EXPECT_CALL(*permissionManagerMock_, CheckAccessServicePermission()).WillRepeatedly(Return(true));
+    EXPECT_CALL(*appManagerMock_, IsSystemSA()).WillRepeatedly(Return(false));
+    EXPECT_CALL(*appManagerMock_, IsSystemApp()).WillRepeatedly(Return(true));
+    EXPECT_CALL(*softbusCacheMock_, GetLocalDeviceInfo(testing::_))
+        .WillOnce(testing::DoAll(
+            testing::WithArg<0>([](DmDeviceInfo &devInfo) {
+                std::string localNetworkId = "networkId_local_other_006";
+                (void)memcpy_s(devInfo.networkId, sizeof(devInfo.networkId),
+                    localNetworkId.c_str(), localNetworkId.length());
+            }),
+            Return(DM_OK)
+        ));
+    EXPECT_CALL(*softbusCacheMock_, GetDevInfoByNetworkId(testing::_, testing::_))
+        .WillOnce(Return(ERR_DM_FAILED));
+    Dm3rdDeviceCache::GetInstance().DeleteAll3rdDeviceInfo();
+    int32_t ret = DeviceManagerService::GetInstance().Register3rdDeviceInfo(info);
+    EXPECT_EQ(ret, DM_OK);
+    DmDeviceInfo devInfo;
+    EXPECT_TRUE(Dm3rdDeviceCache::GetInstance().Get3rdDeviceInfo(info.networkId, devInfo));
+    EXPECT_EQ(std::string(devInfo.networkId), info.networkId);
+    Dm3rdDeviceCache::GetInstance().DeleteAll3rdDeviceInfo();
+}
+
+/**
+ * @tc.name: UnRegister3rdDeviceInfo_005
+ * @tc.desc: unregister 3rd device success when caller is system app but not system SA
+ */
+HWTEST_F(DeviceManagerServiceTest, UnRegister3rdDeviceInfo_005, testing::ext::TestSize.Level0)
+{
+    Dm3rdDeviceInfo info;
+    info.networkId = "networkId_3rd_unreg_005";
+    info.deviceName = "deviceName_3rd_unreg_005";
+    Dm3rdDeviceCache::GetInstance().DeleteAll3rdDeviceInfo();
+    uint32_t tokenId = static_cast<uint32_t>(IPCSkeleton::GetCallingTokenID());
+    ASSERT_EQ(Dm3rdDeviceCache::GetInstance().Register3rdDevice(info, tokenId), DM_OK);
+    EXPECT_CALL(*permissionManagerMock_, CheckAccessServicePermission()).WillRepeatedly(Return(true));
+    EXPECT_CALL(*appManagerMock_, IsSystemSA()).WillRepeatedly(Return(false));
+    EXPECT_CALL(*appManagerMock_, IsSystemApp()).WillRepeatedly(Return(true));
+    int32_t ret = DeviceManagerService::GetInstance().UnRegister3rdDeviceInfo(info.networkId);
+    EXPECT_EQ(ret, DM_OK);
+    DmDeviceInfo devInfo;
+    EXPECT_FALSE(Dm3rdDeviceCache::GetInstance().Get3rdDeviceInfo(info.networkId, devInfo));
+}
+
+/**
+ * @tc.name: GetDeviceInfo_3rdFallback_003
+ * @tc.desc: GetDeviceInfo keeps empty device info when neither standard nor 3rd cache has the device
+ */
+HWTEST_F(DeviceManagerServiceTest, GetDeviceInfo_3rdFallback_003, testing::ext::TestSize.Level0)
+{
+    Dm3rdDeviceCache::GetInstance().DeleteAll3rdDeviceInfo();
+    std::string networkId = "networkId_3rd_fallback_003";
+    DeviceManagerService::GetInstance().softbusListener_ = std::make_shared<SoftbusListener>();
+    EXPECT_CALL(*permissionManagerMock_, CheckAccessServicePermission()).WillRepeatedly(Return(true));
+    EXPECT_CALL(*appManagerMock_, IsSystemSA()).WillRepeatedly(Return(true));
+    // listener succeeds with empty info (device not found) and 3rd cache has no entry either
+    EXPECT_CALL(*softbusListenerMock_, GetDeviceInfo(testing::_, testing::_))
+        .WillOnce(DoAll(WithArg<1>([](DmDeviceInfo &devInfo) {
+            (void)memset_s(&devInfo, sizeof(devInfo), 0, sizeof(devInfo));
+        }), Return(DM_OK)));
+
+    DmDeviceInfo devInfo;
+    int32_t ret = DeviceManagerService::GetInstance().GetDeviceInfo(networkId, devInfo);
+    DeviceManagerService::GetInstance().softbusListener_ = nullptr;
+    EXPECT_EQ(ret, DM_OK);
+    EXPECT_EQ(std::string(devInfo.networkId), "");
+    EXPECT_EQ(std::string(devInfo.deviceName), "");
+}
+
+/**
+ * @tc.name: GetDeviceInfo_3rdFallback_004
+ * @tc.desc: GetDeviceInfo returns listener result directly when peer device is the local device
+ */
+HWTEST_F(DeviceManagerServiceTest, GetDeviceInfo_3rdFallback_004, testing::ext::TestSize.Level0)
+{
+    char localUdid[DEVICE_UUID_LENGTH] = {0};
+    GetDevUdid(localUdid, DEVICE_UUID_LENGTH);
+    ASSERT_NE(std::string(localUdid), "");
+
+    std::string networkId = "networkId_3rd_fallback_004";
+    DeviceManagerService::GetInstance().softbusListener_ = std::make_shared<SoftbusListener>();
+    EXPECT_CALL(*permissionManagerMock_, CheckAccessServicePermission()).WillRepeatedly(Return(true));
+    EXPECT_CALL(*appManagerMock_, IsSystemSA()).WillRepeatedly(Return(true));
+    // udid of the queried networkId equals local device udid -> return listener result directly
+    EXPECT_CALL(*softbusListenerMock_, GetUdidByNetworkId(testing::_, testing::_))
+        .WillRepeatedly(DoAll(WithArg<1>([localUdid](std::string &udid) {
+            udid = std::string(localUdid);
+        }), Return(DM_OK)));
+    EXPECT_CALL(*softbusListenerMock_, GetDeviceInfo(testing::_, testing::_))
+        .WillOnce(Return(ERR_DM_FAILED));
+
+    DmDeviceInfo devInfo;
+    int32_t ret = DeviceManagerService::GetInstance().GetDeviceInfo(networkId, devInfo);
+    DeviceManagerService::GetInstance().softbusListener_ = nullptr;
+    EXPECT_EQ(ret, ERR_DM_FAILED);
+}
+
+
 } // namespace DistributedHardware
 } // namespace OHOS

@@ -1430,5 +1430,62 @@ HWTEST_F(IpcCmdParserServiceTest, ReadResponse_GetOsTypeByNetwork_001, testing::
     ASSERT_EQ(rsp->GetOsType(), 1);
 }
 } // namespace
+
+namespace {
+// parcel default max capacity is 200K; pre-write to fill it exactly, any later write fails
+constexpr size_t FILLED_PARCEL_SIZE = 204795;
+}
+
+HWTEST_F(IpcCmdParserServiceTest, OnIpcCmdFunc_Reg3rdDeviceInfo_003, testing::ext::TestSize.Level1)
+{
+    int32_t cmdCode = REG_3RD_DEVICE_INFO;
+    MessageParcel data;
+    MessageParcel reply;
+    ASSERT_TRUE(reply.WriteString(std::string(FILLED_PARCEL_SIZE, 'f')));
+    OnIpcCmdFunc ptr = GetIpcCmdFunc(cmdCode);
+    if (ptr == nullptr) {
+        GTEST_SKIP() << "REG_3RD_DEVICE_INFO handler not registered (LTO stripped)";
+    }
+    // decode failure with full reply: error code write fails, handler returns ERR_DM_IPC_WRITE_FAILED
+    int32_t ret = ptr(data, reply);
+    ASSERT_EQ(ret, ERR_DM_IPC_WRITE_FAILED);
+}
+
+HWTEST_F(IpcCmdParserServiceTest, OnIpcCmdFunc_Reg3rdDeviceInfo_004, testing::ext::TestSize.Level1)
+{
+    int32_t cmdCode = REG_3RD_DEVICE_INFO;
+    MessageParcel data;
+    MessageParcel reply;
+    Dm3rdDeviceInfo info;
+    info.networkId = "networkId_reg3rd_ipc_004";
+    info.deviceName = "deviceName_reg3rd_ipc_004";
+    info.deviceType = DmDeviceType::DEVICE_TYPE_WIFI_CAMERA;
+    ASSERT_TRUE(IpcModelCodec::Encode3rdDeviceInfo(info, data));
+    ASSERT_TRUE(reply.WriteString(std::string(FILLED_PARCEL_SIZE, 'f')));
+    OnIpcCmdFunc ptr = GetIpcCmdFunc(cmdCode);
+    if (ptr == nullptr) {
+        GTEST_SKIP() << "REG_3RD_DEVICE_INFO handler not registered (LTO stripped)";
+    }
+    // valid data with full reply: result write fails, handler returns ERR_DM_IPC_WRITE_FAILED
+    int32_t ret = ptr(data, reply);
+    ASSERT_EQ(ret, ERR_DM_IPC_WRITE_FAILED);
+}
+
+HWTEST_F(IpcCmdParserServiceTest, OnIpcCmdFunc_Unreg3rdDeviceInfo_003, testing::ext::TestSize.Level1)
+{
+    int32_t cmdCode = UNREG_3RD_DEVICE_INFO;
+    MessageParcel data;
+    MessageParcel reply;
+    ASSERT_TRUE(data.WriteString(std::string("networkId_unreg3rd_ipc_003")));
+    ASSERT_TRUE(reply.WriteString(std::string(FILLED_PARCEL_SIZE, 'f')));
+    OnIpcCmdFunc ptr = GetIpcCmdFunc(cmdCode);
+    if (ptr == nullptr) {
+        GTEST_SKIP() << "UNREG_3RD_DEVICE_INFO handler not registered (LTO stripped)";
+    }
+    // valid data with full reply: result write fails, handler returns ERR_DM_IPC_WRITE_FAILED
+    int32_t ret = ptr(data, reply);
+    ASSERT_EQ(ret, ERR_DM_IPC_WRITE_FAILED);
+}
+
 } // namespace DistributedHardware
 } // namespace OHOS
