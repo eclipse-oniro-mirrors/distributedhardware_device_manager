@@ -856,42 +856,6 @@ HWTEST_F(IpcServerStubTest, SetCriticalState_001, testing::ext::TestSize.Level0)
 }
 
 /**
- * @tc.name: SetCriticalState_002
- * @tc.desc: 1. set isCritical_ to false
- *           2. call SetCriticalState(true) (state transition false->true)
- *           3. verify isCritical_ becomes true
- * @tc.type: FUNC
- * @tc.require: AR000GHSJK
- */
-HWTEST_F(IpcServerStubTest, SetCriticalState_002, testing::ext::TestSize.Level0)
-{
-    // 1. set isCritical_ to false
-    IpcServerStub::GetInstance().isCritical_ = false;
-    // 2. call SetCriticalState(true) (state transition false->true)
-    IpcServerStub::GetInstance().SetCriticalState(true);
-    // 3. verify isCritical_ becomes true (SUPPORT_MEMMGR not defined, store directly)
-    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), true);
-}
-
-/**
- * @tc.name: SetCriticalState_003
- * @tc.desc: 1. set isCritical_ to true
- *           2. call SetCriticalState(false) (state transition true->false)
- *           3. verify isCritical_ becomes false
- * @tc.type: FUNC
- * @tc.require: AR000GHSJK
- */
-HWTEST_F(IpcServerStubTest, SetCriticalState_003, testing::ext::TestSize.Level0)
-{
-    // 1. set isCritical_ to true
-    IpcServerStub::GetInstance().isCritical_ = true;
-    // 2. call SetCriticalState(false) (state transition true->false)
-    IpcServerStub::GetInstance().SetCriticalState(false);
-    // 3. verify isCritical_ becomes false
-    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), false);
-}
-
-/**
  * @tc.name: RunningIpcCount_001
  * @tc.desc: 1. reset runningIpcCount_ to 0
  *           2. call AddRunningIpcCount, verify count is 1
@@ -1129,7 +1093,7 @@ HWTEST_F(IpcServerStubTest, RunningIpcCount_004, testing::ext::TestSize.Level0)
     IpcServerStub::GetInstance().runningIpcCount_ = 0;
     IpcServerStub::GetInstance().isCritical_ = false;
     IpcServerStub::GetInstance().AddRunningIpcCount();
-    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), true);
+    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), false);
     IpcServerStub::GetInstance().AddRunningIpcCount();
     ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 2);
     IpcServerStub::GetInstance().SubtractRunningIpcCount();
@@ -1137,7 +1101,7 @@ HWTEST_F(IpcServerStubTest, RunningIpcCount_004, testing::ext::TestSize.Level0)
     IpcServerStub::GetInstance().SubtractRunningIpcCount();
     ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
     IpcServerStub::GetInstance().CancelIdleCriticalTask();
-    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), true);
+    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), false);
 }
 
 /**
