@@ -46,7 +46,14 @@ void DmNativeEvent::On(std::string &eventType, napi_value handler)
     std::lock_guard<std::mutex> autoLock(eventMapLock_);
     auto listener = std::make_shared<DmEventListener>();
     listener->eventType = eventType;
-    napi_create_reference(env_, handler, 1, &listener->handlerRef);
+    if (napi_create_reference(env_, handler, 1, &listener->handlerRef) != napi_ok) {
+        LOGE("create reference failed");
+        return;
+    }
+    auto iter = eventMap_.find(eventType);
+    if (iter != eventMap_.end() && iter->second != nullptr) {
+        napi_delete_reference(env_, iter->second->handlerRef);
+    }
     eventMap_[eventType] = listener;
 }
 
@@ -88,33 +95,36 @@ void DmNativeEvent::OnEvent(const std::string &eventType, size_t argc, const nap
         return;
     }
 
-    std::lock_guard<std::mutex> autoLock(eventMapLock_);
-    auto iter = eventMap_.find(eventType);
-    if (iter == eventMap_.end()) {
-        LOGE("eventType %{public}s not find", eventType.c_str());
-        napi_close_handle_scope(env_, scope);
-        return;
-    }
-    auto listener = iter->second;
     napi_value thisVar = nullptr;
-    status = napi_get_reference_value(env_, thisVarRef_, &thisVar);
-    if (status != napi_ok) {
-        LOGE("napi_get_reference_value thisVar for %{public}s failed, status = %{public}d", eventType.c_str(), status);
-        napi_close_handle_scope(env_, scope);
-        return;
-    }
-
     napi_value handler = nullptr;
-    if (listener == nullptr) {
-        LOGE("listener is null for %{public}s", eventType.c_str());
-        napi_close_handle_scope(env_, scope);
-        return;
-    }
-    status = napi_get_reference_value(env_, listener->handlerRef, &handler);
-    if (status != napi_ok) {
-        LOGE("napi_get_reference_value handler for %{public}s failed, status = %{public}d", eventType.c_str(), status);
-        napi_close_handle_scope(env_, scope);
-        return;
+    {
+        std::lock_guard<std::mutex> autoLock(eventMapLock_);
+        auto iter = eventMap_.find(eventType);
+        if (iter == eventMap_.end()) {
+            LOGE("eventType %{public}s not find", eventType.c_str());
+            napi_close_handle_scope(env_, scope);
+            return;
+        }
+        auto listener = iter->second;
+        if (listener == nullptr) {
+            LOGE("listener is null for %{public}s", eventType.c_str());
+            napi_close_handle_scope(env_, scope);
+            return;
+        }
+        status = napi_get_reference_value(env_, thisVarRef_, &thisVar);
+        if (status != napi_ok) {
+            LOGE("napi_get_reference_value thisVar for %{public}s failed, "
+                 "status = %{public}d", eventType.c_str(), status);
+            napi_close_handle_scope(env_, scope);
+            return;
+        }
+        status = napi_get_reference_value(env_, listener->handlerRef, &handler);
+        if (status != napi_ok) {
+            LOGE("napi_get_reference_value handler for %{public}s failed, "
+                 "status = %{public}d", eventType.c_str(), status);
+            napi_close_handle_scope(env_, scope);
+            return;
+        }
     }
 
     napi_value callResult = nullptr;

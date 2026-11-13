@@ -380,7 +380,8 @@ public:
     static napi_value JsRestoreLocalDeviceName(napi_env env, napi_callback_info info);
     static napi_value GetIdentificationByDeviceIds(napi_env env, napi_callback_info info);
     static napi_value JsGetDeviceNetworkIdList(napi_env env, napi_callback_info info);
-    static DeviceManagerNapi *GetDeviceManagerNapi(std::string &bundleName);
+    static std::shared_ptr<DeviceManagerNapi> GetDeviceManagerNapi(std::string &bundleName);
+    static bool HasDeviceManagerNapi(std::string &bundleName);
     static void CreateDmCallback(napi_env env, std::string &bundleName, std::string &eventType);
     static void CreateDmCallback(napi_env env, std::string &bundleName, std::string &eventType, std::string &extra);
     static void ReleaseDmCallback(std::string &bundleName, std::string &eventType);
@@ -435,6 +436,8 @@ private:
     napi_env env_;
     static thread_local napi_ref sConstructor_;
     std::string bundleName_;
+    napi_ref wrapperRef_ = nullptr;
     static AuthAsyncCallbackInfo authAsyncCallbackInfo_;
+    static void DeleteDeviceManagerWrapper(napi_env env, void *data, void *hint);
 };
 #endif // OHOS_DM_NATIVE_DEVICEMANAGER_JS_H
