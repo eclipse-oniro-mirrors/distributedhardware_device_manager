@@ -513,7 +513,7 @@ HWTEST_F(IpcClientManagerTest, SendRequest_010, testing::ext::TestSize.Level0)
 
     // 2. set IpcClientManager dmInterface_ null (triggers re-init)
     std::shared_ptr<IpcRegisterListenerReq> req = std::make_shared<IpcRegisterListenerReq>();
-    std::shared_ptr<IpcReq> rsp = std::make_shared<IpcRsp>();
+    std::shared_ptr<IpcRsq> rsp = std::make_shared<IpcRsp>();
     req->SetPkgName("com.ohos.test");
     std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
     instance->dmInterface_ = nullptr;
@@ -864,7 +864,7 @@ HWTEST_F(IpcClientManagerTest, ClientInit_005, testing::ext::TestSize.Level0)
  */
 HWTEST_F(IpcClientManagerTest, OnDmServiceDied_004, testing::ext::TestSize.Level0)
 {
-    sptr<IRemoteObject> remoteObject = nullptr;
+    sptr<IRemoteObject> remoteObject = sptr<IpcClientStub>(new IpcClientStub());
     auto mockInstance = new MockIpcClientManager(remoteObject);
     std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
     instance->dmInterface_ = mockInstance;
