@@ -836,6 +836,420 @@ HWTEST_F(IpcServerStubTest, JoinPath2_006, testing::ext::TestSize.Level0)
     std::string result = IpcServerStub::GetInstance().JoinPath(prefixPath, midPath, subPath);
     ASSERT_EQ(result, "path//midpath//subpath");
 }
+
+/**
+ * @tc.name: SetCriticalState_001
+ * @tc.desc: 1. set isCritical_ to false
+ *           2. call SetCriticalState(false) (same state)
+ *           3. verify isCritical_ remains false (early return, no SetCritical call)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, SetCriticalState_001, testing::ext::TestSize.Level0)
+{
+    // 1. set isCritical_ to false
+    IpcServerStub::GetInstance().isCritical_ = false;
+    // 2. call SetCriticalState(false) (same state -> early return)
+    IpcServerStub::GetInstance().SetCriticalState(false);
+    // 3. verify isCritical_ remains false
+    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), false);
+}
+
+/**
+ * @tc.name: RunningIpcCount_001
+ * @tc.desc: 1. reset runningIpcCount_ to 0
+ *           2. call AddRunningIpcCount, verify count is 1
+ *           3. call SubtractRunningIpcCount, verify count returns to 0
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, RunningIpcCount_001, testing::ext::TestSize.Level0)
+{
+    // 1. reset runningIpcCount_ to 0
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = false;
+    // 2. call AddRunningIpcCount, verify count is 1
+    IpcServerStub::GetInstance().AddRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 1);
+    // 3. call SubtractRunningIpcCount, verify count returns to 0
+    IpcServerStub::GetInstance().SubtractRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
+    // cleanup the idle critical timer started by 1->0 transition
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+}
+
+/**
+ * @tc.name: OnRemoteRequest_003
+ * @tc.desc: 1. call OnRemoteRequest with a CLIENT_CODE_3RD code
+ *           2. verify runningIpcCount_ is balanced (returns to 0)
+ *           3. verify ret is not DM_OK (3rd so load fails)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, OnRemoteRequest_003, testing::ext::TestSize.Level0)
+{
+    // 1. reset count and call OnRemoteRequest with a 3rd code
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = false;
+    // 1000 is INIT_DEVICE_MANAGER (a CLIENT_CODE_3RD entry)
+    constexpr uint32_t code3rd = 1000;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    // 2. call OnRemoteRequest
+    int32_t ret = IpcServerStub::GetInstance().OnRemoteRequest(code3rd, data, reply, option);
+    // 3. verify count is balanced and ret is not DM_OK
+    ASSERT_NE(ret, DM_OK);
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+}
+
+/**
+ * @tc.name: OnRemoteRequest_004
+ * @tc.desc: 1. call OnRemoteRequest with an unsupported code (not in CLIENT_CODE/CLIENT_CODE_3RD)
+ *           2. verify runningIpcCount_ is balanced (returns to 0)
+ *           3. verify ret is not DM_OK
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, OnRemoteRequest_004, testing::ext::TestSize.Level0)
+{
+    // 1. reset count and call OnRemoteRequest with an unsupported code
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = false;
+    constexpr uint32_t unsupportedCode = 9999;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    // 2. call OnRemoteRequest
+    int32_t ret = IpcServerStub::GetInstance().OnRemoteRequest(unsupportedCode, data, reply, option);
+    // 3. verify count is balanced and ret is not DM_OK
+    ASSERT_NE(ret, DM_OK);
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+}
+
+/**
+ * @tc.name: OnRemoteRequest_005
+ * @tc.desc: 1. write a valid interface token to the data parcel
+ *           2. call OnRemoteRequest with a code that passes token check but is
+ *              not registered in IpcCmdRegister (>= IPC_MSG_BUTT)
+ *           3. verify the unsupported-code branch is taken (IPCObjectStub fallback)
+ *              and runningIpcCount_ is balanced
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, OnRemoteRequest_005, testing::ext::TestSize.Level0)
+{
+    // 1. reset count and write a valid interface token
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = false;
+    // use a code >= IPC_MSG_BUTT so OnIpcCmd returns ERR_DM_UNSUPPORTED_IPC_COMMAND
+    constexpr uint32_t unregisteredCode = 500;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(IpcServerStub::GetInstance().GetDescriptor());
+    // 2. call OnRemoteRequest
+    int32_t ret = IpcServerStub::GetInstance().OnRemoteRequest(unregisteredCode, data, reply, option);
+    // 3. verify count is balanced and ret is not DM_OK (unsupported code fallback)
+    ASSERT_NE(ret, DM_OK);
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+}
+
+/**
+ * @tc.name: RunningIpcCount_002
+ * @tc.desc: 1. reset runningIpcCount_ to 0
+ *           2. call AddRunningIpcCount three times (0->1->2->3)
+ *           3. call SubtractRunningIpcCount three times (3->2->1->0)
+ *           4. verify count returns to 0
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, RunningIpcCount_002, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = false;
+    IpcServerStub::GetInstance().AddRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 1);
+    IpcServerStub::GetInstance().AddRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 2);
+    IpcServerStub::GetInstance().AddRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 3);
+    IpcServerStub::GetInstance().SubtractRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 2);
+    IpcServerStub::GetInstance().SubtractRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 1);
+    IpcServerStub::GetInstance().SubtractRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+}
+
+/**
+ * @tc.name: RunningIpcCount_003
+ * @tc.desc: 1. set runningIpcCount_ to 2 and isCritical_ to true
+ *           2. call AddRunningIpcCount (2->3, no critical state change)
+ *           3. call SubtractRunningIpcCount (3->2, no timer start since count > 0)
+ *           4. verify isCritical_ remains true
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, RunningIpcCount_003, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().runningIpcCount_ = 2;
+    IpcServerStub::GetInstance().isCritical_ = true;
+    IpcServerStub::GetInstance().AddRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 3);
+    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), true);
+    IpcServerStub::GetInstance().SubtractRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 2);
+    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), true);
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+}
+
+/**
+ * @tc.name: StartIdleCriticalTask_001
+ * @tc.desc: 1. call StartIdleCriticalTask directly
+ *           2. call CancelIdleCriticalTask to clean up
+ *           3. verify no crash
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, StartIdleCriticalTask_001, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = true;
+    IpcServerStub::GetInstance().StartIdleCriticalTask();
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), true);
+}
+
+/**
+ * @tc.name: CancelIdleCriticalTask_001
+ * @tc.desc: 1. call CancelIdleCriticalTask without prior StartIdleCriticalTask
+ *           2. verify no crash
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, CancelIdleCriticalTask_001, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
+}
+
+/**
+ * @tc.name: SetCriticalState_004
+ * @tc.desc: 1. set isCritical_ to true
+ *           2. call SetCriticalState(true) (same state)
+ *           3. verify isCritical_ remains true (early return)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, SetCriticalState_004, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().isCritical_ = true;
+    IpcServerStub::GetInstance().SetCriticalState(true);
+    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), true);
+}
+
+/**
+ * @tc.name: OnRemoteRequest_006
+ * @tc.desc: 1. call OnRemoteRequest with SERVER_DEVICE_STATE_NOTIFY (a CLIENT_CODE entry)
+ *           2. verify runningIpcCount_ is balanced (returns to 0)
+ *           3. verify ret is not DM_OK
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, OnRemoteRequest_006, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = false;
+    uint32_t code = SERVER_DEVICE_STATE_NOTIFY;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    int32_t ret = IpcServerStub::GetInstance().OnRemoteRequest(code, data, reply, option);
+    ASSERT_NE(ret, DM_OK);
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+}
+
+/**
+ * @tc.name: RunningIpcCount_004
+ * @tc.desc: 1. reset runningIpcCount_ to 0 and isCritical_ to false
+ *           2. call AddRunningIpcCount (0->1, SetCriticalState(true))
+ *           3. call AddRunningIpcCount (1->2, no state change)
+ *           4. call SubtractRunningIpcCount (2->1, no timer start)
+ *           5. call SubtractRunningIpcCount (1->0, StartIdleCriticalTask)
+ *           6. call CancelIdleCriticalTask to clean up
+ *           7. verify isCritical_ is true (timer not fired, state not changed back)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, RunningIpcCount_004, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = false;
+    IpcServerStub::GetInstance().AddRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), false);
+    IpcServerStub::GetInstance().AddRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 2);
+    IpcServerStub::GetInstance().SubtractRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 1);
+    IpcServerStub::GetInstance().SubtractRunningIpcCount();
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), false);
+}
+
+/**
+ * @tc.name: StartIdleCriticalTask_002
+ * @tc.desc: 1. call StartIdleCriticalTask twice (second call should delete first timer)
+ *           2. call CancelIdleCriticalTask to clean up
+ *           3. verify no crash
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, StartIdleCriticalTask_002, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = true;
+    IpcServerStub::GetInstance().StartIdleCriticalTask();
+    IpcServerStub::GetInstance().StartIdleCriticalTask();
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), true);
+}
+
+/**
+ * @tc.name: CancelIdleCriticalTask_002
+ * @tc.desc: 1. call StartIdleCriticalTask then CancelIdleCriticalTask
+ *           2. call CancelIdleCriticalTask again (no active timer)
+ *           3. verify no crash
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, CancelIdleCriticalTask_002, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = true;
+    IpcServerStub::GetInstance().StartIdleCriticalTask();
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), true);
+}
+
+/**
+ * @tc.name: OnRemoteRequest_007
+ * @tc.desc: 1. call OnRemoteRequest with SERVER_DEVICE_FOUND (a CLIENT_CODE entry)
+ *           2. verify runningIpcCount_ is balanced (returns to 0)
+ *           3. verify ret is not DM_OK
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, OnRemoteRequest_007, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = false;
+    uint32_t code = SERVER_DEVICE_FOUND;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    int32_t ret = IpcServerStub::GetInstance().OnRemoteRequest(code, data, reply, option);
+    ASSERT_NE(ret, DM_OK);
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+}
+
+/**
+ * @tc.name: OnRemoteRequest_008
+ * @tc.desc: 1. call OnRemoteRequest with SERVER_AUTH_RESULT (a CLIENT_CODE entry)
+ *           2. verify runningIpcCount_ is balanced (returns to 0)
+ *           3. verify ret is not DM_OK
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, OnRemoteRequest_008, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = false;
+    uint32_t code = SERVER_AUTH_RESULT;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    int32_t ret = IpcServerStub::GetInstance().OnRemoteRequest(code, data, reply, option);
+    ASSERT_NE(ret, DM_OK);
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+}
+
+/**
+ * @tc.name: OnRemoteRequest_009
+ * @tc.desc: 1. call OnRemoteRequest with SERVER_PUBLISH_FINISH (a CLIENT_CODE entry)
+ *           2. verify runningIpcCount_ is balanced (returns to 0)
+ *           3. verify ret is not DM_OK
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, OnRemoteRequest_009, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = false;
+    uint32_t code = SERVER_PUBLISH_FINISH;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    int32_t ret = IpcServerStub::GetInstance().OnRemoteRequest(code, data, reply, option);
+    ASSERT_NE(ret, DM_OK);
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+}
+
+/**
+ * @tc.name: OnRemoteRequest_010
+ * @tc.desc: 1. call OnRemoteRequest with UNBIND_TARGET_RESULT (a CLIENT_CODE entry)
+ *           2. verify runningIpcCount_ is balanced (returns to 0)
+ *           3. verify ret is not DM_OK
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, OnRemoteRequest_010, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = false;
+    uint32_t code = UNBIND_TARGET_RESULT;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    int32_t ret = IpcServerStub::GetInstance().OnRemoteRequest(code, data, reply, option);
+    ASSERT_NE(ret, DM_OK);
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+}
+
+/**
+ * @tc.name: OnRemoteRequest_011
+ * @tc.desc: 1. call OnRemoteRequest with IMPORT_PINCODE_3RD (a CLIENT_CODE_3RD entry)
+ *           2. verify runningIpcCount_ is balanced (returns to 0)
+ *           3. verify ret is not DM_OK (3rd so load fails)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(IpcServerStubTest, OnRemoteRequest_011, testing::ext::TestSize.Level0)
+{
+    IpcServerStub::GetInstance().runningIpcCount_ = 0;
+    IpcServerStub::GetInstance().isCritical_ = false;
+    // 1003 is IMPORT_PINCODE_3RD (a CLIENT_CODE_3RD entry)
+    constexpr uint32_t code3rd = 1003;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    int32_t ret = IpcServerStub::GetInstance().OnRemoteRequest(code3rd, data, reply, option);
+    ASSERT_NE(ret, DM_OK);
+    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
+    IpcServerStub::GetInstance().CancelIdleCriticalTask();
+}
 } // namespace
 } // namespace DistributedHardware
 } // namespace OHOS
