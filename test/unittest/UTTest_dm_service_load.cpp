@@ -210,7 +210,7 @@ HWTEST_F(DmServiceLoadTest, OnLoadSystemAbilitySuccess_002, testing::ext::TestSi
     // 1. construct a real DMLoadCallback with a non-null remoteObject
     DMLoadCallback dmLoadCallback;
     int32_t systemAbilityId = 1002;
-    sptr<IRemoteObject> remoteObject = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
+    sptr<IRemoteObject> remoteObject = sptr<DMLoadCallback>(new DMLoadCallback());
     // 2. call OnLoadSystemAbilitySuccess with non-null remoteObject (no early return)
     DmServiceLoad::GetInstance().isDMServiceLoading_ = true;
     dmLoadCallback.OnLoadSystemAbilitySuccess(systemAbilityId, remoteObject);
@@ -507,7 +507,7 @@ HWTEST_F(DmServiceLoadTest, OnLoadSystemAbilitySuccess_003, testing::ext::TestSi
 {
     DMLoadCallback dmLoadCallback;
     int32_t systemAbilityId = 1004;
-    sptr<IRemoteObject> remoteObject = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
+    sptr<IRemoteObject> remoteObject = sptr<DMLoadCallback>(new DMLoadCallback());
     DmServiceLoad::GetInstance().isDMServiceLoading_ = true;
     DmServiceLoad::GetInstance().loadFailed_ = true;
     dmLoadCallback.OnLoadSystemAbilitySuccess(systemAbilityId, remoteObject);
