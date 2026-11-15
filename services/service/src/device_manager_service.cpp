@@ -502,12 +502,10 @@ int32_t DeviceManagerService::GetTrustedDeviceList(const std::string &pkgName, c
     int32_t userId = MultipleUserConnector::GetCallerUserIdInCar(extra);
     if (userId < 0) {
         LOGE("get caller userId failed");
-        return ERR_DM_FAILED;
+        return ERR_DM_GET_LOCAL_USERID_FAILED;
     }
     processInfo.userId = userId;
     processInfo.accountId = MultipleUserConnector::GetAccountIdByUserId(processInfo.userId);
-    LOGI("pkgName: %{public}s, userId: %{public}d, accountId: %{public}s",
-        processInfo.pkgName.c_str(), processInfo.userId, GetAnonyString(processInfo.accountId).c_str());
     return GetTrustedDeviceList(processInfo, deviceList);
 }
 #else
