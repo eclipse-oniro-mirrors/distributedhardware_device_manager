@@ -1043,5 +1043,47 @@ HWTEST_F(IpcModelCodecTest, EncodeServiceSyncInfo_003, testing::ext::TestSize.Le
     EXPECT_EQ(decodedInfo.callerUserId, -100);
 }
 
+/**
+ * @tc.name: Decode3rdDeviceInfo_006
+ * @tc.desc: Decode3rdDeviceInfo fails when extendParam size field is missing
+ *           Step 1: Manually write networkId/deviceName/deviceType only, no mapSize field
+ *           Step 2: Call Decode3rdDeviceInfo
+ *           Step 3: Verify return value is false
+ * @tc.type: FUNC
+ */
+HWTEST_F(IpcModelCodecTest, Decode3rdDeviceInfo_006, testing::ext::TestSize.Level1)
+{
+    MessageParcel parcel;
+    ASSERT_TRUE(parcel.WriteString("3rd_networkId_006"));
+    ASSERT_TRUE(parcel.WriteString("3rd_deviceName_006"));
+    ASSERT_TRUE(parcel.WriteUint16(DmDeviceType::DEVICE_TYPE_WIFI_CAMERA));
+    // mapSize field intentionally missing to trigger ReadUint32 failure
+
+    Dm3rdDeviceInfo decodedInfo;
+    bool decodeRet = IpcModelCodec::Decode3rdDeviceInfo(parcel, decodedInfo);
+    EXPECT_EQ(decodeRet, false);
+}
+
+/**
+ * @tc.name: Encode3rdDeviceInfo_003
+ * @tc.desc: Encode3rdDeviceInfo fails when extendParam value exceeds parcel capacity
+ *           Step 1: Prepare Dm3rdDeviceInfo with a huge extendParam value (over 200K parcel capacity limit)
+ *           Step 2: Call Encode3rdDeviceInfo
+ *           Step 3: Verify return value is false
+ * @tc.type: FUNC
+ */
+HWTEST_F(IpcModelCodecTest, Encode3rdDeviceInfo_003, testing::ext::TestSize.Level1)
+{
+    Dm3rdDeviceInfo info;
+    info.networkId = "3rd_networkId_003";
+    info.deviceName = "3rd_deviceName_003";
+    info.deviceType = DmDeviceType::DEVICE_TYPE_WIFI_CAMERA;
+    // value longer than parcel default max capacity (200K) makes WriteString fail inside extendParam loop
+    info.extendParam = {{"customKey", std::string(300 * 1024, 'v')}};
+    MessageParcel parcel;
+    EXPECT_EQ(IpcModelCodec::Encode3rdDeviceInfo(info, parcel), false);
+}
+
+
 } // namespace DistributedHardware
 } // namespace OHOS

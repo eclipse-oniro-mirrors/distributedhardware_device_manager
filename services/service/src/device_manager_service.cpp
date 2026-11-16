@@ -27,7 +27,6 @@
 #include "dm_device_info.h"
 #include "dm_hidumper.h"
 #include "dm_softbus_cache.h"
-#include "dm_3rd_device_cache.h"
 #include "json_object.h"
 #include "parameter.h"
 #include "permission_manager.h"
@@ -66,6 +65,7 @@
 #include "ipc_server_stub.h"
 
 constexpr const char* LIB_IMPL_NAME = "libdevicemanagerserviceimpl.z.so";
+constexpr const char* LIB_3RD_DEVICE_CACHE_NAME = "libdm3rddevicecache.z.so";
 using namespace OHOS::EventFwk;
 constexpr const char* LIB_DM_ADAPTER_NAME = "libdevicemanageradapter.z.so";
 constexpr const char* LIB_DM_RESIDENT_NAME = "libdevicemanagerresident.z.so";
@@ -627,13 +627,30 @@ int32_t DeviceManagerService::GetDeviceInfo(const std::string &networkId, DmDevi
         return ERR_DM_NO_PERMISSION;
     }
     CHECK_NULL_RETURN(softbusListener_, ERR_DM_POINT_NULL);
-    int32_t ret = softbusListener_->GetDeviceInfo(networkId, info);
+    std::string peerDeviceId = "";
+    SoftbusListener::GetUdidByNetworkId(networkId.c_str(), peerDeviceId);
+    int32_t ret = DM_OK;
+    if (!IsDMServiceImplReady()) {
+        LOGE("instance not init or init failed.");
+        return ERR_DM_NOT_INIT;
+    }
+    char localDeviceId[DEVICE_UUID_LENGTH] = {0};
+    GetDevUdid(localDeviceId, DEVICE_UUID_LENGTH);
+    std::string localUdid = static_cast<std::string>(localDeviceId);
+    if (localUdid == peerDeviceId) {
+        ret = softbusListener_->GetDeviceInfo(networkId, info);
+        if (ret != DM_OK) {
+            LOGE("Get DeviceInfo By NetworkId failed, ret : %{public}d", ret);
+        }
+        return ret;
+    }
+    ret = softbusListener_->GetDeviceInfo(networkId, info);
     if (ret != DM_OK) {
         return ret;
     }
     if (info.networkId[0] == '\0') {
         // standard device info not found, fallback to 3rd device cache
-        if (Dm3rdDeviceCache::GetInstance().Get3rdDeviceInfo(networkId, info)) {
+        if (IsDM3rdDeviceCacheReady() && dm3rdDeviceCache_->Get3rdDeviceInfo(networkId, info)) {
             LOGI("get device info from 3rd device cache, networkId %{public}s",
                 GetAnonyString(networkId).c_str());
         }
@@ -667,8 +684,12 @@ int32_t DeviceManagerService::Register3rdDeviceInfo(const Dm3rdDeviceInfo &info)
         LOGE("networkId conflicts with standard networking device");
         return ERR_DM_MAP_KEY_ALREADY_EXISTS;
     }
+    if (!IsDM3rdDeviceCacheReady()) {
+        LOGE("3rd device cache is not ready.");
+        return ERR_DM_NOT_INIT;
+    }
     uint32_t tokenId = static_cast<uint32_t>(IPCSkeleton::GetCallingTokenID());
-    return Dm3rdDeviceCache::GetInstance().Register3rdDevice(info, tokenId);
+    return dm3rdDeviceCache_->Register3rdDevice(info, tokenId);
 }
 
 int32_t DeviceManagerService::UnRegister3rdDeviceInfo(const std::string &networkId)
@@ -686,8 +707,12 @@ int32_t DeviceManagerService::UnRegister3rdDeviceInfo(const std::string &network
         LOGE("The caller does not have permission.");
         return ERR_DM_NO_PERMISSION;
     }
+    if (!IsDM3rdDeviceCacheReady()) {
+        LOGE("3rd device cache is not ready.");
+        return ERR_DM_NOT_INIT;
+    }
     uint32_t tokenId = static_cast<uint32_t>(IPCSkeleton::GetCallingTokenID());
-    return Dm3rdDeviceCache::GetInstance().UnRegister3rdDevice(networkId, tokenId);
+    return dm3rdDeviceCache_->UnRegister3rdDevice(networkId, tokenId);
 }
 
 int32_t DeviceManagerService::GetDeviceNameByNetworkId(const std::string &networkId, std::string &deviceName)
@@ -1427,8 +1452,8 @@ static std::string GetLocalDeviceUdid()
 void DeviceManagerService::HandleDeviceStatusChange(DmDeviceState devState, DmDeviceInfo &devInfo, const bool isOnline)
 {
     LOGI("start.");
-    if (devState == DEVICE_STATE_ONLINE || devState == DEVICE_INFO_CHANGED) {
-        Dm3rdDeviceCache::GetInstance().OnStandardDeviceOnline(std::string(devInfo.networkId));
+    if ((devState == DEVICE_STATE_ONLINE || devState == DEVICE_INFO_CHANGED) && IsDM3rdDeviceCacheReady()) {
+        dm3rdDeviceCache_->OnStandardDeviceOnline(std::string(devInfo.networkId));
     }
     if (IsDMServiceImplReady()) {
         dmServiceImpl_->HandleDeviceStatusChange(devState, devInfo, isOnline);
@@ -1634,6 +1659,45 @@ bool DeviceManagerService::IsDMServiceImplReady()
         return false;
     }
     isImplsoLoaded_ = true;
+    LOGI("Sussess.");
+    return true;
+}
+
+bool DeviceManagerService::IsDM3rdDeviceCacheReady()
+{
+#if !(defined(__LITEOS_M__) || defined(LITE_DEVICE))
+    std::lock_guard<ffrt::mutex> lock(is3rdCacheLoadLock_);
+#else
+    std::lock_guard<std::mutex> lock(is3rdCacheLoadLock_);
+#endif
+    if (is3rdCacheLoaded_ && (dm3rdDeviceCache_ != nullptr)) {
+        return true;
+    }
+    LOGI("libdm3rddevicecache start load.");
+    dm3rdDeviceCacheSoHandle_ = dlopen(LIB_3RD_DEVICE_CACHE_NAME, RTLD_NOW | RTLD_NODELETE | RTLD_NOLOAD);
+    if (dm3rdDeviceCacheSoHandle_ == nullptr) {
+        dm3rdDeviceCacheSoHandle_ = dlopen(LIB_3RD_DEVICE_CACHE_NAME, RTLD_NOW | RTLD_NODELETE);
+    }
+    if (dm3rdDeviceCacheSoHandle_ == nullptr) {
+        LOGE("load libdm3rddevicecache so failed, errMsg: %{public}s.", dlerror());
+        return false;
+    }
+    dlerror();
+    auto func = (CreateDM3rdDeviceCacheFuncPtr)dlsym(dm3rdDeviceCacheSoHandle_, "CreateDM3rdDeviceCacheObject");
+    if (dlerror() != nullptr || func == nullptr) {
+        dlclose(dm3rdDeviceCacheSoHandle_);
+        dm3rdDeviceCacheSoHandle_ = nullptr;
+        LOGE("Create 3rd device cache object function is not exist.");
+        return false;
+    }
+    dm3rdDeviceCache_ = func();
+    if (dm3rdDeviceCache_ == nullptr) {
+        dlclose(dm3rdDeviceCacheSoHandle_);
+        dm3rdDeviceCacheSoHandle_ = nullptr;
+        LOGE("Create 3rd device cache object failed.");
+        return false;
+    }
+    is3rdCacheLoaded_ = true;
     LOGI("Sussess.");
     return true;
 }

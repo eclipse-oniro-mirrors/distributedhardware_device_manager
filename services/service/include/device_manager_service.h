@@ -35,6 +35,7 @@
 #include "i_dm_service_impl_ext_resident.h"
 #include "i_dm_device_risk_detect.h"
 #include "dp_inited_callback.h"
+#include "i_dm_3rd_device_cache.h"
 #include "dm_account_common_event.h"
 #include "dm_datashare_common_event.h"
 #include "dm_package_common_event.h"
@@ -353,6 +354,7 @@ public:
 private:
     int32_t ValidateUnBindTokenId(const std::string &pkgName, const std::string &udidHash);
     bool IsDMServiceImplReady();
+    bool IsDM3rdDeviceCacheReady();
     bool IsDMImplSoLoaded();
     bool IsDMServiceAdapterSoLoaded();
     bool IsDMServiceAdapterResidentLoad();
@@ -564,9 +566,13 @@ private:
 private:
     bool isImplsoLoaded_ = false;
     bool isAdapterResidentSoLoaded_ = false;
+    bool is3rdCacheLoaded_ = false;
     void *residentSoHandle_ = nullptr;
     void *dmServiceImplSoHandle_ = nullptr;
+    void *dm3rdDeviceCacheSoHandle_ = nullptr;
+    IDm3rdDeviceCache *dm3rdDeviceCache_ = nullptr;
     ffrt::mutex isImplLoadLock_;
+    ffrt::mutex is3rdCacheLoadLock_;
     ffrt::mutex isAdapterResidentLoadLock_;
     ffrt::mutex deviceRiskDetectSoLoadLock_;
     ffrt::mutex detectLock_;

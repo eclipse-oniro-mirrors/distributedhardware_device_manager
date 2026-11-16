@@ -15,6 +15,8 @@
 
 #include "UTTest_dm_3rd_device_cache.h"
 
+#include <vector>
+
 #include "dm_error_type.h"
 
 using namespace testing;
@@ -35,7 +37,7 @@ Dm3rdDeviceInfo Build3rdDeviceInfo(const std::string &networkId, const std::stri
     Dm3rdDeviceInfo info;
     info.networkId = networkId;
     info.deviceName = deviceName;
-    info.deviceType = DmDeviceType::DEVICE_TYPE_SMART_PHONE;
+    info.deviceType = DmDeviceType::DEVICE_TYPE_PHONE;
     return info;
 }
 
@@ -54,7 +56,7 @@ HWTEST_F(Dm3rdDeviceCacheTest, Register3rdDevice_001, testing::ext::TestSize.Lev
     EXPECT_TRUE(isFound);
     EXPECT_EQ(std::string(deviceInfo.networkId), info.networkId);
     EXPECT_EQ(std::string(deviceInfo.deviceName), info.deviceName);
-    EXPECT_EQ(deviceInfo.deviceTypeId, DmDeviceType::DEVICE_TYPE_SMART_PHONE);
+    EXPECT_EQ(deviceInfo.deviceTypeId, DmDeviceType::DEVICE_TYPE_PHONE);
 }
 
 /**
@@ -109,6 +111,44 @@ HWTEST_F(Dm3rdDeviceCacheTest, Register3rdDevice_003, testing::ext::TestSize.Lev
         info.extendParam["key_" + std::to_string(i)] = "value";
     }
     EXPECT_EQ(Dm3rdDeviceCache::GetInstance().Register3rdDevice(info, 1), ERR_DM_INPUT_PARA_INVALID);
+}
+
+/**
+ * @tc.name: Register3rdDevice_006
+ * @tc.desc: register with empty extend param key or too long extend param value
+ * @tc.type: FUNC
+ */
+HWTEST_F(Dm3rdDeviceCacheTest, Register3rdDevice_006, testing::ext::TestSize.Level1)
+{
+    Dm3rdDeviceInfo info = Build3rdDeviceInfo("networkId_006", "deviceName_006");
+    info.extendParam[""] = "value";
+    EXPECT_EQ(Dm3rdDeviceCache::GetInstance().Register3rdDevice(info, 1), ERR_DM_INPUT_PARA_INVALID);
+
+    info.extendParam.clear();
+    info.extendParam["customKey"] = std::string(129, 'v');
+    EXPECT_EQ(Dm3rdDeviceCache::GetInstance().Register3rdDevice(info, 1), ERR_DM_INPUT_PARA_INVALID);
+
+    DmDeviceInfo deviceInfo;
+    EXPECT_FALSE(Dm3rdDeviceCache::GetInstance().Get3rdDeviceInfo("networkId_006", deviceInfo));
+}
+
+/**
+ * @tc.name: Register3rdDevice_007
+ * @tc.desc: register with each remaining reserved extend param key
+ * @tc.type: FUNC
+ */
+HWTEST_F(Dm3rdDeviceCacheTest, Register3rdDevice_007, testing::ext::TestSize.Level1)
+{
+    const std::vector<std::string> reservedKeys = {
+        "OS_VERSION", "CONN_ADDR_TYPE", "BR_MAC", "BLE_MAC", "WIFI_IP", "WIFI_PORT"
+    };
+    for (const auto &key : reservedKeys) {
+        Dm3rdDeviceInfo info = Build3rdDeviceInfo("networkId_007", "deviceName_007");
+        info.extendParam[key] = "value";
+        EXPECT_EQ(Dm3rdDeviceCache::GetInstance().Register3rdDevice(info, 1), ERR_DM_INPUT_PARA_INVALID);
+    }
+    DmDeviceInfo deviceInfo;
+    EXPECT_FALSE(Dm3rdDeviceCache::GetInstance().Get3rdDeviceInfo("networkId_007", deviceInfo));
 }
 
 /**
@@ -194,7 +234,7 @@ HWTEST_F(Dm3rdDeviceCacheTest, Get3rdDeviceInfo_001, testing::ext::TestSize.Leve
     EXPECT_NE(deviceInfo.extraData.find("\"DEVICE_SOURCE\":\"3RD\""), std::string::npos);
     EXPECT_NE(deviceInfo.extraData.find("\"customKey\":\"customValue\""), std::string::npos);
     EXPECT_EQ(std::string(deviceInfo.deviceId), "");
-    EXPECT_EQ(deviceInfo.deviceTypeId, DmDeviceType::DEVICE_TYPE_SMART_PHONE);
+    EXPECT_EQ(deviceInfo.deviceTypeId, DmDeviceType::DEVICE_TYPE_PHONE);
 
     EXPECT_FALSE(Dm3rdDeviceCache::GetInstance().Get3rdDeviceInfo("networkId_not_exist", deviceInfo));
     EXPECT_FALSE(Dm3rdDeviceCache::GetInstance().Get3rdDeviceInfo("", deviceInfo));

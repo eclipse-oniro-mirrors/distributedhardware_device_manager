@@ -190,5 +190,9 @@ void Dm3rdDeviceCache::DeleteAll3rdDeviceInfo()
     thirdDeviceCache_.clear();
     LOGI("clear all 3rd device info");
 }
+extern "C" IDm3rdDeviceCache *CreateDM3rdDeviceCacheObject(void)
+{
+    return &Dm3rdDeviceCache::GetInstance();
+}
 } // namespace DistributedHardware
 } // namespace OHOS
