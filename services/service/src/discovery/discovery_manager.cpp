@@ -644,6 +644,7 @@ bool DiscoveryManager::IsCommonDependencyReady()
     auto func = (CreateDpConnectorFuncPtr)dlsym(dpConnectorHandle_, "CreateDpConnectorInstance");
     if (dlerror() != nullptr || func == nullptr) {
         dlclose(dpConnectorHandle_);
+        dpConnectorHandle_ = nullptr;
         LOGE("Create object function is not exist.");
         return false;
     }
