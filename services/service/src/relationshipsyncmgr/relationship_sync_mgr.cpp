@@ -882,7 +882,7 @@ bool RelationShipChangeMsg::FromAccountEventPayLoad(const JsonItemObject &payloa
         return false;
     }
 
-    uint8_t flagByte = items[0].Get<int32_t>();
+    uint8_t flagByte = static_cast<uint8_t>(items[0].Get<int32_t>());
     // Bit 0: syncUserIdFlag (0=请求, 1=回复)
     syncUserIdFlag = (flagByte & 0x1) != 0;
     // Bit 1-3: accountEventType
@@ -928,7 +928,7 @@ bool RelationShipChangeMsg::FromSyncForegroundAccountPayLoad(const JsonItemObjec
         return false;
     }
 
-    uint8_t flagByte = items[0].Get<int32_t>();
+    uint8_t flagByte = static_cast<uint8_t>(items[0].Get<int32_t>());
     syncUserIdFlag = (flagByte & 0x1) != 0;
     accountEventType = static_cast<AccountEventType>((flagByte >> SYNC_FOREGROUND_ACCOUNT_TYPE_OFFSET) & 0x7);
     isLastBatch = ((flagByte >> SYNC_FOREGROUND_ACCOUNT_LAST_BATCH_OFFSET) & 0x1) != 0;

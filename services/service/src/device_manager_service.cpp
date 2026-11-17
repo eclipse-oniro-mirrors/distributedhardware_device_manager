@@ -3202,7 +3202,7 @@ void DeviceManagerService::NotifyPeerByBroadcast(int32_t userId, const std::stri
     RelationShipChangeMsg msg;
     msg.type = RelationShipChangeType::ACCOUNT_EVENT;
     msg.accountEventType = accountEventType;
-    msg.userId = userId;
+    msg.userId = static_cast<uint32_t>(userId);
     msg.accountId = std::string(accountIdHash);
     msg.peerUdids = peerUdids;
     msg.syncUserIdFlag = false;
