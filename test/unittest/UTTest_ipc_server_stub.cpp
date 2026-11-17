@@ -1079,12 +1079,12 @@ HWTEST_F(IpcServerStubTest, OnRemoteRequest_006, testing::ext::TestSize.Level0)
 /**
  * @tc.name: RunningIpcCount_004
  * @tc.desc: 1. reset runningIpcCount_ to 0 and isCritical_ to false
- *           2. call AddRunningIpcCount (0->1, SetCriticalState(true))
+ *           2. call AddRunningIpcCount (0->1, starts idle critical task, isCritical_ stays false)
  *           3. call AddRunningIpcCount (1->2, no state change)
  *           4. call SubtractRunningIpcCount (2->1, no timer start)
  *           5. call SubtractRunningIpcCount (1->0, StartIdleCriticalTask)
  *           6. call CancelIdleCriticalTask to clean up
- *           7. verify isCritical_ is true (timer not fired, state not changed back)
+ *           7. verify isCritical_ remains false (idle timer did not fire)
  * @tc.type: FUNC
  * @tc.require: AR000GHSJK
  */

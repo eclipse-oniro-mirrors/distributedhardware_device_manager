@@ -15,6 +15,7 @@
 
 #include "UTTest_dm_service_load.h"
 
+#include <atomic>
 #include <chrono>
 #include <thread>
 #include <unistd.h>
@@ -50,6 +51,33 @@ void DmServiceLoadTest::TearDownTestCase()
 
 namespace {
 constexpr int32_t SHORT_DELAY_MS = 200;
+
+/**
+ * @brief RAII guard that installs a SystemAbilityManager mock and restores the
+ *        original singleton on destruction, including when a test aborts early
+ *        on an ASSERT failure.
+ */
+class SamgrMockGuard {
+public:
+    SamgrMockGuard()
+    {
+        saved_ = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+        mock_ = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
+        SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = mock_;
+    }
+    ~SamgrMockGuard()
+    {
+        SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = saved_;
+    }
+    sptr<SystemAbilityManagerMock> Get() const
+    {
+        return mock_;
+    }
+private:
+    sptr<ISystemAbilityManager> saved_;
+    sptr<SystemAbilityManagerMock> mock_;
+};
+
 /**
  * @tc.name: LoadDMService_001
  * @tc.desc: 1. mock samgr so LoadSystemAbility returns DM_OK
@@ -59,9 +87,8 @@ constexpr int32_t SHORT_DELAY_MS = 200;
  */
 HWTEST_F(DmServiceLoadTest, LoadDMService_001, testing::ext::TestSize.Level0)
 {
-    auto iSystemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = mockAbilityMgr;
+    SamgrMockGuard samgrGuard;
+    auto mockAbilityMgr = samgrGuard.Get();
     EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(_, An<const sptr<ISystemAbilityLoadCallback>&>()))
         .WillOnce(Return(DM_OK));
 
@@ -73,7 +100,6 @@ HWTEST_F(DmServiceLoadTest, LoadDMService_001, testing::ext::TestSize.Level0)
     notifyThread.join();
     EXPECT_EQ(ret, DM_OK);
     EXPECT_EQ(DmServiceLoad::GetInstance().isDMServiceLoading_, false);
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = iSystemAbilityMgr;
 }
 
 /**
@@ -102,9 +128,8 @@ HWTEST_F(DmServiceLoadTest, SetLoadFinish_001, testing::ext::TestSize.Level0)
  */
 HWTEST_F(DmServiceLoadTest, LoadDMService_002, testing::ext::TestSize.Level2)
 {
-    auto iSystemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = mockAbilityMgr;
+    SamgrMockGuard samgrGuard;
+    auto mockAbilityMgr = samgrGuard.Get();
     EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(_, An<const sptr<ISystemAbilityLoadCallback>&>()))
         .Times(1)
         .WillOnce(Return(ERR_DM_FAILED));
@@ -112,7 +137,6 @@ HWTEST_F(DmServiceLoadTest, LoadDMService_002, testing::ext::TestSize.Level2)
     int32_t ret = DmServiceLoad::GetInstance().LoadDMService();
     EXPECT_EQ(ret, ERR_DM_FAILED);
     EXPECT_EQ(DmServiceLoad::GetInstance().loadFailed_, true);
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = iSystemAbilityMgr;
 }
 
 /**
@@ -167,16 +191,14 @@ HWTEST_F(DmServiceLoadTest, LoadDMService_004, testing::ext::TestSize.Level2)
  */
 HWTEST_F(DmServiceLoadTest, LoadDMService_006, testing::ext::TestSize.Level2)
 {
-    auto iSystemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = mockAbilityMgr;
+    SamgrMockGuard samgrGuard;
+    auto mockAbilityMgr = samgrGuard.Get();
     EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(_, An<const sptr<ISystemAbilityLoadCallback>&>()))
         .WillOnce(Return(DM_OK));
 
     int32_t ret = DmServiceLoad::GetInstance().LoadDMService();
     EXPECT_EQ(ret, ERR_DM_INIT_FAILED);
     EXPECT_EQ(DmServiceLoad::GetInstance().loadFailed_, true);
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = iSystemAbilityMgr;
 }
 
 /**
@@ -271,15 +293,14 @@ HWTEST_F(DmServiceLoadTest, SetLoadFailed_001, testing::ext::TestSize.Level2)
  * @tc.name: LoadDMService_007
  * @tc.desc: 1. mock samgr so LoadSystemAbility fails first (loadFailed_=true)
  *           2. call LoadDMService again with fresh mock (LoadSystemAbility succeeds)
- *           3. another thread calls SetLoadFinish to unblock
+ *           3. another thread keeps calling SetLoadFinish until the wait completes
  *           4. verify second call returns DM_OK (loadFailed_ reset on new load)
  * @tc.type: FUNC
  */
 HWTEST_F(DmServiceLoadTest, LoadDMService_007, testing::ext::TestSize.Level2)
 {
-    auto iSystemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = mockAbilityMgr;
+    SamgrMockGuard samgrGuard;
+    auto mockAbilityMgr = samgrGuard.Get();
     EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(_, An<const sptr<ISystemAbilityLoadCallback>&>()))
         .WillOnce(Return(ERR_DM_FAILED))
         .WillOnce(Return(DM_OK));
@@ -288,48 +309,58 @@ HWTEST_F(DmServiceLoadTest, LoadDMService_007, testing::ext::TestSize.Level2)
     EXPECT_EQ(ret, ERR_DM_FAILED);
     EXPECT_EQ(DmServiceLoad::GetInstance().loadFailed_, true);
 
-    std::thread notifyThread([]() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_DELAY_MS));
-        DmServiceLoad::GetInstance().SetLoadFinish();
+    // Keep notifying until the second load completes so the waiter can never
+    // miss the notification regardless of thread scheduling.
+    std::atomic<bool> stopNotify(false);
+    std::thread notifyThread([&stopNotify]() {
+        while (!stopNotify.load()) {
+            DmServiceLoad::GetInstance().SetLoadFinish();
+            std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_DELAY_MS));
+        }
     });
     ret = DmServiceLoad::GetInstance().LoadDMService();
+    stopNotify.store(true);
     notifyThread.join();
     EXPECT_EQ(ret, DM_OK);
     EXPECT_EQ(DmServiceLoad::GetInstance().isDMServiceLoading_, false);
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = iSystemAbilityMgr;
 }
 
 /**
  * @tc.name: LoadDMService_008
  * @tc.desc: 1. two threads call LoadDMService concurrently
  *           2. mock LoadSystemAbility to succeed
- *           3. a third thread calls SetLoadFinish to unblock both waiters
- *           4. verify both threads get DM_OK or one triggers the load and the other waits
+ *           3. a third thread keeps calling SetLoadFinish until both waiters finish
+ *           4. verify both threads get DM_OK
  * @tc.type: FUNC
  */
 HWTEST_F(DmServiceLoadTest, LoadDMService_008, testing::ext::TestSize.Level2)
 {
-    auto iSystemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = mockAbilityMgr;
+    SamgrMockGuard samgrGuard;
+    auto mockAbilityMgr = samgrGuard.Get();
     EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(_, An<const sptr<ISystemAbilityLoadCallback>&>()))
-        .WillOnce(Return(DM_OK));
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(Return(DM_OK));
 
-    std::thread notifyThread([]() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_DELAY_MS));
-        DmServiceLoad::GetInstance().SetLoadFinish();
+    // A late-starting worker may trigger another load, so keep notifying until
+    // both workers have joined instead of relying on a single fixed delay.
+    std::atomic<bool> stopNotify(false);
+    std::thread notifyThread([&stopNotify]() {
+        while (!stopNotify.load()) {
+            DmServiceLoad::GetInstance().SetLoadFinish();
+            std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_DELAY_MS));
+        }
     });
-    int32_t ret1 = DM_OK;
-    int32_t ret2 = DM_OK;
+    int32_t ret1 = ERR_DM_INIT_FAILED;
+    int32_t ret2 = ERR_DM_INIT_FAILED;
     std::thread t1([&ret1]() { ret1 = DmServiceLoad::GetInstance().LoadDMService(); });
     std::thread t2([&ret2]() { ret2 = DmServiceLoad::GetInstance().LoadDMService(); });
     t1.join();
     t2.join();
+    stopNotify.store(true);
     notifyThread.join();
     EXPECT_EQ(DmServiceLoad::GetInstance().isDMServiceLoading_, false);
     EXPECT_EQ(ret1, DM_OK);
     EXPECT_EQ(ret2, DM_OK);
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = iSystemAbilityMgr;
 }
 
 /**
@@ -385,21 +416,26 @@ HWTEST_F(DmServiceLoadTest, OnLoadSystemAbilityFail_002, testing::ext::TestSize.
  * @tc.name: LoadDMService_009
  * @tc.desc: 1. mock samgr so LoadSystemAbility succeeds
  *           2. three threads call LoadDMService concurrently
- *           3. a fourth thread calls SetLoadFinish after a short delay
+ *           3. a fourth thread keeps calling SetLoadFinish until all workers finish
  *           4. verify all three threads get DM_OK
  * @tc.type: FUNC
  */
 HWTEST_F(DmServiceLoadTest, LoadDMService_009, testing::ext::TestSize.Level2)
 {
-    auto iSystemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = mockAbilityMgr;
+    SamgrMockGuard samgrGuard;
+    auto mockAbilityMgr = samgrGuard.Get();
     EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(_, An<const sptr<ISystemAbilityLoadCallback>&>()))
-        .WillOnce(Return(DM_OK));
+        .Times(testing::AtLeast(1))
+        .WillRepeatedly(Return(DM_OK));
 
-    std::thread notifyThread([]() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_DELAY_MS));
-        DmServiceLoad::GetInstance().SetLoadFinish();
+    // A late-starting worker may trigger another load, so keep notifying until
+    // all workers have joined instead of relying on a single fixed delay.
+    std::atomic<bool> stopNotify(false);
+    std::thread notifyThread([&stopNotify]() {
+        while (!stopNotify.load()) {
+            DmServiceLoad::GetInstance().SetLoadFinish();
+            std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_DELAY_MS));
+        }
     });
     int32_t ret1 = ERR_DM_INIT_FAILED;
     int32_t ret2 = ERR_DM_INIT_FAILED;
@@ -410,12 +446,12 @@ HWTEST_F(DmServiceLoadTest, LoadDMService_009, testing::ext::TestSize.Level2)
     t1.join();
     t2.join();
     t3.join();
+    stopNotify.store(true);
     notifyThread.join();
     EXPECT_EQ(ret1, DM_OK);
     EXPECT_EQ(ret2, DM_OK);
     EXPECT_EQ(ret3, DM_OK);
     EXPECT_EQ(DmServiceLoad::GetInstance().isDMServiceLoading_, false);
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = iSystemAbilityMgr;
 }
 
 /**
@@ -427,9 +463,8 @@ HWTEST_F(DmServiceLoadTest, LoadDMService_009, testing::ext::TestSize.Level2)
  */
 HWTEST_F(DmServiceLoadTest, LoadDMService_010, testing::ext::TestSize.Level2)
 {
-    auto iSystemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = mockAbilityMgr;
+    SamgrMockGuard samgrGuard;
+    auto mockAbilityMgr = samgrGuard.Get();
     EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(_, An<const sptr<ISystemAbilityLoadCallback>&>()))
         .Times(2)
         .WillRepeatedly(Return(ERR_DM_FAILED));
@@ -439,7 +474,6 @@ HWTEST_F(DmServiceLoadTest, LoadDMService_010, testing::ext::TestSize.Level2)
     EXPECT_EQ(DmServiceLoad::GetInstance().loadFailed_, true);
     int32_t ret2 = DmServiceLoad::GetInstance().LoadDMService();
     EXPECT_EQ(ret2, ERR_DM_FAILED);
-    SystemAbilityManagerClient::GetInstance().systemAbilityManager_ = iSystemAbilityMgr;
 }
 
 /**

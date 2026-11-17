@@ -15,7 +15,6 @@
 
 #include "UTTest_ipc_client_manager.h"
 
-#include <chrono>
 #include <thread>
 #include "device_manager_ipc_interface_code.h"
 #include "device_manager_notify.h"
@@ -52,7 +51,14 @@ void IpcClientManagerTest::TearDownTestCase()
 }
 
 namespace {
-constexpr int32_t SHORT_DELAY_MS = 200;
+std::shared_ptr<SystemAbilityManagerClientMock> SetupSamgrClientMock(const sptr<ISystemAbilityManager> &samgr)
+{
+    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
+        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
+    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(samgr));
+    return clientMock;
+}
+
     /**
  * @tc.name: OnRemoteDied_001
  * @tc.desc: 1. new a dmInterface
@@ -136,21 +142,20 @@ HWTEST_F(IpcClientManagerTest, ClientInit_003, testing::ext::TestSize.Level0)
 {
     // 1. mock samgr: first CheckSystemAbility returns nullptr (trigger LoadDMService),
     //    then returns a valid object (re-check succeeds after load)
-    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
-        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
     auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
-    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(mockAbilityMgr));
+    SetupSamgrClientMock(mockAbilityMgr);
     sptr<IRemoteObject> stubObj = sptr<IpcClientStub>(new IpcClientStub());
     EXPECT_CALL(*mockAbilityMgr, CheckSystemAbility(testing::_))
         .WillOnce(testing::Return(nullptr))
         .WillOnce(testing::Return(stubObj));
+    std::thread notifyThread;
     EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(testing::_, testing::An<const sptr<ISystemAbilityLoadCallback>&>()))
-        .WillOnce(testing::Invoke([](int32_t, const sptr<ISystemAbilityLoadCallback> &callback) {
-            // simulate async load success by invoking the callback
-            std::thread([callback]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_DELAY_MS));
+        .WillOnce(testing::Invoke([&notifyThread](int32_t, const sptr<ISystemAbilityLoadCallback> &callback) {
+            // Simulate async load success. The callback blocks on dmServiceLoadLock_ until
+            // LoadDMService enters its cv wait, so no fixed sleep is needed.
+            notifyThread = std::thread([callback]() {
                 callback->OnLoadSystemAbilitySuccess(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID, nullptr);
-            }).detach();
+            });
             return DM_OK;
         }));
 
@@ -159,6 +164,9 @@ HWTEST_F(IpcClientManagerTest, ClientInit_003, testing::ext::TestSize.Level0)
     instance->dmInterface_ = nullptr;
     // 3. call ClientInit
     int ret = instance->ClientInit();
+    if (notifyThread.joinable()) {
+        notifyThread.join();
+    }
     // 4. check ret is DM_OK and dmInterface_ is set
     ASSERT_EQ(ret, DM_OK);
     ASSERT_NE(instance->dmInterface_, nullptr);
@@ -457,10 +465,8 @@ HWTEST_F(IpcClientManagerTest, UnInit_005, testing::ext::TestSize.Level0)
 HWTEST_F(IpcClientManagerTest, SendRequest_001, testing::ext::TestSize.Level0)
 {
     // 0. mock samgr: DM SA unavailable so re-init always fails
-    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
-        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
     auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
-    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(mockAbilityMgr));
+    SetupSamgrClientMock(mockAbilityMgr);
     EXPECT_CALL(*mockAbilityMgr, CheckSystemAbility(testing::_)).WillRepeatedly(testing::Return(nullptr));
     EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(testing::_, testing::An<const sptr<ISystemAbilityLoadCallback>&>()))
         .WillRepeatedly(testing::Return(ERR_DM_FAILED));
@@ -494,20 +500,20 @@ HWTEST_F(IpcClientManagerTest, SendRequest_010, testing::ext::TestSize.Level0)
 {
     // 1. mock samgr: first CheckSystemAbility returns nullptr (trigger LoadDMService),
     //    then returns a valid proxy object (re-check succeeds after load)
-    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
-        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
     auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
-    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(mockAbilityMgr));
+    SetupSamgrClientMock(mockAbilityMgr);
     sptr<IRemoteObject> stubObj = sptr<IpcClientStub>(new IpcClientStub());
     EXPECT_CALL(*mockAbilityMgr, CheckSystemAbility(testing::_))
         .WillOnce(testing::Return(nullptr))
         .WillOnce(testing::Return(stubObj));
+    std::thread notifyThread;
     EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(testing::_, testing::An<const sptr<ISystemAbilityLoadCallback>&>()))
-        .WillOnce(testing::Invoke([](int32_t, const sptr<ISystemAbilityLoadCallback> &callback) {
-            std::thread([callback]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_DELAY_MS));
+        .WillOnce(testing::Invoke([&notifyThread](int32_t, const sptr<ISystemAbilityLoadCallback> &callback) {
+            // The callback blocks on dmServiceLoadLock_ until LoadDMService enters its cv
+            // wait, so the thread is joined instead of detached and no sleep is needed.
+            notifyThread = std::thread([callback]() {
                 callback->OnLoadSystemAbilitySuccess(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID, nullptr);
-            }).detach();
+            });
             return DM_OK;
         }));
 
@@ -519,9 +525,13 @@ HWTEST_F(IpcClientManagerTest, SendRequest_010, testing::ext::TestSize.Level0)
     instance->dmInterface_ = nullptr;
     // 3. call SendRequest with parameter
     int ret = instance->SendRequest(0, req, rsp);
-    // 4. check re-init path is taken: dmInterface_ is set and ret is not ERR_DM_INIT_FAILED
+    if (notifyThread.joinable()) {
+        notifyThread.join();
+    }
+    // 4. check re-init path is taken: dmInterface_ is set; the local IpcClientStub
+    //    cannot serve cmd 0, so SendCmd deterministically reports a send failure.
     ASSERT_NE(instance->dmInterface_, nullptr);
-    ASSERT_NE(ret, ERR_DM_INIT_FAILED);
+    ASSERT_EQ(ret, ERR_DM_IPC_SEND_REQUEST_FAILED);
 
     ISystemAbilityManagerClient::ReleaseSAMgrClient();
 }
@@ -841,9 +851,7 @@ HWTEST_F(IpcClientManagerTest, ClientInit_004, testing::ext::TestSize.Level0)
  */
 HWTEST_F(IpcClientManagerTest, ClientInit_005, testing::ext::TestSize.Level0)
 {
-    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
-        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
-    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(nullptr));
+    SetupSamgrClientMock(nullptr);
 
     std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
     instance->dmInterface_ = nullptr;
@@ -886,10 +894,8 @@ HWTEST_F(IpcClientManagerTest, OnDmServiceDied_004, testing::ext::TestSize.Level
  */
 HWTEST_F(IpcClientManagerTest, ClientInit_006, testing::ext::TestSize.Level0)
 {
-    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
-        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
     auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
-    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(mockAbilityMgr));
+    SetupSamgrClientMock(mockAbilityMgr);
     EXPECT_CALL(*mockAbilityMgr, CheckSystemAbility(testing::_)).WillRepeatedly(testing::Return(nullptr));
     EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(testing::_, testing::An<const sptr<ISystemAbilityLoadCallback>&>()))
         .WillRepeatedly(testing::Return(ERR_DM_FAILED));
@@ -914,20 +920,20 @@ HWTEST_F(IpcClientManagerTest, ClientInit_006, testing::ext::TestSize.Level0)
  */
 HWTEST_F(IpcClientManagerTest, SendRequest_012, testing::ext::TestSize.Level0)
 {
-    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
-        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
     auto mockAbilityMgr = sptr<SystemAbilityManagerMock>(new SystemAbilityManagerMock());
-    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(mockAbilityMgr));
+    SetupSamgrClientMock(mockAbilityMgr);
     sptr<IRemoteObject> stubObj = sptr<IpcClientStub>(new IpcClientStub());
     EXPECT_CALL(*mockAbilityMgr, CheckSystemAbility(testing::_))
         .WillOnce(testing::Return(nullptr))
         .WillOnce(testing::Return(stubObj));
+    std::thread notifyThread;
     EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(testing::_, testing::An<const sptr<ISystemAbilityLoadCallback>&>()))
-        .WillOnce(testing::Invoke([](int32_t, const sptr<ISystemAbilityLoadCallback> &callback) {
-            std::thread([callback]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(SHORT_DELAY_MS));
+        .WillOnce(testing::Invoke([&notifyThread](int32_t, const sptr<ISystemAbilityLoadCallback> &callback) {
+            // The callback blocks on dmServiceLoadLock_ until LoadDMService enters its cv
+            // wait, so the thread is joined instead of detached and no sleep is needed.
+            notifyThread = std::thread([callback]() {
                 callback->OnLoadSystemAbilitySuccess(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID, nullptr);
-            }).detach();
+            });
             return DM_OK;
         }));
 
@@ -937,8 +943,12 @@ HWTEST_F(IpcClientManagerTest, SendRequest_012, testing::ext::TestSize.Level0)
     std::shared_ptr<IpcClientManager> instance = std::make_shared<IpcClientManager>();
     instance->dmInterface_ = nullptr;
     int ret = instance->SendRequest(REGISTER_DEVICE_MANAGER_LISTENER, req, rsp);
+    if (notifyThread.joinable()) {
+        notifyThread.join();
+    }
     ASSERT_NE(instance->dmInterface_, nullptr);
-    ASSERT_NE(ret, ERR_DM_INIT_FAILED);
+    // The local IpcClientStub cannot serve cmd 0, so SendCmd deterministically fails.
+    ASSERT_EQ(ret, ERR_DM_IPC_SEND_REQUEST_FAILED);
 
     ISystemAbilityManagerClient::ReleaseSAMgrClient();
 }
@@ -973,9 +983,7 @@ HWTEST_F(IpcClientManagerTest, OnDmServiceDied_005, testing::ext::TestSize.Level
  */
 HWTEST_F(IpcClientManagerTest, SendRequest_013, testing::ext::TestSize.Level0)
 {
-    auto clientMock = std::static_pointer_cast<SystemAbilityManagerClientMock>(
-        ISystemAbilityManagerClient::GetOrCreateSAMgrClient());
-    EXPECT_CALL(*clientMock, GetSystemAbilityManager()).WillRepeatedly(testing::Return(nullptr));
+    SetupSamgrClientMock(nullptr);
 
     std::shared_ptr<IpcReq> req = std::make_shared<IpcReq>();
     std::shared_ptr<IpcRsp> rsp = std::make_shared<IpcRsp>();
