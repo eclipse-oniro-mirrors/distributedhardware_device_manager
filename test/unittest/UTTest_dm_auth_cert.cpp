@@ -17,6 +17,7 @@
 #include "dm_auth_cert.h"
 #include "dm_error_type.h"
 #include "dm_log.h"
+#include "dm_auth_attest_common.h"
 #include "dm_auth_cert_ext_mock.h"
 #include "UTTest_dm_auth_cert.h"
 

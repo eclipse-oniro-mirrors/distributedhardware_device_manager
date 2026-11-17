@@ -18,18 +18,15 @@
 
 #include <new>
 
-#include "dm_auth_attest_common.h"
-#include "dm_auth_cert.h"
 #include "dm_error_type.h"
 #include "i_dm_auth_cert_ext.h"
 
 namespace OHOS {
 namespace DistributedHardware {
-// Test-only IDMAuthCertExt implementation. It records which certificate algorithm
-// (V1/V2/V3) was selected by version-negotiation branches and returns configurable
-// results, so branch tests observe the chosen path without the real
-// libdm_auth_cert.z.so. It is only meaningful in unit-test builds where the
-// DEVICE_MANAGER_COMMON_FLAG open-source cert bypass is not compiled out.
+// Test-only IDMAuthCertExt implementation used by the AuthCert V3 wrapper tests
+// (UTTest_dm_auth_cert). It records which certificate method (V1/V2/V3) was called
+// and returns configurable results, so wrapper delegation can be observed without
+// loading the real libdm_auth_cert.z.so.
 class DmAuthCertExtMock : public IDMAuthCertExt {
 public:
     DmAuthCertExtMock() = default;
@@ -38,7 +35,9 @@ public:
     int32_t GenerateCertificate(DmCertChain &dmCertChain) override
     {
         generateV1Count++;
-        FillCertChain(dmCertChain);
+        if (generateRet == DM_OK) {
+            FillCertChain(dmCertChain);
+        }
         return generateRet;
     }
 
@@ -54,7 +53,9 @@ public:
     {
         (void)random;
         generateV2Count++;
-        FillCertChain(dmCertChain);
+        if (generateRet == DM_OK) {
+            FillCertChain(dmCertChain);
+        }
         return generateRet;
     }
 
@@ -72,7 +73,9 @@ public:
     {
         (void)random;
         generateV3Count++;
-        FillCertChain(dmCertChain);
+        if (generateRet == DM_OK) {
+            FillCertChain(dmCertChain);
+        }
         return generateRet;
     }
 
@@ -112,8 +115,10 @@ public:
     int32_t verifyV3Ret = DM_OK;
 
 private:
-    // GenerateCertificate* callers hand over an uninitialized stack chain; overwrite it
-    // with a valid 4-cert chain so SerializeDmCertChain/FreeDmCertChain stay safe.
+    // GenerateCertificate* callers hand over an uninitialized stack chain. Fill it with a
+    // valid 4-cert chain only on success: DM's failure path returns early without freeing,
+    // so filling the chain on failure would leak in tests. Success paths free the chain
+    // via FreeDmCertChain after serialization.
     static void FillCertChain(DmCertChain &dmCertChain)
     {
         dmCertChain.cert = new (std::nothrow) DmBlob[DM_CERTS_COUNT];
@@ -124,46 +129,6 @@ private:
         }
     }
 };
-
-// Injects mock into the AuthCert singleton for the guard's lifetime and restores the
-// previous state on destruction, keeping cert branch tests isolated from each other.
-class AuthCertExtMockGuard {
-public:
-    explicit AuthCertExtMockGuard(const std::shared_ptr<DmAuthCertExtMock> &mock) : mock_(mock)
-    {
-        savedLoaded_ = AuthCert::GetInstance().isAdapterAuthCertSoLoaded_;
-        savedExt_ = AuthCert::GetInstance().dmAuthCertExt_;
-        AuthCert::GetInstance().isAdapterAuthCertSoLoaded_ = true;
-        AuthCert::GetInstance().dmAuthCertExt_ = mock_;
-    }
-
-    ~AuthCertExtMockGuard()
-    {
-        AuthCert::GetInstance().isAdapterAuthCertSoLoaded_ = savedLoaded_;
-        AuthCert::GetInstance().dmAuthCertExt_ = savedExt_;
-    }
-
-private:
-    std::shared_ptr<DmAuthCertExtMock> mock_;
-    bool savedLoaded_ = false;
-    std::shared_ptr<IDMAuthCertExt> savedExt_;
-};
-
-// Builds a serialized 4-cert chain accepted by DeserializeDmCertChain, so sink-side
-// branch tests can get past cert deserialization and reach the verify branch.
-inline std::string BuildMockCertChainJson()
-{
-    DmCertChain chain;
-    chain.cert = new (std::nothrow) DmBlob[DM_CERTS_COUNT];
-    chain.certCount = DM_CERTS_COUNT;
-    for (uint32_t i = 0; i < DM_CERTS_COUNT; ++i) {
-        chain.cert[i].size = 1;
-        chain.cert[i].data = new (std::nothrow) uint8_t[1]();
-    }
-    std::string certChainJson = AuthAttestCommon::GetInstance().SerializeDmCertChain(&chain);
-    AuthAttestCommon::GetInstance().FreeDmCertChain(chain);
-    return certChainJson;
-}
 } // namespace DistributedHardware
 } // namespace OHOS
 #endif // OHOS_DM_AUTH_CERT_EXT_MOCK_H

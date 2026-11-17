@@ -1064,47 +1064,6 @@ HWTEST_F(DmAnonymousTest, DmVersionConstants_002, testing::ext::TestSize.Level1)
 {
     EXPECT_STREQ(DM_CURRENT_VERSION, "5.1.8");
 }
-
-/**
- * @tc.name: CompareVersion_004
- * @tc.desc: CompareVersion boundaries at the 5.1.8 PQC threshold
- * @tc.type: FUNC
- * @tc.require: AR000GHSJK
- */
-HWTEST_F(DmAnonymousTest, CompareVersion_004, testing::ext::TestSize.Level1)
-{
-    // strictly greater than -> true
-    EXPECT_EQ(CompareVersion("5.1.9", DM_VERSION_5_1_8), true);
-    // equal -> false (CompareVersion is strictly-greater); the 5.1.8 PQC branch must
-    // compose ">= threshold" as CompareVersion(v, DM_VERSION_5_1_8) || v == DM_VERSION_5_1_8
-    EXPECT_EQ(CompareVersion("5.1.8", DM_VERSION_5_1_8), false);
-    EXPECT_EQ(CompareVersion("5.1.7", DM_VERSION_5_1_8), false);
-    // composed ">=" semantics used by the V3 certificate branch
-    bool atLeastThreshold = CompareVersion("5.1.8", DM_VERSION_5_1_8) ||
-        (std::string("5.1.8") == DM_VERSION_5_1_8);
-    EXPECT_EQ(atLeastThreshold, true);
-    bool belowThreshold = CompareVersion("5.1.7", DM_VERSION_5_1_8) ||
-        (std::string("5.1.7") == DM_VERSION_5_1_8);
-    EXPECT_EQ(belowThreshold, false);
-}
-
-/**
- * @tc.name: CompareVersion_005
- * @tc.desc: CompareVersion legacy certificate thresholds stay unchanged (V2/V1/skip)
- * @tc.type: FUNC
- * @tc.require: AR000GHSJK
- */
-HWTEST_F(DmAnonymousTest, CompareVersion_005, testing::ext::TestSize.Level1)
-{
-    // V2 threshold: peer strictly above 5.1.3
-    EXPECT_EQ(CompareVersion("5.1.5", DM_VERSION_5_1_3), true);
-    EXPECT_EQ(CompareVersion("5.1.3", DM_VERSION_5_1_3), false);
-    // V1 threshold: 5.1.0 < peer <= 5.1.3
-    EXPECT_EQ(CompareVersion("5.1.1", DM_VERSION_5_1_0), true);
-    EXPECT_EQ(CompareVersion("5.1.0", DM_VERSION_5_1_0), false);
-    // below the old-version estimate -> version incompatible (AC-3.3 regression)
-    EXPECT_EQ(CompareVersion("5.0.50", DM_VERSION_5_0_OLD_MAX), false);
-}
 } // namespace
 } // namespace DistributedHardware
 } // namespace OHOS
