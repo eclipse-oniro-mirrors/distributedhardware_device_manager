@@ -69,6 +69,7 @@ group("unittest") {
     ":UTTest_dm_credential_manager",
     ":UTTest_dm_crypto",
     ":UTTest_dm_crypto_mgr",
+    ":UTTest_dm_random",
     ":UTTest_dm_device_state_manager",
     ":UTTest_dm_device_state_manager_two",
     ":UTTest_dm_deviceprofile_connector",
@@ -3531,6 +3532,38 @@ ohos_unittest("UTTest_dm_crypto_mgr") {
 }
 
 ## UnitTest UTTest_dm_crypto_mgr }}}
+
+## UnitTest UTTest_dm_random {{{
+ohos_unittest("UTTest_dm_random") {
+  module_out_path = module_out_path
+
+  include_dirs = [ "${devicemanager_path}/test/unittest" ]
+
+  sources = [ "${devicemanager_path}/test/unittest/UTTest_dm_random.cpp" ]
+
+  deps = [
+    ":device_manager_test_common",
+    "${devicemanager_path}/commondependency:devicemanagerdependencytest",
+    "${devicemanager_path}/interfaces/kits/js:devicemanager",
+    "${devicemanager_path}/radar:devicemanagerradartest",
+    "${ext_path}/pin_auth:devicemanagerext_pin_auth",
+    "${innerkits_path}/native_cpp:devicemanagersdk",
+    "${json_path}:devicemanagerjson",
+    "${mini_tools_kits_path}/native_cpp:devicemanagerminisdk",
+    "${services_path}:devicemanagerservicetest",
+    "${servicesimpl_path}:devicemanagerserviceimpl",
+    "${softbuscache_parh}:dmdevicecache",
+    "${utils_path}:devicemanagerutilstest",
+  ]
+
+  external_deps = [
+    "ffrt:libffrt",
+    "googletest:gmock",
+    "hilog:libhilog",
+  ]
+}
+
+## UnitTest UTTest_dm_random }}}
 
 ## UnitTest UTTest_dm_account_common_event {{{
 ohos_unittest("UTTest_dm_account_common_event") {
