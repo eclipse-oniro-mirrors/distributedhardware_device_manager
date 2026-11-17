@@ -14,6 +14,8 @@
  */
 
 #include "dm_auth_state.h"
+#include "dm_auth_cert_ext_mock.h"
+#include "dm_constants.h"
 #include "UTTest_auth_acl.h"
 #include "dm_auth_message_processor_mock.h"
 #include "device_manager_service_listener.h"
@@ -528,6 +530,185 @@ HWTEST_F(AuthAclTest, VerifyFlagXor_007, testing::ext::TestSize.Level1)
     std::shared_ptr<DmAuthState> authState = std::make_shared<AuthSrcDataSyncState>();
     auto ret = authState->VerifyFlagXor(context);
     EXPECT_FALSE(ret);
+}
+
+/**
+ * @tc.name: AuthSinkDataSyncState_VerifyCertificate_V3_WhenPeerVersionAt5_1_8
+ * @tc.desc: peer dmVersion equal to 5.1.8 selects the PQC V3 verify path (AC-1.1)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(AuthAclTest, AuthSinkDataSyncState_VerifyCertificate_V3_WhenPeerVersionAt5_1_8,
+    testing::ext::TestSize.Level1)
+{
+    auto mockExt = std::make_shared<DmAuthCertExtMock>();
+    AuthCertExtMockGuard guard(mockExt);
+    context = std::make_shared<DmAuthContext>();
+    context->accesser.dmVersion = DM_VERSION_5_1_8;
+    context->accesser.deviceIdHash = "testDeviceIdHash";
+    context->accessee.certRandom = 12345;
+    context->accesser.cert = BuildMockCertChainJson();
+    auto authState = std::make_shared<AuthSinkDataSyncState>();
+    int32_t ret = authState->VerifyCertificate(context);
+#ifdef DEVICE_MANAGER_COMMON_FLAG
+    // EX-5: open-source build keeps the common bypass regardless of peer version
+    EXPECT_EQ(mockExt->verifyV3Count, 0u);
+    EXPECT_EQ(ret, DM_OK);
+#else
+    EXPECT_EQ(mockExt->verifyV3Count, 1u);
+    EXPECT_EQ(mockExt->verifyV2Count, 0u);
+    EXPECT_EQ(mockExt->verifyV1Count, 0u);
+    EXPECT_EQ(ret, DM_OK);
+#endif
+}
+
+/**
+ * @tc.name: AuthSinkDataSyncState_VerifyCertificate_V3_Failed_ReturnsError
+ * @tc.desc: V3 verify failure maps to ERR_DM_VERIFY_CERT_FAILED (AC-1.2)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(AuthAclTest, AuthSinkDataSyncState_VerifyCertificate_V3_Failed_ReturnsError,
+    testing::ext::TestSize.Level1)
+{
+    auto mockExt = std::make_shared<DmAuthCertExtMock>();
+    AuthCertExtMockGuard guard(mockExt);
+    context = std::make_shared<DmAuthContext>();
+    context->accesser.dmVersion = DM_VERSION_5_1_8;
+    context->accesser.deviceIdHash = "testDeviceIdHash";
+    context->accessee.certRandom = 12345;
+    context->accesser.cert = BuildMockCertChainJson();
+    auto authState = std::make_shared<AuthSinkDataSyncState>();
+#ifndef DEVICE_MANAGER_COMMON_FLAG
+    mockExt->verifyV3Ret = ERR_DM_VERIFY_CERT_FAILED;
+#endif
+    int32_t ret = authState->VerifyCertificate(context);
+#ifdef DEVICE_MANAGER_COMMON_FLAG
+    EXPECT_EQ(ret, DM_OK);
+#else
+    EXPECT_EQ(mockExt->verifyV3Count, 1u);
+    EXPECT_EQ(ret, ERR_DM_VERIFY_CERT_FAILED);
+#endif
+}
+
+/**
+ * @tc.name: AuthSinkDataSyncState_VerifyCertificate_V2_WhenPeerVersion5_1_5
+ * @tc.desc: peer dmVersion 5.1.3 ~ 5.1.7 keeps the V2 verify path (AC-2.1)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(AuthAclTest, AuthSinkDataSyncState_VerifyCertificate_V2_WhenPeerVersion5_1_5,
+    testing::ext::TestSize.Level1)
+{
+    auto mockExt = std::make_shared<DmAuthCertExtMock>();
+    AuthCertExtMockGuard guard(mockExt);
+    context = std::make_shared<DmAuthContext>();
+    context->accesser.dmVersion = DM_VERSION_5_1_5;
+    context->accesser.deviceIdHash = "testDeviceIdHash";
+    context->accessee.certRandom = 12345;
+    context->accesser.cert = BuildMockCertChainJson();
+    auto authState = std::make_shared<AuthSinkDataSyncState>();
+    int32_t ret = authState->VerifyCertificate(context);
+#ifdef DEVICE_MANAGER_COMMON_FLAG
+    EXPECT_EQ(ret, DM_OK);
+#else
+    EXPECT_EQ(mockExt->verifyV2Count, 1u);
+    EXPECT_EQ(mockExt->verifyV3Count, 0u);
+    EXPECT_EQ(mockExt->verifyV1Count, 0u);
+    EXPECT_EQ(ret, DM_OK);
+#endif
+}
+
+/**
+ * @tc.name: AuthSinkDataSyncState_VerifyCertificate_V1_WhenPeerVersion5_1_1
+ * @tc.desc: peer dmVersion 5.1.0 ~ 5.1.3 keeps the V1 verify path (AC-2.2)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(AuthAclTest, AuthSinkDataSyncState_VerifyCertificate_V1_WhenPeerVersion5_1_1,
+    testing::ext::TestSize.Level1)
+{
+    auto mockExt = std::make_shared<DmAuthCertExtMock>();
+    AuthCertExtMockGuard guard(mockExt);
+    context = std::make_shared<DmAuthContext>();
+    context->accesser.dmVersion = "5.1.1";
+    context->accesser.deviceIdHash = "testDeviceIdHash";
+    context->accesser.cert = BuildMockCertChainJson();
+    auto authState = std::make_shared<AuthSinkDataSyncState>();
+    int32_t ret = authState->VerifyCertificate(context);
+#ifdef DEVICE_MANAGER_COMMON_FLAG
+    EXPECT_EQ(ret, DM_OK);
+#else
+    EXPECT_EQ(mockExt->verifyV1Count, 1u);
+    EXPECT_EQ(mockExt->verifyV3Count, 0u);
+    EXPECT_EQ(mockExt->verifyV2Count, 0u);
+    EXPECT_EQ(ret, DM_OK);
+#endif
+}
+
+/**
+ * @tc.name: AuthSinkDataSyncState_VerifyCertificate_Skip_WhenPeerVersion5_0_5
+ * @tc.desc: peer dmVersion below 5.1.0 skips cert verify entirely (AC-2.3)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(AuthAclTest, AuthSinkDataSyncState_VerifyCertificate_Skip_WhenPeerVersion5_0_5,
+    testing::ext::TestSize.Level1)
+{
+    auto mockExt = std::make_shared<DmAuthCertExtMock>();
+    AuthCertExtMockGuard guard(mockExt);
+    context = std::make_shared<DmAuthContext>();
+    context->accesser.dmVersion = DM_VERSION_5_0_5;
+    context->accesser.deviceIdHash = "testDeviceIdHash";
+    context->accesser.cert = "cert_not_used";
+    auto authState = std::make_shared<AuthSinkDataSyncState>();
+    int32_t ret = authState->VerifyCertificate(context);
+    EXPECT_EQ(ret, DM_OK);
+    EXPECT_EQ(mockExt->verifyV3Count, 0u);
+    EXPECT_EQ(mockExt->verifyV2Count, 0u);
+    EXPECT_EQ(mockExt->verifyV1Count, 0u);
+}
+
+/**
+ * @tc.name: AuthSinkDataSyncState_VerifyCertificate_DeserializeFailed
+ * @tc.desc: malformed cert chain json maps to ERR_DM_DESERIAL_CERT_FAILED (AC-1.3)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(AuthAclTest, AuthSinkDataSyncState_VerifyCertificate_DeserializeFailed,
+    testing::ext::TestSize.Level1)
+{
+    auto mockExt = std::make_shared<DmAuthCertExtMock>();
+    AuthCertExtMockGuard guard(mockExt);
+    context = std::make_shared<DmAuthContext>();
+    context->accesser.dmVersion = DM_VERSION_5_1_8;
+    context->accesser.deviceIdHash = "testDeviceIdHash";
+    context->accesser.cert = "not_a_cert_chain_json";
+    auto authState = std::make_shared<AuthSinkDataSyncState>();
+    int32_t ret = authState->VerifyCertificate(context);
+#ifdef DEVICE_MANAGER_COMMON_FLAG
+    EXPECT_EQ(ret, DM_OK);
+#else
+    EXPECT_EQ(ret, ERR_DM_DESERIAL_CERT_FAILED);
+    EXPECT_EQ(mockExt->verifyV3Count, 0u);
+#endif
+}
+
+/**
+ * @tc.name: AuthSinkDataSyncState_VerifyCertificate_NullContext
+ * @tc.desc: null context is guarded without crash
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(AuthAclTest, AuthSinkDataSyncState_VerifyCertificate_NullContext, testing::ext::TestSize.Level1)
+{
+    auto authState = std::make_shared<AuthSinkDataSyncState>();
+    int32_t ret = authState->VerifyCertificate(nullptr);
+#ifdef DEVICE_MANAGER_COMMON_FLAG
+    EXPECT_EQ(ret, DM_OK);
+#else
+    EXPECT_EQ(ret, ERR_DM_POINT_NULL);
+#endif
 }
 }
 }

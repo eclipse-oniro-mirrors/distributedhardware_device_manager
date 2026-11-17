@@ -65,7 +65,11 @@ int32_t AuthSinkDataSyncState::VerifyCertificate(std::shared_ptr<DmAuthContext> 
         return ERR_DM_DESERIAL_CERT_FAILED;
     }
     int32_t certRet = -1;
-    if (CompareVersion(context->accesser.dmVersion, DM_VERSION_5_1_3)) {
+    if (CompareVersion(context->accesser.dmVersion, DM_VERSION_5_1_8) ||
+        context->accesser.dmVersion == DM_VERSION_5_1_8) {
+        certRet = AuthCert::GetInstance().
+            VerifyCertificateV3(dmCertChain, context->accesser.deviceIdHash.c_str(), context->accessee.certRandom);
+    } else if (CompareVersion(context->accesser.dmVersion, DM_VERSION_5_1_3)) {
         certRet = AuthCert::GetInstance().
             VerifyCertificateV2(dmCertChain, context->accesser.deviceIdHash.c_str(), context->accessee.certRandom);
     } else {

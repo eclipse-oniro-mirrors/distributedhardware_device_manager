@@ -733,7 +733,10 @@ void AuthSrcConfirmState::GenerateCertificate(std::shared_ptr<DmAuthContext> con
 #else
     DmCertChain dmCertChain;
     int32_t certRet = -1;
-    if (CompareVersion(context->accessee.dmVersion, DM_VERSION_5_1_3)) {
+    if (CompareVersion(context->accessee.dmVersion, DM_VERSION_5_1_8) ||
+        context->accessee.dmVersion == DM_VERSION_5_1_8) {
+        certRet = AuthCert::GetInstance().GenerateCertificateV3(dmCertChain, context->accessee.certRandom);
+    } else if (CompareVersion(context->accessee.dmVersion, DM_VERSION_5_1_3)) {
         certRet = AuthCert::GetInstance().GenerateCertificateV2(dmCertChain, context->accessee.certRandom);
     } else {
         certRet = AuthCert::GetInstance().GenerateCertificate(dmCertChain);

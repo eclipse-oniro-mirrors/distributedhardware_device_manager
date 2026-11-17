@@ -15,6 +15,8 @@
 
 #include "device_manager_service_listener.h"
 #include "dm_auth_state.h"
+#include "dm_auth_cert_ext_mock.h"
+#include "dm_constants.h"
 #include "dm_crypto.h"
 #include "UTTest_auth_confirm.h"
 
@@ -969,6 +971,142 @@ HWTEST_F(AuthConfirmTest, ProcessBindAuthorize_PinUltrasonic_WithoutPinFallback_
     EXPECT_FALSE(hasPinFallback);
     EXPECT_EQ(context->authTypeList.size(), 1);
     EXPECT_EQ(context->authTypeList[0], DmAuthType::AUTH_TYPE_PIN_ULTRASONIC);
+}
+
+/**
+ * @tc.name: AuthSrcConfirmState_GenerateCertificate_V3_WhenPeerVersionAt5_1_8
+ * @tc.desc: peer dmVersion equal to 5.1.8 selects the PQC V3 generate path (AC-1.1)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(AuthConfirmTest, AuthSrcConfirmState_GenerateCertificate_V3_WhenPeerVersionAt5_1_8,
+    testing::ext::TestSize.Level1)
+{
+    auto mockExt = std::make_shared<DmAuthCertExtMock>();
+    AuthCertExtMockGuard guard(mockExt);
+    context = std::make_shared<DmAuthContext>();
+    context->accessee.dmVersion = DM_VERSION_5_1_8;
+    context->accessee.certRandom = 12345;
+    AuthSrcConfirmState::GenerateCertificate(context);
+#ifdef DEVICE_MANAGER_COMMON_FLAG
+    // EX-5: open-source build keeps the common bypass regardless of peer version
+    EXPECT_EQ(mockExt->generateV3Count, 0u);
+    EXPECT_EQ(context->accesser.cert, "common");
+#else
+    EXPECT_EQ(mockExt->generateV3Count, 1u);
+    EXPECT_EQ(mockExt->generateV2Count, 0u);
+    EXPECT_EQ(mockExt->generateV1Count, 0u);
+    EXPECT_FALSE(context->accesser.cert.empty());
+#endif
+}
+
+/**
+ * @tc.name: AuthSrcConfirmState_GenerateCertificate_V3_WhenPeerVersionAbove5_1_8
+ * @tc.desc: peer dmVersion strictly above 5.1.8 selects the PQC V3 generate path (AC-3.1)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(AuthConfirmTest, AuthSrcConfirmState_GenerateCertificate_V3_WhenPeerVersionAbove5_1_8,
+    testing::ext::TestSize.Level1)
+{
+    auto mockExt = std::make_shared<DmAuthCertExtMock>();
+    AuthCertExtMockGuard guard(mockExt);
+    context = std::make_shared<DmAuthContext>();
+    context->accessee.dmVersion = "5.1.9";
+    context->accessee.certRandom = 12345;
+    AuthSrcConfirmState::GenerateCertificate(context);
+#ifdef DEVICE_MANAGER_COMMON_FLAG
+    EXPECT_EQ(mockExt->generateV3Count, 0u);
+    EXPECT_EQ(context->accesser.cert, "common");
+#else
+    EXPECT_EQ(mockExt->generateV3Count, 1u);
+    EXPECT_EQ(mockExt->generateV2Count, 0u);
+    EXPECT_EQ(mockExt->generateV1Count, 0u);
+#endif
+}
+
+/**
+ * @tc.name: AuthSrcConfirmState_GenerateCertificate_V2_WhenPeerVersion5_1_5
+ * @tc.desc: peer dmVersion 5.1.3 ~ 5.1.7 keeps the V2 generate path (AC-2.1)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(AuthConfirmTest, AuthSrcConfirmState_GenerateCertificate_V2_WhenPeerVersion5_1_5,
+    testing::ext::TestSize.Level1)
+{
+    auto mockExt = std::make_shared<DmAuthCertExtMock>();
+    AuthCertExtMockGuard guard(mockExt);
+    context = std::make_shared<DmAuthContext>();
+    context->accessee.dmVersion = DM_VERSION_5_1_5;
+    context->accessee.certRandom = 12345;
+    AuthSrcConfirmState::GenerateCertificate(context);
+#ifdef DEVICE_MANAGER_COMMON_FLAG
+    EXPECT_EQ(context->accesser.cert, "common");
+#else
+    EXPECT_EQ(mockExt->generateV2Count, 1u);
+    EXPECT_EQ(mockExt->generateV3Count, 0u);
+    EXPECT_EQ(mockExt->generateV1Count, 0u);
+#endif
+}
+
+/**
+ * @tc.name: AuthSrcConfirmState_GenerateCertificate_V1_WhenPeerVersion5_1_1
+ * @tc.desc: peer dmVersion 5.1.0 ~ 5.1.3 keeps the V1 generate path (AC-2.2)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(AuthConfirmTest, AuthSrcConfirmState_GenerateCertificate_V1_WhenPeerVersion5_1_1,
+    testing::ext::TestSize.Level1)
+{
+    auto mockExt = std::make_shared<DmAuthCertExtMock>();
+    AuthCertExtMockGuard guard(mockExt);
+    context = std::make_shared<DmAuthContext>();
+    context->accessee.dmVersion = "5.1.1";
+    AuthSrcConfirmState::GenerateCertificate(context);
+#ifdef DEVICE_MANAGER_COMMON_FLAG
+    EXPECT_EQ(context->accesser.cert, "common");
+#else
+    EXPECT_EQ(mockExt->generateV1Count, 1u);
+    EXPECT_EQ(mockExt->generateV3Count, 0u);
+    EXPECT_EQ(mockExt->generateV2Count, 0u);
+#endif
+}
+
+/**
+ * @tc.name: AuthSrcConfirmState_GenerateCertificate_V3_FailedSkipsCertSync
+ * @tc.desc: cert generation failure leaves accesser cert empty (AC-1.2 error propagation)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(AuthConfirmTest, AuthSrcConfirmState_GenerateCertificate_V3_FailedSkipsCertSync,
+    testing::ext::TestSize.Level1)
+{
+    auto mockExt = std::make_shared<DmAuthCertExtMock>();
+    AuthCertExtMockGuard guard(mockExt);
+    context = std::make_shared<DmAuthContext>();
+    context->accessee.dmVersion = DM_VERSION_5_1_8;
+    context->accessee.certRandom = 12345;
+    AuthSrcConfirmState::GenerateCertificate(context);
+#ifdef DEVICE_MANAGER_COMMON_FLAG
+    EXPECT_EQ(mockExt->generateV3Count, 0u);
+    EXPECT_EQ(context->accesser.cert, "common");
+#else
+    mockExt->generateRet = ERR_DM_VERIFY_CERT_FAILED;
+    AuthSrcConfirmState::GenerateCertificate(context);
+    EXPECT_EQ(mockExt->generateV3Count, 1u);
+    EXPECT_TRUE(context->accesser.cert.empty());
+#endif
+}
+
+/**
+ * @tc.name: AuthSrcConfirmState_GenerateCertificate_NullContext
+ * @tc.desc: null context is guarded without crash
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(AuthConfirmTest, AuthSrcConfirmState_GenerateCertificate_NullContext, testing::ext::TestSize.Level1)
+{
+    AuthSrcConfirmState::GenerateCertificate(nullptr);
 }
 }  // end namespace DistributedHardware
 }  // end namespace OHOS

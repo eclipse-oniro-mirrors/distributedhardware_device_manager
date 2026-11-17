@@ -124,6 +124,7 @@ group("unittest") {
     ":UTTest_permission_manager",
     ":UTTest_pin_auth",
     ":UTTest_pin_auth_ui",
+    ":UTTest_pqc_cert_compat",
     ":UTTest_relationship_sync_mgr",
     ":UTTest_softbus_connector",
     ":UTTest_softbus_listener",
@@ -297,6 +298,41 @@ ohos_unittest("UTTest_dm_auth_cert") {
 }
  
 ## UnitTest UTTest_dm_auth_cert }}}
+
+## UnitTest UTTest_pqc_cert_compat {{{
+ohos_unittest("UTTest_pqc_cert_compat") {
+  module_out_path = module_out_path
+
+  sources = [ "UTTest_pqc_cert_compat.cpp" ]
+
+  deps = [
+    ":device_manager_test_common",
+    "${devicemanager_path}/commondependency:devicemanagerdependencytest",
+    "${devicemanager_path}/interfaces/kits/js:devicemanager",
+    "${devicemanager_path}/radar:devicemanagerradartest",
+    "${ext_path}/pin_auth:devicemanagerext_pin_auth",
+    "${innerkits_path}/native_cpp:devicemanagersdk",
+    "${json_path}:devicemanagerjson",
+    "${mini_tools_kits_path}/native_cpp:devicemanagerminisdk",
+    "${services_path}:devicemanagerservicetest",
+    "${servicesimpl_path}:devicemanagerserviceimpl",
+    "${softbuscache_parh}:dmdevicecache",
+    "${utils_path}:devicemanagerutilstest",
+  ]
+
+  external_deps = [
+    "bundle_framework:appexecfwk_base",
+    "device_auth:deviceauth_sdk",
+    "device_info_manager:distributed_device_profile_common",
+    "device_info_manager:distributed_device_profile_sdk",
+    "dsoftbus:softbus_client",
+    "ffrt:libffrt",
+    "googletest:gmock",
+    "hilog:libhilog",
+  ]
+}
+
+## UnitTest UTTest_pqc_cert_compat }}}
 
 ## UnitTest UTTest_ipc_cmd_parser_client {{{
 ohos_unittest("UTTest_ipc_cmd_parser_client") {

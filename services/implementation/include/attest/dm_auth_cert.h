@@ -37,6 +37,8 @@ public:
     int32_t VerifyCertificate(const DmCertChain &dmCertChain, const char *deviceIdHash);
     int32_t GenerateCertificateV2(DmCertChain &dmCertChain, const uint64_t random);
     int32_t VerifyCertificateV2(const DmCertChain &dmCertChain, const char *deviceIdHash, const uint64_t random);
+    int32_t GenerateCertificateV3(DmCertChain &dmCertChain, const uint64_t random);
+    int32_t VerifyCertificateV3(const DmCertChain &dmCertChain, const char *deviceIdHash, const uint64_t random);
 
 private:
     AuthCert();

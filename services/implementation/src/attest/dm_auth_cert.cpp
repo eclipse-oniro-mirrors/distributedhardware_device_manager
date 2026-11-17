@@ -113,5 +113,25 @@ int32_t AuthCert::VerifyCertificateV2(const DmCertChain &dmCertChain, const char
     CHECK_NULL_RETURN(dmAuthCertExt_, ERR_DM_POINT_NULL);
     return dmAuthCertExt_->VerifyCertificateV2(dmCertChain, deviceIdHash, random);
 }
+
+int32_t AuthCert::GenerateCertificateV3(DmCertChain &dmCertChain, const uint64_t random)
+{
+    if (!IsDMAdapterAuthCertLoaded()) {
+        LOGE("authCertSo load failed!");
+        return ERR_DM_FAILED;
+    }
+    CHECK_NULL_RETURN(dmAuthCertExt_, ERR_DM_POINT_NULL);
+    return dmAuthCertExt_->GenerateCertificateV3(dmCertChain, random);
+}
+
+int32_t AuthCert::VerifyCertificateV3(const DmCertChain &dmCertChain, const char *deviceIdHash, const uint64_t random)
+{
+    if (!IsDMAdapterAuthCertLoaded()) {
+        LOGE("authCertSo load failed!");
+        return ERR_DM_FAILED;
+    }
+    CHECK_NULL_RETURN(dmAuthCertExt_, ERR_DM_POINT_NULL);
+    return dmAuthCertExt_->VerifyCertificateV3(dmCertChain, deviceIdHash, random);
+}
 } // namespace DistributedHardware
 } // namespace OHOS
