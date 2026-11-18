@@ -3965,7 +3965,7 @@ int32_t DeviceManagerImpl::GetServiceTrustedPeersOnSvrPublisher(const std::strin
     std::vector<DmServiceTrustedPeer> &peers)
 {
     LOGI("Start");
-    if (pkgName.empty() || serviceId < 0) {
+    if (pkgName.empty() || serviceId <= 0) {
         LOGE("Invalid parameter, pkgName is empty or serviceId is Invalid.");
         return ERR_DM_INPUT_PARA_INVALID;
     }
@@ -3993,7 +3993,7 @@ int32_t DeviceManagerImpl::RegSvrTrustedPeerStateCbOnSvrPublisher(const std::str
     std::shared_ptr<ServiceTrustedPeerStateCallback> callback)
 {
     LOGI("start.");
-    if (pkgName.empty() || serviceId < 0 || callback == nullptr) {
+    if (pkgName.empty() || serviceId <= 0 || callback == nullptr) {
         LOGE("input pkgName, serviceId or callback is invalid.");
         return ERR_DM_INPUT_PARA_INVALID;
     }
@@ -4015,7 +4015,7 @@ int32_t DeviceManagerImpl::RegSvrTrustedPeerStateCbOnSvrPublisher(const std::str
 int32_t DeviceManagerImpl::UnregSvrTrustedPeerStateCbOnSvrPublisher(const std::string &pkgName, int64_t serviceId)
 {
     LOGD("start.");
-    if (pkgName.empty() || serviceId < 0) {
+    if (pkgName.empty() || serviceId <= 0) {
         LOGE("input pkgName or serviceId is invalid.");
         return ERR_DM_INPUT_PARA_INVALID;
     }

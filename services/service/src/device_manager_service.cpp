@@ -7081,7 +7081,7 @@ int32_t DeviceManagerService::GetServiceTrustedPeersOnSvrPublisher(const std::st
         LOGE("No permission");
         return ERR_DM_NO_PERMISSION;
     }
-    if (pkgName.empty() || serviceId < 0) {
+    if (pkgName.empty() || serviceId <= 0) {
         LOGE("Invalid parameter, pkgName is empty or serviceId is invaild.");
         return ERR_DM_INPUT_PARA_INVALID;
     }
@@ -7121,7 +7121,7 @@ int32_t DeviceManagerService::UnregSvrTrustedPeerStateCbOnSvrPublisher(const std
         LOGE("No permission");
         return ERR_DM_NO_PERMISSION;
     }
-    if (pkgName.empty() || serviceId < 0) {
+    if (pkgName.empty() || serviceId <= 0) {
         LOGE("Invalid parameter.");
         return ERR_DM_INPUT_PARA_INVALID;
     }
