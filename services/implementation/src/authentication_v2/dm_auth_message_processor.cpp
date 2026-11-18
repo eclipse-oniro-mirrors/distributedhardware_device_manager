@@ -611,7 +611,10 @@ static void SetSubjectAccessExtraData(std::shared_ptr<DmAuthContext> context, Dm
     jsonObjAccesser[TAG_DMVERSION] = context->accesser.dmVersion;
     jsonObjAccesser[TAG_PKG_NAME] = subject.proxyAccesser.pkgName;
     jsonObjAccesser[TAG_PROXY] = jsonObjAccesserProxy.Dump();
+    jsonObjAccesser[TAG_DEVICE_TYPE_IN_ACL] = context->accesser.deviceType;
+
     jsonObjAccessee[TAG_DMVERSION] = context->accessee.dmVersion;
+    jsonObjAccessee[TAG_DEVICE_TYPE_IN_ACL] = context->accessee.deviceType;
     DistributedDeviceProfile::ServiceInfo dpServiceInfo;
     int32_t ret = DeviceProfileConnector::GetInstance().GetServiceInfoByUdidAndServiceId(
         context->accessee.deviceId, subject.proxyAccessee.serviceId, dpServiceInfo);
