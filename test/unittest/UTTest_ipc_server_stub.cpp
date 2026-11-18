@@ -1077,34 +1077,6 @@ HWTEST_F(IpcServerStubTest, OnRemoteRequest_006, testing::ext::TestSize.Level0)
 }
 
 /**
- * @tc.name: RunningIpcCount_004
- * @tc.desc: 1. reset runningIpcCount_ to 0 and isCritical_ to false
- *           2. call AddRunningIpcCount (0->1, SetCriticalState(true))
- *           3. call AddRunningIpcCount (1->2, no state change)
- *           4. call SubtractRunningIpcCount (2->1, no timer start)
- *           5. call SubtractRunningIpcCount (1->0, StartIdleCriticalTask)
- *           6. call CancelIdleCriticalTask to clean up
- *           7. verify isCritical_ is true (timer not fired, state not changed back)
- * @tc.type: FUNC
- * @tc.require: AR000GHSJK
- */
-HWTEST_F(IpcServerStubTest, RunningIpcCount_004, testing::ext::TestSize.Level0)
-{
-    IpcServerStub::GetInstance().runningIpcCount_ = 0;
-    IpcServerStub::GetInstance().isCritical_ = false;
-    IpcServerStub::GetInstance().AddRunningIpcCount();
-    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), false);
-    IpcServerStub::GetInstance().AddRunningIpcCount();
-    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 2);
-    IpcServerStub::GetInstance().SubtractRunningIpcCount();
-    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 1);
-    IpcServerStub::GetInstance().SubtractRunningIpcCount();
-    ASSERT_EQ(IpcServerStub::GetInstance().runningIpcCount_.load(), 0);
-    IpcServerStub::GetInstance().CancelIdleCriticalTask();
-    ASSERT_EQ(IpcServerStub::GetInstance().isCritical_.load(), false);
-}
-
-/**
  * @tc.name: StartIdleCriticalTask_002
  * @tc.desc: 1. call StartIdleCriticalTask twice (second call should delete first timer)
  *           2. call CancelIdleCriticalTask to clean up

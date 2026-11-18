@@ -92,6 +92,12 @@ int32_t SoftbusListener::GetAllTrustedDeviceList(const std::string &pkgName, con
     return DmSoftbusListener::dmSoftbusListener->GetAllTrustedDeviceList(pkgName, extra, deviceList);
 }
 
+int32_t SoftbusListener::RefreshSoftbusLNN(const char *pkgName, const DmSubscribeInfo &dmSubInfo,
+    const std::string &customData)
+{
+    return DmSoftbusListener::dmSoftbusListener->RefreshSoftbusLNN(pkgName, dmSubInfo, customData);
+}
+
 int32_t SoftbusListener::StopRefreshSoftbusLNN(uint16_t subscribeId)
 {
     return DmSoftbusListener::dmSoftbusListener->StopRefreshSoftbusLNN(subscribeId);

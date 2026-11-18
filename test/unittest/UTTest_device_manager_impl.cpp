@@ -69,6 +69,8 @@ void DeviceManagerImplTest::SetUp()
 void DeviceManagerImplTest::TearDown()
 {
     testing::Mock::VerifyAndClearExpectations(ipcClientProxyMock_.get());
+    // Restore the singleton state even when a test aborts early on ASSERT failure.
+    DeviceManagerImpl::GetInstance().ipcClientProxy_ = ipcClientProxyMock_;
 }
 
 void DeviceManagerImplTest::SetUpTestCase()
@@ -1349,11 +1351,9 @@ HWTEST_F(DeviceManagerImplTest, InitDeviceManager_007, testing::ext::TestSize.Le
 {
     std::string packName = "com.ohos.null.proxy.test";
     std::shared_ptr<DmInitCallbackTest> callback = std::make_shared<DmInitCallbackTest>();
-    auto savedProxy = DeviceManagerImpl::GetInstance().ipcClientProxy_;
     DeviceManagerImpl::GetInstance().ipcClientProxy_ = nullptr;
     int32_t ret = DeviceManager::GetInstance().InitDeviceManager(packName, callback);
     ASSERT_EQ(ret, ERR_DM_POINT_NULL);
-    DeviceManagerImpl::GetInstance().ipcClientProxy_ = savedProxy;
 }
 
 /**
@@ -1388,11 +1388,9 @@ HWTEST_F(DeviceManagerImplTest, InitDeviceManager_008, testing::ext::TestSize.Le
 HWTEST_F(DeviceManagerImplTest, UnInitDeviceManager_006, testing::ext::TestSize.Level0)
 {
     std::string packName = "com.ohos.uninit.null.test";
-    auto savedProxy = DeviceManagerImpl::GetInstance().ipcClientProxy_;
     DeviceManagerImpl::GetInstance().ipcClientProxy_ = nullptr;
     int32_t ret = DeviceManager::GetInstance().UnInitDeviceManager(packName);
     ASSERT_EQ(ret, ERR_DM_POINT_NULL);
-    DeviceManagerImpl::GetInstance().ipcClientProxy_ = savedProxy;
 }
 
 /**
