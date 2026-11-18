@@ -927,6 +927,7 @@ HWTEST_F(IpcClientManagerTest, SendRequest_012, testing::ext::TestSize.Level0)
     EXPECT_CALL(*mockAbilityMgr, CheckSystemAbility(testing::_))
         .WillOnce(testing::Return(nullptr))
         .WillOnce(testing::Return(stubObj));
+
     std::thread notifyThread;
     EXPECT_CALL(*mockAbilityMgr, LoadSystemAbility(testing::_, testing::An<const sptr<ISystemAbilityLoadCallback>&>()))
         .WillOnce(testing::Invoke([&notifyThread](int32_t, const sptr<ISystemAbilityLoadCallback> &callback) {
