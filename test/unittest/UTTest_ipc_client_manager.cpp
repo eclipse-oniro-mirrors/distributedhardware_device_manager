@@ -40,6 +40,7 @@ void IpcClientManagerTest::SetUp()
 
 void IpcClientManagerTest::TearDown()
 {
+    ISystemAbilityManagerClient::ReleaseSAMgrClient();
 }
 
 void IpcClientManagerTest::SetUpTestCase()
