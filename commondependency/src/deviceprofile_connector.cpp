@@ -5316,37 +5316,17 @@ int32_t DeviceProfileConnector::GetServiceIdByDisplayIdAndServiceCode(int64_t di
         }
         return ret;
     }
-    int32_t localUserId = MultipleUserConnector::GetUserIdByDisplayId(displayId);
-    const std::string localAccountId = MultipleUserConnector::GetAccountIdByUserId(localUserId);
     for (const auto &dpServiceInfo : dpServiceInfos) {
         if (dpServiceInfo.GetDisplayId() != displayId || dpServiceInfo.GetServiceCode() != serviceCode) {
             continue;
         }
-        std::string accountId = "";
-        ParseAccountIdByExtraData(dpServiceInfo.GetExtraData(), accountId);
-        if (localAccountId == accountId) {
-            serviceId = dpServiceInfo.GetServiceId();
-            LOGI("serviceId: %{public}s", std::to_string(serviceId).c_str());
-            return DM_OK;
-        }
+        serviceId = dpServiceInfo.GetServiceId();
+        LOGI("serviceId: %{public}s", std::to_string(serviceId).c_str());
+        return DM_OK;
     }
     LOGE("failed, displayId and serviceCode not match");
     return ERR_DM_SERVICE_INFO_NOT_EXIST;
 }
 
-void DeviceProfileConnector::ParseAccountIdByExtraData(const std::string &extraData, std::string &accountId)
-{
-    if (extraData.empty()) {
-        LOGE("extraData is empty");
-        return;
-    }
-    JsonObject extraDataJson(extraData);
-    if (extraDataJson.IsDiscarded() || !IsString(extraDataJson, TAG_ACCOUNT_ID)) {
-        LOGE("parse extraData fail or accountid is not string");
-        return;
-    }
-    accountId = extraDataJson[TAG_ACCOUNT_ID].Get<std::string>();
-    LOGI("accountId: %{public}s", GetAnonyString(accountId).c_str());
-}
 } // namespace DistributedHardware
 } // namespace OHOS

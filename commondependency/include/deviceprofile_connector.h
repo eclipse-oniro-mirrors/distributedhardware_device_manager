@@ -641,7 +641,6 @@ private:
         std::vector<DmUserRemovedServiceInfo> &serviceInfos);
     void FillDmUserRemovedServiceInfoLocal(const DistributedDeviceProfile::AccessControlProfile &item,
         std::vector<DmUserRemovedServiceInfo> &serviceInfos);
-    void ParseAccountIdByExtraData(const std::string &extraData, std::string &accountId);
 };
 
 DM_EXPORT extern "C" IDeviceProfileConnector *CreateDpConnectorInstance();
