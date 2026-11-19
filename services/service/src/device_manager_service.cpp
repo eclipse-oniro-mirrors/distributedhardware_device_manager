@@ -2687,7 +2687,9 @@ void DeviceManagerService::SubscribeAccountCommonEvent()
         this->AccountCommonEventCallback(eventInfo);
     };
     std::vector<std::string> AccountCommonEventVec;
+#ifndef CAR_DEVICE_ENABLE
     AccountCommonEventVec.emplace_back(CommonEventSupport::COMMON_EVENT_USER_SWITCHED);
+#endif
     AccountCommonEventVec.emplace_back(CommonEventSupport::COMMON_EVENT_USER_REMOVED);
     AccountCommonEventVec.emplace_back(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGOUT);
     AccountCommonEventVec.emplace_back(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGIN);
