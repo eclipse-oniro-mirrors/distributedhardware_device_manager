@@ -323,11 +323,8 @@ int32_t SoftbusConnector::SyncLocalAclListProcess(
         remoteAllAclMap.end()) {
         remoteAclHashList = remoteAllAclMap[matchVersion].aclHashList;
     }
-    auto localAclList = DeviceProfileConnector::GetInstance().
-        GetAclList(localDevUserInfo.deviceId,
-            localDevUserInfo.userId,
-            remoteDevUserInfo.deviceId,
-            remoteDevUserInfo.userId);
+    auto localAclList = DeviceProfileConnector::GetInstance().GetAclList(
+        localDevUserInfo.deviceId, localDevUserInfo.userId, remoteDevUserInfo.deviceId, remoteDevUserInfo.userId);
     for (auto &localAcl : localAclList) {
         int32_t versionNum = 0;
         if (!GetVersionNumber(matchVersion, versionNum)) {
@@ -549,8 +546,7 @@ ConnectionAddr *SoftbusConnector::GetConnectAddrByType(
     return nullptr;
 }
 
-std::shared_ptr<DeviceInfo>
-    SoftbusConnector::GetDeviceInfoFromMap(const std::string &deviceId)
+std::shared_ptr<DeviceInfo>SoftbusConnector::GetDeviceInfoFromMap(const std::string &deviceId)
 {
     std::lock_guard<std::mutex> lock(discoveryDeviceInfoMutex_);
     auto iter = discoveryDeviceInfoMap_.find(deviceId);
