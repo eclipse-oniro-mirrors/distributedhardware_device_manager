@@ -82,13 +82,11 @@ DM_EXPORT void AppManager::RegisterCallerAppId(const std::string &pkgName, const
         return;
     }
     std::string appIdKey = pkgName + "#" + std::to_string(userId);
-    {
-        std::lock_guard<std::mutex> lock(appIdMapLock_);
-        if (appIdMap_.find(appIdKey) != appIdMap_.end()) {
-            LOGI("PkgName %{public}s, userId %{public}d, appId %{public}s.",
-                pkgName.c_str(), userId, GetAnonyString(appIdMap_[appIdKey]).c_str());
-            return;
-        }
+    std::lock_guard<std::mutex> lock(appIdMapLock_);
+    if (appIdMap_.find(appIdKey) != appIdMap_.end()) {
+        LOGI("PkgName %{public}s, userId %{public}d, appId %{public}s.",
+            pkgName.c_str(), userId, GetAnonyString(appIdMap_[appIdKey]).c_str());
+        return;
     }
     std::string appId = GetAppId();
     if (appId.empty()) {
@@ -97,7 +95,6 @@ DM_EXPORT void AppManager::RegisterCallerAppId(const std::string &pkgName, const
     }
     LOGI("PkgName %{public}s, userId %{public}d, appId %{public}s.",
         pkgName.c_str(), userId, GetAnonyString(appId).c_str());
-    std::lock_guard<std::mutex> lock(appIdMapLock_);
     CHECK_SIZE_VOID(appIdMap_);
     appIdMap_[appIdKey] = appId;
 }

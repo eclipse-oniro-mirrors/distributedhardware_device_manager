@@ -117,6 +117,7 @@ int32_t PinHolder::CreatePinHolder(const std::string &pkgName,
         LOGE("listener or session is nullptr.");
         return ERR_DM_FAILED;
     }
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     if (sourceState_ != SOURCE_INIT) {
         LOGE("state is %{public}d.", sourceState_);
         return ERR_DM_FAILED;
@@ -162,6 +163,7 @@ int32_t PinHolder::DestroyPinHolder(const std::string &pkgName, const PeerTarget
         LOGE("targetId is invalid.");
         return ret;
     }
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     if (sessionId_ == SESSION_ID_INVALID) {
         LOGI("session already destroy.");
         listener_->OnDestroyResult(processInfo_, ret);
@@ -203,6 +205,7 @@ int32_t PinHolder::CreateGeneratePinHolderMsg()
         LOGE("listener or session is nullptr.");
         return ERR_DM_FAILED;
     }
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     if (timer_ != nullptr) {
         timer_->DeleteAll();
         timer_->StartTimer(std::string(PINHOLDER_CREATE_TIMEOUT_TASK), PIN_HOLDER_SESSION_CREATE_TIMEOUT,
@@ -252,6 +255,7 @@ void PinHolder::ProcessCloseSessionMsg(const std::string &message)
         LOGE("listener or session is nullptr.");
         return;
     }
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     LOGI("CloseSessionMsg, message type is: %{public}d.", MSG_TYPE_PIN_CLOSE_SESSION);
     session_->CloseSessionServer(sessionId_);
     sessionId_ = SESSION_ID_INVALID;
@@ -266,6 +270,7 @@ void PinHolder::ProcessCreateMsg(const std::string &message)
         LOGE("listener or session is nullptr.");
         return;
     }
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     JsonObject jsonObject(message);
     if (jsonObject.IsDiscarded()) {
         LOGE("DecodeRequest jsonStr error");
@@ -309,6 +314,7 @@ void PinHolder::ProcessCreateMsg(const std::string &message)
 
 void PinHolder::ProcessCreateRespMsg(const std::string &message)
 {
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     JsonObject jsonObject(message);
     if (jsonObject.IsDiscarded()) {
         LOGE("DecodeRequest jsonStr error.");
@@ -347,6 +353,7 @@ void PinHolder::ProcessDestroyMsg(const std::string &message)
         LOGE("listener or session is nullptr.");
         return;
     }
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     JsonObject jsonObject(message);
     if (jsonObject.IsDiscarded()) {
         LOGE("DecodeRequest jsonStr error.");
@@ -395,6 +402,7 @@ void PinHolder::CloseSession(const std::string &name)
         LOGE("session is nullptr.");
         return;
     }
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     JsonObject jsonObj;
     jsonObj[DM_CONNECTION_DISCONNECTED] = true;
     std::string payload = jsonObj.Dump();
@@ -421,6 +429,7 @@ void PinHolder::CloseSession(const std::string &name)
 
 void PinHolder::ProcessDestroyResMsg(const std::string &message)
 {
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     JsonObject jsonObject(message);
     if (jsonObject.IsDiscarded()) {
         LOGE("DecodeRequest jsonStr error.");
@@ -457,6 +466,7 @@ void PinHolder::ProcessDestroyResMsg(const std::string &message)
 
 void PinHolder::OnDataReceived(int32_t sessionId, std::string message)
 {
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     int32_t msgType = ParseMsgType(message);
     LOGI("msgType: %{public}d.", msgType);
     int32_t sessionSide = GetSessionSide(sessionId);
@@ -521,6 +531,7 @@ void PinHolder::GetPeerDeviceId(int32_t sessionId, std::string &udidHash)
 
 void PinHolder::OnSessionOpened(int32_t sessionId, int32_t sessionSide, int32_t result)
 {
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     isDestroy_.store(false);
     destroyState_ = STATE_UNKNOW;
     char peerDeviceId[DEVICE_UUID_LENGTH] = {0};
@@ -555,6 +566,7 @@ void PinHolder::OnSessionOpened(int32_t sessionId, int32_t sessionSide, int32_t 
 
 void PinHolder::OnSessionClosed(int32_t sessionId)
 {
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     if (sessionId != sessionId_) {
         return;
     }
@@ -608,6 +620,7 @@ int32_t PinHolder::NotifyPinHolderEvent(const std::string &pkgName, const std::s
         LOGE("pkgName: %{public}s is not register callback.", pkgName.c_str());
         return ERR_DM_FAILED;
     }
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     if (sessionId_ == SESSION_ID_INVALID) {
         LOGE("session invalid.");
         return ERR_DM_FAILED;
@@ -650,6 +663,7 @@ void PinHolder::ProcessChangeMsg(const std::string &message)
         LOGE("listener or session is nullptr.");
         return;
     }
+    std::lock_guard<std::recursive_mutex> lock(pinHolderStateLock_);
     JsonObject jsonObject(message);
     if (jsonObject.IsDiscarded()) {
         LOGE("DecodeRequest jsonStr error.");

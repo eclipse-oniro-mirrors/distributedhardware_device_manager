@@ -163,7 +163,9 @@ int32_t DeviceManagerImpl::InitDeviceManager(const std::string &pkgName, std::sh
         return ERR_DM_INIT_FAILED;
     }
     if (anonyLocalUdid_.empty()) {
-        GetAnonyLocalUdid(pkgName, anonyLocalUdid_);
+        std::call_once(anonyLocalUdidOnceFlag_, [this, &pkgName]() {
+            GetAnonyLocalUdid(pkgName, anonyLocalUdid_);
+        });
     }
     DmRadarHelper::GetInstance().ReportDmBehavior(pkgName, "InitDeviceManager", DM_OK, anonyLocalUdid_);
     DeviceManagerNotify::GetInstance().RegisterDeathRecipientCallback(pkgName, dmInitCallback);
@@ -1876,6 +1878,7 @@ int32_t DeviceManagerImpl::RegisterDiscoveryCallback(const std::string &pkgName,
         LOGE("input callback is null or pkgName is empty.");
         return ERR_DM_INPUT_PARA_INVALID;
     }
+    std::lock_guard<std::recursive_mutex> autoLock(subMapLock);
     LOGI("pkgName: %{public}s", pkgName.c_str());
     uint16_t subscribeId = AddDiscoveryCallback(pkgName, discoverParam, callback);
     discoverParam.emplace(PARAM_KEY_SUBSCRIBE_ID, std::to_string(subscribeId));
@@ -1910,6 +1913,7 @@ int32_t DeviceManagerImpl::UnRegisterDiscoveryCallback(const std::string &pkgNam
         LOGE("input pkgName is empty.");
         return ERR_DM_INPUT_PARA_INVALID;
     }
+    std::lock_guard<std::recursive_mutex> autoLock(subMapLock);
     LOGI("pkgName: %{public}s", pkgName.c_str());
     std::string pkgNameTemp = ComposeStr(pkgName, DM_INVALID_FLAG_ID);
     uint16_t subscribeId = GetSubscribeIdFromMap(pkgNameTemp);
@@ -2142,7 +2146,7 @@ uint16_t DeviceManagerImpl::AddDiscoveryCallback(const std::string &pkgName,
     }
     std::string pkgNameTemp = ComposeStr(pkgName, subscribeId);
     {
-        std::lock_guard<std::mutex> autoLock(subMapLock);
+        std::lock_guard<std::recursive_mutex> autoLock(subMapLock);
         auto item = pkgName2SubIdMap_.find(pkgNameTemp);
         if (item == pkgName2SubIdMap_.end() && subscribeId == DM_INVALID_FLAG_ID) {
             CHECK_SIZE_RETURN(pkgName2SubIdMap_, DM_INVALID_FLAG_ID);
@@ -2159,8 +2163,8 @@ uint16_t DeviceManagerImpl::AddDiscoveryCallback(const std::string &pkgName,
         } else {
             LOGE("subscribeId is unreasonable");
         }
+        DeviceManagerNotify::GetInstance().RegisterDiscoveryCallback(pkgNameTemp, subscribeId, callback);
     }
-    DeviceManagerNotify::GetInstance().RegisterDiscoveryCallback(pkgNameTemp, subscribeId, callback);
     DmRadarHelper::GetInstance().ReportDmBehavior(pkgNameTemp, "AddDiscoveryCallback", DM_OK, anonyLocalUdid_);
     return subscribeId;
 }
@@ -2169,14 +2173,14 @@ uint16_t DeviceManagerImpl::RemoveDiscoveryCallback(const std::string &pkgName)
 {
     uint16_t subscribeId = DM_INVALID_FLAG_ID;
     {
-        std::lock_guard<std::mutex> autoLock(subMapLock);
+        std::lock_guard<std::recursive_mutex> autoLock(subMapLock);
         if (pkgName2SubIdMap_.find(pkgName) != pkgName2SubIdMap_.end()) {
             subscribeId = pkgName2SubIdMap_[pkgName];
             randSubIdSet_.erase(subscribeId);
             pkgName2SubIdMap_.erase(pkgName);
         }
+        DeviceManagerNotify::GetInstance().UnRegisterDiscoveryCallback(pkgName, subscribeId);
     }
-    DeviceManagerNotify::GetInstance().UnRegisterDiscoveryCallback(pkgName, subscribeId);
     DmRadarHelper::GetInstance().ReportDmBehavior(pkgName, "RemoveDiscoveryCallback", DM_OK, anonyLocalUdid_);
     return subscribeId;
 }
@@ -2627,7 +2631,7 @@ int32_t DeviceManagerImpl::GetAnonyLocalUdid(const std::string &pkgName, std::st
 uint16_t DeviceManagerImpl::GetSubscribeIdFromMap(const std::string &pkgName)
 {
     {
-        std::lock_guard<std::mutex> autoLock(subMapLock);
+        std::lock_guard<std::recursive_mutex> autoLock(subMapLock);
         if (pkgName2SubIdMap_.find(pkgName) != pkgName2SubIdMap_.end()) {
             return pkgName2SubIdMap_[pkgName];
         }

@@ -256,6 +256,9 @@ private:
         uint64_t logicalSessionId);
     void EraseAuthMgr(uint64_t tokenId);
     std::shared_ptr<AuthManagerBase> GetAuthMgrByTokenId(uint64_t tokenId);
+    int32_t GetSessionIdForStop(const std::string &pkgName, uint64_t tokenId, int32_t &sessionId);
+    void NotifySessionStop(int32_t sessionId, uint64_t tokenId);
+    int32_t StopAuthAndCleanup(const std::string &pkgName, uint64_t tokenId, int32_t sessionId);
     std::shared_ptr<AuthManagerBase> GetCurrentAuthMgr();
     void CreateGlobalClassicalAuthMgr();
     std::shared_ptr<Session> GetCurSession(int sessionId);

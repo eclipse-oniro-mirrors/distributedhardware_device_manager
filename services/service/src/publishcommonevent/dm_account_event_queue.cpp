@@ -36,11 +36,11 @@ void DmAccountEventQueue::SetCallback(const AccountEventCallback& callback)
 
 void DmAccountEventQueue::Start()
 {
-    if (isRunning_) {
+    if (isRunning_.load()) {
         LOGI("Account event queue is already running.");
         return;
     }
-    isRunning_ = true;
+    isRunning_.store(true);
     processThread_ = std::thread(&DmAccountEventQueue::ProcessLoop, this);
     if (pthread_setname_np(processThread_.native_handle(), ACCOUNT_EVENT_QUEUE_THREAD) != DM_OK) {
         LOGE("Failed to set thread name.");
@@ -50,11 +50,11 @@ void DmAccountEventQueue::Start()
 
 void DmAccountEventQueue::Stop()
 {
-    if (!isRunning_) {
+    if (!isRunning_.load()) {
         LOGI("Account event queue is not running.");
         return;
     }
-    isRunning_ = false;
+    isRunning_.store(false);
     queueCond_.notify_all();
     if (processThread_.joinable()) {
         processThread_.join();
@@ -72,12 +72,12 @@ void DmAccountEventQueue::PushEvent(const DmAccountEventInfo& eventInfo)
 
 void DmAccountEventQueue::ProcessLoop()
 {
-    while (isRunning_) {
+    while (isRunning_.load()) {
         DmAccountEventInfo eventInfo;
         {
             std::unique_lock<std::mutex> lock(queueMutex_);
-            queueCond_.wait(lock, [this]() { return !eventQueue_.empty() || !isRunning_; });
-            if (!isRunning_ && eventQueue_.empty()) {
+            queueCond_.wait(lock, [this]() { return !eventQueue_.empty() || !isRunning_.load(); });
+            if (!isRunning_.load() && eventQueue_.empty()) {
                 break;
             }
             if (eventQueue_.empty()) {

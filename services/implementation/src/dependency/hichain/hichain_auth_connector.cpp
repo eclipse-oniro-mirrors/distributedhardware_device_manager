@@ -66,6 +66,7 @@ HiChainAuthConnector::HiChainAuthConnector()
 
 HiChainAuthConnector::~HiChainAuthConnector()
 {
+    std::lock_guard<ffrt::mutex> lock(dmDeviceAuthCallbackMutex_);
     for (auto& pair : dmDeviceAuthCallbackMap_) {
         pair.second = nullptr;
     }
@@ -108,6 +109,7 @@ int32_t HiChainAuthConnector::UnRegisterHiChainAuthCallbackById(int64_t id)
 
 std::shared_ptr<IDmDeviceAuthCallback> HiChainAuthConnector::GetDeviceAuthCallback(int64_t id)
 {
+    std::lock_guard<ffrt::mutex> lock(dmDeviceAuthCallbackMutex_);
     if (dmDeviceAuthCallbackMap_.find(id) != dmDeviceAuthCallbackMap_.end()) {
         LOGD("dmDeviceAuthCallbackMap_ id: %{public}" PRId64 ".", id);
         return dmDeviceAuthCallbackMap_[id];

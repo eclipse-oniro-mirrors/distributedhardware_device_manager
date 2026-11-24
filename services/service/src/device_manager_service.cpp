@@ -180,6 +180,7 @@ int32_t DeviceManagerService::HandleProcessRestart()
 
 int32_t DeviceManagerService::InitSoftbusListener()
 {
+    std::lock_guard<ffrt::mutex> lock(isImplLoadLock_);
     if (softbusListener_ == nullptr) {
         softbusListener_ = std::make_shared<SoftbusListener>();
     }
@@ -416,6 +417,7 @@ void DeviceManagerService::QueryDependsSwitchState()
 
 void DeviceManagerService::UninitSoftbusListener()
 {
+    std::lock_guard<ffrt::mutex> lock(isImplLoadLock_);
     CHECK_NULL_VOID(softbusListener_);
     softbusListener_->DeleteCacheDeviceInfo();
     softbusListener_ = nullptr;
@@ -424,6 +426,7 @@ void DeviceManagerService::UninitSoftbusListener()
 
 int32_t DeviceManagerService::InitDMServiceListener()
 {
+    std::lock_guard<ffrt::mutex> lock(isImplLoadLock_);
     if (listener_ == nullptr) {
         listener_ = std::make_shared<DeviceManagerServiceListener>();
     }
@@ -466,6 +469,7 @@ int32_t DeviceManagerService::InitDMServiceListener()
 
 DM_EXPORT void DeviceManagerService::UninitDMServiceListener()
 {
+    std::lock_guard<ffrt::mutex> lock(isImplLoadLock_);
     listener_ = nullptr;
     advertiseMgr_ = nullptr;
     discoveryMgr_ = nullptr;
@@ -2090,10 +2094,10 @@ void DeviceManagerService::UnloadDMServiceImplSo()
 
 bool DeviceManagerService::IsDMServiceAdapterResidentLoad()
 {
+    std::lock_guard<ffrt::mutex> lock(isAdapterResidentLoadLock_);
     if (listener_ == nullptr) {
         listener_ = std::make_shared<DeviceManagerServiceListener>();
     }
-    std::lock_guard<ffrt::mutex> lock(isAdapterResidentLoadLock_);
     if (isAdapterResidentSoLoaded_ && (dmServiceImplExtResident_ != nullptr)) {
         return true;
     }

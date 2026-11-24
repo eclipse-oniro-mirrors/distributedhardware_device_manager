@@ -20,6 +20,8 @@
 #include "idevice_manager_service_listener.h"
 #include "pin_holder_session.h"
 
+#include <mutex>
+
 namespace OHOS {
 namespace DistributedHardware {
 typedef enum PinHolderState {
@@ -82,6 +84,7 @@ private:
     std::atomic<bool> isDestroy_ {false};
     DestroyState destroyState_ = STATE_UNKNOW;
     ProcessInfo processInfo_;
+    std::recursive_mutex pinHolderStateLock_;
 };
 }
 }

@@ -189,6 +189,7 @@ private:
 
 private:
     static std::string remoteUdidHash_;
+    static std::mutex remoteUdidHashMutex_;
     std::shared_ptr<SoftbusSession> softbusSession_;
     std::shared_ptr<HiChainAuthConnector> hiChainAuthConnector_;
     static std::map<std::string, std::shared_ptr<DeviceInfo>> discoveryDeviceInfoMap_;
@@ -201,6 +202,7 @@ private:
     static std::mutex processInfoVecMutex_;
     static std::mutex processChangeInfoVecMutex_;
     static std::shared_ptr<ISoftbusConnectorCallback> connectorCallback_;
+    static std::mutex connectorCallbackMutex_;
     static std::shared_ptr<ISoftbusLeaveLNNCallback> leaveLNNCallback_;
     static std::mutex leaveLNNMutex_;
     static std::map<std::string, std::string> leaveLnnPkgMap_;

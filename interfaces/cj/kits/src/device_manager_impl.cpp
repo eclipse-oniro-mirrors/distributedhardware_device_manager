@@ -634,10 +634,15 @@ void DeviceManagerFfiImpl::OnAuthResult(const std::string &deviceId, const std::
         errCode_ = reason;
     }
 
-    std::lock_guard<std::mutex> autoLock(g_authCallbackMapMutex);
-    g_authCallbackMap.erase(bundleName_);
-    callbackFinished = true;
-    callbackFinishedCv.notify_one();
+    {
+        std::lock_guard<std::mutex> autoLock(g_authCallbackMapMutex);
+        g_authCallbackMap.erase(bundleName_);
+    }
+    {
+        std::lock_guard<std::mutex> autoLock(callbackFinishedMutex);
+        callbackFinished = true;
+        callbackFinishedCv.notify_one();
+    }
 }
 
 void DeviceManagerFfiImpl::OnDmUiCall(const std::string &paramJson)
