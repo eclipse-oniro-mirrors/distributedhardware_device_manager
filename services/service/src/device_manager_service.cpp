@@ -137,6 +137,29 @@ namespace {
     constexpr const char* HANDLE_REMOTE_USER_REMOVED_TASK = "HandleRemoteUserRemovedTask";
     constexpr const char* ON_SET_LOCAL_DEVICE_NAME_RESULT_TASK = "OnSetLocalDeviceNameResultTask";
     constexpr const char* HANDLE_SERVICE_UN_REG_EVENT_TASK = "HandleServiceUnRegEventTask";
+    constexpr const char* TAG_LOCAL_DISPLAY_ID = "localDisplayId";
+    constexpr int32_t AUTH_FORM_PRIORITY_INVALID = 0;
+    constexpr int32_t AUTH_FORM_PRIORITY_PEER_TO_PEER = 1;
+    constexpr int32_t AUTH_FORM_PRIORITY_ACROSS_ACCOUNT = 2;
+    constexpr int32_t AUTH_FORM_PRIORITY_SHARE = 3;
+    constexpr int32_t AUTH_FORM_PRIORITY_IDENTICAL_ACCOUNT = 4;
+    constexpr int32_t CALLING_USER_ID_DEFAULT = 0;
+
+    int32_t GetAuthFormPriority(DmAuthForm authForm)
+    {
+        switch (authForm) {
+            case IDENTICAL_ACCOUNT: return AUTH_FORM_PRIORITY_IDENTICAL_ACCOUNT;
+            case SHARE:             return AUTH_FORM_PRIORITY_SHARE;
+            case ACROSS_ACCOUNT:    return AUTH_FORM_PRIORITY_ACROSS_ACCOUNT;
+            case PEER_TO_PEER:      return AUTH_FORM_PRIORITY_PEER_TO_PEER;
+            default:                return AUTH_FORM_PRIORITY_INVALID;
+        }
+    }
+
+    DmAuthForm GetHigherAuthForm(DmAuthForm a, DmAuthForm b)
+    {
+        return GetAuthFormPriority(a) >= GetAuthFormPriority(b) ? a : b;
+    }
 }
 //LCOV_EXCL_START
 DeviceManagerService::~DeviceManagerService()
@@ -499,8 +522,27 @@ int32_t DeviceManagerService::GetTrustedDeviceList(const std::string &pkgName, c
     }
     ProcessInfo processInfo;
     processInfo.pkgName = pkgName;
-    int32_t userId = MultipleUserConnector::GetCallerUserIdInCar(extra);
-    if (userId < 0) {
+    bool isSystemSA = AppManager::GetInstance().IsSystemSA();
+    bool isSystemApp = false;
+    if (!isSystemSA) {
+        isSystemApp = AppManager::GetInstance().IsSystemApp();
+    }
+    int32_t userId = -1;
+    int32_t callerUserId = -1;
+    MultipleUserConnector::GetCallerUserId(callerUserId);
+    if (isSystemSA || (isSystemApp && callerUserId == CALLING_USER_ID_DEFAULT)) {
+        JsonObject jsonObject(extra);
+        if (jsonObject.IsDiscarded() || !IsInt32(jsonObject, TAG_LOCAL_DISPLAY_ID)) {
+            LOGI("system caller without localDisplayId, query all foreground users");
+            return GetTrustedDeviceListForAllForegroundUsers(pkgName, deviceList);
+        }
+        int32_t displayId = jsonObject[TAG_LOCAL_DISPLAY_ID].Get<int32_t>();
+        userId = MultipleUserConnector::GetUserIdByDisplayId(displayId);
+        LOGI("localDisplayId: %{public}d, userId: %{public}d", displayId, userId);
+    } else {
+        userId = callerUserId;
+    }
+    if (userId <= 0) {
         LOGE("get caller userId failed");
         return ERR_DM_GET_LOCAL_USERID_FAILED;
     }
@@ -5073,6 +5115,79 @@ int32_t DeviceManagerService::GetTrustedDeviceList(ProcessInfo processInfo, std:
         }
     }
     return DM_OK;
+}
+
+int32_t DeviceManagerService::GetTrustedDeviceListForAllForegroundUsers(const std::string &pkgName,
+    std::vector<DmDeviceInfo> &deviceList)
+{
+    LOGI("pkgName: %{public}s, query all foreground users", pkgName.c_str());
+    if (DmConstrainsManager::GetInstance().CheckOsAccountConstraintEnabled(
+        MultipleUserConnector::GetForgroundUserId(), DM_ACCOUNT_CONSTRAINT)) {
+        return DM_OK;
+    }
+    if (pkgName.empty() || pkgName == std::string(DM_PKG_NAME)) {
+        LOGE("Invalid parameter, pkgName is empty.");
+        return ERR_DM_INPUT_PARA_INVALID;
+    }
+    std::vector<int32_t> foregroundUserIds;
+    if (MultipleUserConnector::GetForegroundUserIds(foregroundUserIds) != DM_OK || foregroundUserIds.empty()) {
+        LOGE("get foreground user ids failed");
+        return ERR_DM_GET_LOCAL_USERID_FAILED;
+    }
+    std::vector<DmDeviceInfo> onlineDeviceList;
+    CHECK_NULL_RETURN(softbusListener_, ERR_DM_POINT_NULL);
+    int32_t ret = softbusListener_->GetTrustedDeviceList(onlineDeviceList);
+    if (ret != DM_OK || onlineDeviceList.empty()) {
+        return (ret != DM_OK) ? ret : DM_OK;
+    }
+    std::string queryPkgName = PermissionManager::GetInstance().CheckWhiteListSystemSA(pkgName) ?
+        std::string(ALL_PKGNAME) : pkgName;
+    std::unordered_map<std::string, DmAuthForm> mergedUdidMap;
+    MergeTrustedDevicesFromUsers(queryPkgName, pkgName, foregroundUserIds, mergedUdidMap);
+    BuildDeviceListFromTrustMap(mergedUdidMap, onlineDeviceList, deviceList);
+    return DM_OK;
+}
+
+void DeviceManagerService::MergeTrustedDevicesFromUsers(const std::string &queryPkgName,
+    const std::string &pkgName, const std::vector<int32_t> &foregroundUserIds,
+    std::unordered_map<std::string, DmAuthForm> &mergedUdidMap)
+{
+    if (!IsDMServiceImplReady()) {
+        LOGE("instance not init or init failed.");
+        return;
+    }
+    for (int32_t fgUserId : foregroundUserIds) {
+        ProcessInfo processInfo;
+        processInfo.pkgName = pkgName;
+        processInfo.userId = fgUserId;
+        processInfo.accountId = MultipleUserConnector::GetAccountIdByUserId(fgUserId);
+        std::unordered_map<PeerDevInfo, DmAuthForm, PeerDevInfoHash> udidMap =
+            dmServiceImpl_->GetAppTrustDeviceIdList(queryPkgName, processInfo);
+        for (const auto &entry : udidMap) {
+            const std::string &peerUdid = entry.first.deviceId;
+            auto it = mergedUdidMap.find(peerUdid);
+            if (it == mergedUdidMap.end()) {
+                mergedUdidMap[peerUdid] = entry.second;
+            } else {
+                mergedUdidMap[peerUdid] = GetHigherAuthForm(it->second, entry.second);
+            }
+        }
+    }
+}
+
+void DeviceManagerService::BuildDeviceListFromTrustMap(
+    const std::unordered_map<std::string, DmAuthForm> &mergedUdidMap,
+    const std::vector<DmDeviceInfo> &onlineDeviceList, std::vector<DmDeviceInfo> &deviceList)
+{
+    for (auto item : onlineDeviceList) {
+        std::string peerUdid = "";
+        SoftbusListener::GetUdidByNetworkId(item.networkId, peerUdid);
+        auto it = mergedUdidMap.find(peerUdid);
+        if (it != mergedUdidMap.end()) {
+            item.authForm = it->second;
+            deviceList.push_back(item);
+        }
+    }
 }
 #endif
 
