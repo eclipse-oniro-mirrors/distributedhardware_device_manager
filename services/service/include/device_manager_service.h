@@ -264,6 +264,12 @@ public:
     int32_t UnRegServiceStateCallback(const std::string &pkgName, int64_t serviceId);
 #ifdef CAR_DEVICE_ENABLE
     int32_t GetTrustedDeviceList(ProcessInfo processInfo, std::vector<DmDeviceInfo> &deviceList);
+    int32_t GetTrustedDeviceListForAllForegroundUsers(const std::string &pkgName,
+        std::vector<DmDeviceInfo> &deviceList);
+    void MergeTrustedDevicesFromUsers(const std::string &queryPkgName, const std::string &pkgName,
+        const std::vector<int32_t> &foregroundUserIds, std::unordered_map<std::string, DmAuthForm> &mergedUdidMap);
+    void BuildDeviceListFromTrustMap(const std::unordered_map<std::string, DmAuthForm> &mergedUdidMap,
+        const std::vector<DmDeviceInfo> &onlineDeviceList, std::vector<DmDeviceInfo> &deviceList);
 #endif
     void HandleDeviceUnBind(const char *peerUdid, const GroupInformation &groupInfo);
     int32_t GetAnonyLocalUdid(const std::string &pkgName, std::string &anonyUdid);
