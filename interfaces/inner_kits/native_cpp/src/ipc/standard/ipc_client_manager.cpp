@@ -58,7 +58,11 @@ int32_t IpcClientManager::ClientInit()
     auto object = samgr->CheckSystemAbility(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
     if (object == nullptr) {
         LOGW("DM SA null, trigger LoadDMService");
-        DmServiceLoad::GetInstance().LoadDMService();
+        int32_t loadRet = DmServiceLoad::GetInstance().LoadDMService();
+        if (loadRet != DM_OK) {
+            LOGE("LoadDMService failed, ret %{public}d", loadRet);
+            return ERR_DM_INIT_FAILED;
+        }
         object = samgr->CheckSystemAbility(DISTRIBUTED_HARDWARE_DEVICEMANAGER_SA_ID);
         if (object == nullptr) {
             LOGE("DM SA still unavailable after load");
