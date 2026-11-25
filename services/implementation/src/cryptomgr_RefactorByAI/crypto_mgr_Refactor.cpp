@@ -1,0 +1,492 @@
+/*
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * PR-09 refactor of services/implementation/src/cryptomgr/crypto_mgr.cpp
+ * (session-key handling fixes in the legacy-protocol compatibility path;
+ * modification of that path is authorized by the developer). The original
+ * file is intentionally untouched; this whole-file copy replaces it through
+ * normal code review and is not compiled from this directory.
+ *
+ * Fixes (secure-code-refactor principles 11/12):
+ *
+ * A. SaveSessionKey never copied the caller's key bytes into the allocated
+ *    buffer, so the saved session key was always all-zero while DM_OK was
+ *    returned and the legacy path encrypted/decrypted with an all-zero key;
+ *    the calloc result was also unchecked, and on allocation failure
+ *    GetSessionKey built vector(nullptr, len), which is undefined behavior.
+ *    Fixed by mirroring the ProcessSessionKey reference implementation that
+ *    is already correct in this file and in the 3rd stack copy: null/length
+ *    validation, calloc null check, verified memcpy_s copy, fail-closed
+ *    cleanup, keyLen set only after a successful copy. SaveSessionKey keeps
+ *    its own existing failure code ERR_DM_SAVE_SESSION_KEY_FAILED instead of
+ *    delegating to ProcessSessionKey, because UTTest_crypto_mgr.cpp
+ *    SaveSessionKey_001 asserts exactly that code, and the callers
+ *    (AuthMessageProcessor::SaveSessionKey -> DmAuthManager::
+ *    AuthDeviceSessionKey) only compare the result against DM_OK; the stored
+ *    state semantics are identical to ProcessSessionKey.
+ *
+ * B. EncryptMessage/DecryptMessage returned on error paths without wiping
+ *    cipherKey, the local session-key copy. Every return path now wipes it
+ *    through the WipeCipherKey helper: best-effort on error paths so the
+ *    original error code wins, and checked on the success path, keeping the
+ *    original ERR_DM_SECURITY_FUNC_FAILED contract.
+ *
+ * C. The decrypted plaintext buffer outData was freed without zeroing on
+ *    both the failure path (GCM writes plaintext before the tag check can
+ *    fail) and the success path. Both free sites now memset_s the buffer
+ *    first, using the originally allocated capacity.
+ *
+ * D. Two VLAs sized themselves from peer-controlled data and could overflow
+ *    the stack: char hexStrTemp[hexStrLen] (up to about 2 * MAX_ENCRY_MSG_LEN
+ *    bytes) in EncryptMessage, and unsigned char
+ *    inputMsgBytsTemp[inputMsgBytesLen] (unbounded) in DecryptMessage. Both
+ *    are replaced by checked calloc/free buffers, so the memset of the
+ *    fresh VLA and its ERR_DM_SECURITY_FUNC_FAILED branch disappear because
+ *    calloc memory is already zeroed. DecodeHexToBytes also bounds the
+ *    decrypt input by MAX_DECRY_BYTES_LEN before allocating: a legitimate
+ *    peer message is produced by EncryptMessage, whose plaintext is bounded
+ *    by MAX_ENCRY_MSG_LEN, so its ciphertext never exceeds
+ *    MAX_ENCRY_MSG_LEN + OVERHEAD_LEN bytes and no valid message is
+ *    rejected; oversized input used to smash the stack and is now rejected
+ *    with ERR_DM_CRYPTO_PARA_INVALID.
+ *
+ * Logs never print key material (only lengths and return codes). No IPC
+ * code, public SDK signature or error-code value is changed. Upgrade note:
+ * an unpatched legacy peer (remote version < 5.0.4) still encrypts with the
+ * all-zero key, so a mixed-version pair fails to decrypt and the bind fails
+ * closed; both ends must upgrade and push packages in sync.
+ *
+ * Codecheck self-check: every function stays within nbnc <= 50, nesting
+ * <= 4, cyclomatic complexity <= 20 and line width <= 120; no magic numbers
+ * (MAX_DECRY_BYTES_LEN derives from existing named constants), no
+ * commented-out code, no try-catch and no std::sto*.
+ */
+
+#include "crypto_mgr.h"
+
+#include <atomic>
+#include <cstdlib>
+#include <string>
+
+#include "mbedtls/base64.h"
+#include "mbedtls/cipher.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/gcm.h"
+#include "mbedtls/md.h"
+#include "mbedtls/platform.h"
+
+#include "securec.h"
+
+#include "dm_error_type.h"
+#include "dm_crypto.h"
+#include "dm_log.h"
+
+namespace OHOS {
+namespace DistributedHardware {
+constexpr uint32_t MAX_SESSION_KEY_LENGTH = 512;
+constexpr uint32_t TAG_LEN = 16;
+constexpr uint32_t OVERHEAD_LEN = GCM_IV_LEN + TAG_LEN;
+constexpr uint32_t MAX_ENCRY_MSG_LEN = 10 * 1024 * 1024; // 10MB
+// PR-09 fix (D): upper bound of a legitimate decrypt input in bytes; derived
+// from the encrypt-side bound so no valid peer message is ever rejected.
+constexpr uint32_t MAX_DECRY_BYTES_LEN = MAX_ENCRY_MSG_LEN + OVERHEAD_LEN;
+constexpr uint32_t KEY_BITS_UNIT = 8;
+constexpr uint32_t HEX_TO_UINT8 = 2;
+
+// PR-09 fix (B): single wipe point for the local session-key copy used by
+// EncryptMessage/DecryptMessage. Error paths call it best-effort and keep
+// their original error code; the success path keeps the checked contract.
+static int32_t WipeCipherKey(AesGcmCipherKey &cipherKey)
+{
+    if (memset_s(&cipherKey, sizeof(AesGcmCipherKey), 0, sizeof(AesGcmCipherKey)) != EOK) {
+        LOGE("memset_s failed.");
+        return ERR_DM_SECURITY_FUNC_FAILED;
+    }
+    return DM_OK;
+}
+
+// PR-09 fix (D): heap buffer replaces the hexStrTemp[hexStrLen] VLA, which
+// sized itself from the message and could claim up to about
+// 2 * MAX_ENCRY_MSG_LEN bytes of stack. calloc memory is already zeroed, so
+// the memset the VLA version needed is gone; every path frees exactly once.
+static int32_t EncodeCipherToHex(const unsigned char *encData, uint32_t encDataLen, std::string &outputMsg)
+{
+    const uint32_t hexStrLen = encDataLen * HEX_TO_UINT8 + 1;
+    char *hexStr = (char *)calloc(hexStrLen, sizeof(char));
+    if (hexStr == nullptr) {
+        LOGE("calloc fail");
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+    Crypto::ConvertBytesToHexString(hexStr, hexStrLen, encData, encDataLen);
+    outputMsg.clear();
+    outputMsg.assign(hexStr, encDataLen * HEX_TO_UINT8);
+    free(hexStr);
+    return DM_OK;
+}
+
+// PR-09 fix (D): heap buffer replaces the inputMsgBytsTemp[inputMsgBytesLen]
+// VLA, whose size followed the peer-controlled input without any bound. The
+// length is validated before the allocation, so an oversized input is
+// rejected instead of exhausting the stack or the heap.
+static int32_t DecodeHexToBytes(const std::string &inputMsg, unsigned char *&outBytes, uint32_t &outBytesLen)
+{
+    outBytesLen = static_cast<uint32_t>(inputMsg.length()) / HEX_TO_UINT8;
+    if (outBytesLen > MAX_DECRY_BYTES_LEN || outBytesLen < OVERHEAD_LEN) {
+        LOGE("Decrypt msg invalid len: %{public}u", outBytesLen);
+        return ERR_DM_CRYPTO_PARA_INVALID;
+    }
+    outBytes = (unsigned char *)calloc(outBytesLen, sizeof(unsigned char));
+    if (outBytes == nullptr) {
+        LOGE("calloc fail");
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+    Crypto::ConvertHexStringToBytes(outBytes, outBytesLen,
+        reinterpret_cast<const char *>(inputMsg.c_str()), static_cast<uint32_t>(inputMsg.length()));
+    return DM_OK;
+}
+
+CryptoMgr::CryptoMgr()
+{
+    LOGI("ctor");
+}
+
+CryptoMgr::~CryptoMgr()
+{
+    LOGI("CryptoMgr dtor");
+    ClearSessionKey();
+}
+
+//LCOV_EXCL_START
+int32_t CryptoMgr::EncryptMessage(const std::string &inputMsg, std::string &outputMsg)
+{
+    if (inputMsg.length() > MAX_ENCRY_MSG_LEN) {
+        LOGE("Encrypt msg too long, size: %{public}zu", inputMsg.size());
+        return ERR_DM_CRYPTO_PARA_INVALID;
+    }
+
+    std::lock_guard<ffrt::mutex> lock(sessionKeyMtx_);
+    AesGcmCipherKey cipherKey = {.keyLen = sessionKey_.keyLen};
+    if (memcpy_s(cipherKey.key, SESSION_KEY_LENGTH, sessionKey_.key, sessionKey_.keyLen) != EOK) {
+        LOGE("set key fail");
+        (void)WipeCipherKey(cipherKey); // PR-09 fix (B): wipe the key copy before this error return
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+
+    uint32_t encDataLen = inputMsg.length() + OVERHEAD_LEN;
+    unsigned char *encData = (unsigned char *)calloc(encDataLen, sizeof(unsigned char));
+    if (encData == nullptr) {
+        LOGE("calloc fail");
+        (void)WipeCipherKey(cipherKey); // PR-09 fix (B): wipe the key copy before this error return
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+    int32_t ret = DoEncryptData(&cipherKey, reinterpret_cast<const unsigned char*>(inputMsg.c_str()),
+        static_cast<uint32_t>(inputMsg.length()), encData, &encDataLen);
+    if (ret != DM_OK) {
+        LOGE("EncryptData fail=%{public}d", ret);
+        (void)WipeCipherKey(cipherKey); // PR-09 fix (B): wipe the key copy before this error return
+        free(encData);
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+    if (WipeCipherKey(cipherKey) != DM_OK) {
+        LOGE("memset_s failed.");
+        free(encData);
+        return ERR_DM_SECURITY_FUNC_FAILED;
+    }
+    // PR-09 fix (D): the hexStrTemp[hexStrLen] VLA is replaced by the checked
+    // heap buffer allocated inside EncodeCipherToHex.
+    ret = EncodeCipherToHex(encData, encDataLen, outputMsg);
+    free(encData);
+    return ret;
+}
+//LCOV_EXCL_STOP
+
+int32_t CryptoMgr::DoEncryptData(AesGcmCipherKey *cipherKey, const unsigned char *input, uint32_t inLen,
+    unsigned char *encryptData, uint32_t *encryptLen)
+{
+    if (cipherKey == nullptr || input == nullptr || inLen == 0 || encryptData == nullptr || encryptLen == nullptr) {
+        return ERR_DM_CRYPTO_PARA_INVALID;
+    }
+
+    if (GenerateRandomArray(cipherKey->iv, sizeof(cipherKey->iv)) != DM_OK) {
+        LOGE("generate random iv error.");
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+    uint32_t outLen = inLen + OVERHEAD_LEN;
+    int32_t result = MbedAesGcmEncrypt(cipherKey, input, inLen, encryptData, outLen);
+    if (result <= 0) {
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+    *encryptLen = result;
+    return DM_OK;
+}
+
+int32_t CryptoMgr::MbedAesGcmEncrypt(const AesGcmCipherKey *cipherKey, const unsigned char *plainText,
+    uint32_t plainTextSize, unsigned char *cipherText, uint32_t cipherTextLen)
+{
+    if ((cipherKey == nullptr) || (plainText == nullptr) || (plainTextSize == 0) || cipherText == nullptr ||
+        (cipherTextLen < plainTextSize + OVERHEAD_LEN)) {
+        LOGE("Encrypt invalid para");
+        return ERR_DM_CRYPTO_PARA_INVALID;
+    }
+
+    int32_t ret = -1;
+    unsigned char tagBuf[TAG_LEN] = { 0 };
+    mbedtls_gcm_context aesContext;
+    mbedtls_gcm_init(&aesContext);
+
+    ret = mbedtls_gcm_setkey(&aesContext, MBEDTLS_CIPHER_ID_AES, cipherKey->key, cipherKey->keyLen * KEY_BITS_UNIT);
+    if (ret != 0) {
+        mbedtls_gcm_free(&aesContext);
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+
+    ret = mbedtls_gcm_crypt_and_tag(&aesContext, MBEDTLS_GCM_ENCRYPT, plainTextSize, cipherKey->iv, GCM_IV_LEN, NULL, 0,
+        plainText, cipherText + GCM_IV_LEN, TAG_LEN, tagBuf);
+    if (ret != 0) {
+        mbedtls_gcm_free(&aesContext);
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+
+    if (memcpy_s(cipherText, cipherTextLen, cipherKey->iv, GCM_IV_LEN) != EOK) {
+        mbedtls_gcm_free(&aesContext);
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+
+    if (memcpy_s(cipherText + GCM_IV_LEN + plainTextSize, cipherTextLen - GCM_IV_LEN - plainTextSize, tagBuf,
+                 TAG_LEN) != 0) {
+        mbedtls_gcm_free(&aesContext);
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+
+    mbedtls_gcm_free(&aesContext);
+    return (plainTextSize + OVERHEAD_LEN);
+}
+
+int32_t CryptoMgr::GenerateRandomArray(unsigned char *randStr, uint32_t len)
+{
+    if (randStr == NULL || len == 0) {
+        return ERR_DM_CRYPTO_PARA_INVALID;
+    }
+
+    static mbedtls_entropy_context entropy;
+    static mbedtls_ctr_drbg_context ctrDrbg;
+    static std::atomic<bool> initFlag = false;
+    int32_t ret;
+
+    if (!initFlag) {
+        std::lock_guard<ffrt::mutex> lock(randomLock_);
+        mbedtls_ctr_drbg_init(&ctrDrbg);
+        mbedtls_entropy_init(&entropy);
+        ret = mbedtls_ctr_drbg_seed(&ctrDrbg, mbedtls_entropy_func, &entropy, NULL, 0);
+        if (ret != 0) {
+            LOGE("gen random seed error, ret=%{public}d", ret);
+            return ERR_DM_CRYPTO_OPT_FAILED;
+        }
+        initFlag = true;
+    }
+
+    std::lock_guard<ffrt::mutex> lock(randomLock_);
+    ret = mbedtls_ctr_drbg_random(&ctrDrbg, randStr, len);
+    if (ret != 0) {
+        LOGE("gen random error, ret=%{public}d", ret);
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+    return DM_OK;
+}
+
+//LCOV_EXCL_START
+int32_t CryptoMgr::DecryptMessage(const std::string &inputMsg, std::string &outputMsg)
+{
+    uint32_t inputMsgBytesLen = 0;
+    unsigned char *inputMsgBytes = nullptr;
+    // PR-09 fix (D): the inputMsgBytsTemp[inputMsgBytesLen] VLA is replaced by
+    // the checked heap buffer allocated inside DecodeHexToBytes.
+    int32_t ret = DecodeHexToBytes(inputMsg, inputMsgBytes, inputMsgBytesLen);
+    if (ret != DM_OK) {
+        return ret;
+    }
+    std::lock_guard<ffrt::mutex> lock(sessionKeyMtx_);
+    AesGcmCipherKey cipherKey = {.keyLen = sessionKey_.keyLen};
+    if (memcpy_s(cipherKey.key, SESSION_KEY_LENGTH, sessionKey_.key, sessionKey_.keyLen) != EOK) {
+        LOGE("set key fail");
+        (void)WipeCipherKey(cipherKey); // PR-09 fix (B): wipe the key copy before this error return
+        free(inputMsgBytes);
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+
+    const uint32_t outDataLen = inputMsgBytesLen - OVERHEAD_LEN + 1; /* for '\0' */
+    uint32_t outLen = outDataLen;
+    unsigned char *outData = (unsigned char *)calloc(outLen, sizeof(unsigned char));
+    if (outData == nullptr) {
+        LOGE("calloc fail");
+        (void)WipeCipherKey(cipherKey); // PR-09 fix (B): wipe the key copy before this error return
+        free(inputMsgBytes);
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+
+    ret = DoDecryptData(&cipherKey, inputMsgBytes, inputMsgBytesLen, outData, &outLen);
+    free(inputMsgBytes);
+    if (ret != DM_OK) {
+        LOGE("SoftBusDecryptDataWithSeq fail=%{public}d", ret);
+        (void)WipeCipherKey(cipherKey); // PR-09 fix (B): wipe the key copy before this error return
+        (void)memset_s(outData, outDataLen, 0, outDataLen); // PR-09 fix (C): wipe before free
+        free(outData);
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+    if (WipeCipherKey(cipherKey) != DM_OK) {
+        LOGE("memset_s failed.");
+        (void)memset_s(outData, outDataLen, 0, outDataLen); // PR-09 fix (C): wipe before free
+        free(outData);
+        return ERR_DM_SECURITY_FUNC_FAILED;
+    }
+    outputMsg.clear();
+    outputMsg.assign(reinterpret_cast<const char*>(outData), outLen);
+    (void)memset_s(outData, outDataLen, 0, outDataLen); // PR-09 fix (C): wipe the plaintext before free
+    free(outData);
+    return DM_OK;
+}
+//LCOV_EXCL_STOP
+
+int32_t CryptoMgr::MbedAesGcmDecrypt(const AesGcmCipherKey *cipherKey, const unsigned char *cipherText,
+    uint32_t cipherTextSize, unsigned char *plain, uint32_t &plainLen)
+{
+    if ((cipherKey == NULL) || (cipherText == NULL) || (cipherTextSize <= OVERHEAD_LEN) || plain == NULL ||
+        (plainLen < cipherTextSize - OVERHEAD_LEN)) {
+        LOGE("Decrypt invalid para");
+        return ERR_DM_CRYPTO_PARA_INVALID;
+    }
+
+    mbedtls_gcm_context aesContext;
+    mbedtls_gcm_init(&aesContext);
+    int32_t ret =
+        mbedtls_gcm_setkey(&aesContext, MBEDTLS_CIPHER_ID_AES, cipherKey->key, cipherKey->keyLen * KEY_BITS_UNIT);
+    if (ret != 0) {
+        LOGE("Decrypt mbedtls_gcm_setkey fail.");
+        mbedtls_gcm_free(&aesContext);
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+
+    int32_t actualPlainLen = (int32_t)(cipherTextSize - OVERHEAD_LEN);
+    ret = mbedtls_gcm_auth_decrypt(&aesContext, cipherTextSize - OVERHEAD_LEN, cipherKey->iv, GCM_IV_LEN, NULL, 0,
+        cipherText + actualPlainLen + GCM_IV_LEN, TAG_LEN, cipherText + GCM_IV_LEN, plain);
+    if (ret != 0) {
+        LOGE("[TRANS] Decrypt mbedtls_gcm_auth_decrypt fail. ret=%{public}d", ret);
+        mbedtls_gcm_free(&aesContext);
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+    plainLen = (uint32_t)actualPlainLen;
+    mbedtls_gcm_free(&aesContext);
+    return DM_OK;
+}
+
+int32_t CryptoMgr::DoDecryptData(AesGcmCipherKey *cipherKey, const unsigned char *input, uint32_t inLen,
+    unsigned char *decryptData, uint32_t *decryptLen)
+{
+    if (cipherKey == NULL || input == NULL || inLen < OVERHEAD_LEN || decryptData == NULL || decryptLen == NULL) {
+        return ERR_DM_CRYPTO_PARA_INVALID;
+    }
+
+    if (memcpy_s(cipherKey->iv, sizeof(cipherKey->iv), input, GCM_IV_LEN) != EOK) {
+        LOGE("copy iv failed.");
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+    uint32_t outLen = inLen - OVERHEAD_LEN;
+    int32_t result = MbedAesGcmDecrypt(cipherKey, input, inLen, decryptData, outLen);
+    if (result != DM_OK) {
+        return ERR_DM_CRYPTO_OPT_FAILED;
+    }
+    *decryptLen = outLen;
+    return DM_OK;
+}
+
+int32_t CryptoMgr::SaveSessionKey(const uint8_t *sessionKey, const uint32_t keyLen)
+{
+    // PR-09 fix (A): the original body never copied the caller's key bytes
+    // into the buffer (the saved key was always all-zero) and did not check
+    // the calloc result. The body now mirrors the ProcessSessionKey reference
+    // implementation (same in this file and the 3rd stack): validate the
+    // parameters, check the allocation, verify the copy and fail closed.
+    if (sessionKey == nullptr || keyLen > MAX_SESSION_KEY_LENGTH) {
+        LOGE("Invalid param, SessionKey len: %{public}d", keyLen);
+        return ERR_DM_SAVE_SESSION_KEY_FAILED;
+    }
+    ClearSessionKey();
+    {
+        std::lock_guard<ffrt::mutex> lock(sessionKeyMtx_);
+        sessionKey_.key = (uint8_t*)calloc(keyLen, sizeof(uint8_t));
+        if (sessionKey_.key == nullptr) {
+            LOGE("calloc failed.");
+            return ERR_DM_SAVE_SESSION_KEY_FAILED;
+        }
+        if (memcpy_s(sessionKey_.key, keyLen, sessionKey, keyLen) != DM_OK) {
+            LOGE("memcpy_s failed.");
+            (void)memset_s(sessionKey_.key, keyLen, 0, keyLen);
+            free(sessionKey_.key);
+            sessionKey_.key = nullptr;
+            sessionKey_.keyLen = 0;
+            return ERR_DM_SAVE_SESSION_KEY_FAILED;
+        }
+        sessionKey_.keyLen = keyLen;
+    }
+    return DM_OK;
+}
+
+std::vector<unsigned char> CryptoMgr::GetSessionKey()
+{
+    std::lock_guard<ffrt::mutex> lock(sessionKeyMtx_);
+    return std::vector<unsigned char>(sessionKey_.key, sessionKey_.key + sessionKey_.keyLen);
+}
+
+void CryptoMgr::ClearSessionKey()
+{
+    std::lock_guard<ffrt::mutex> lock(sessionKeyMtx_);
+    if (sessionKey_.key != nullptr) {
+        (void)memset_s(sessionKey_.key, sessionKey_.keyLen, 0, sessionKey_.keyLen);
+        free(sessionKey_.key);
+        sessionKey_.key = nullptr;
+        sessionKey_.keyLen = 0;
+    }
+}
+
+int32_t CryptoMgr::ProcessSessionKey(const uint8_t *sessionKey, const uint32_t keyLen)
+{
+    if (sessionKey == nullptr || keyLen > MAX_SESSION_KEY_LENGTH) {
+        LOGE("Invalid param, SessionKey len: %{public}d", keyLen);
+        return ERR_DM_PROCESS_SESSION_KEY_FAILED;
+    }
+    ClearSessionKey();
+    {
+        std::lock_guard<ffrt::mutex> lock(sessionKeyMtx_);
+        sessionKey_.key = (uint8_t*)calloc(keyLen, sizeof(uint8_t));
+        if (sessionKey_.key == nullptr) {
+            LOGE("calloc failed.");
+            return ERR_DM_PROCESS_SESSION_KEY_FAILED;
+        }
+        if (memcpy_s(sessionKey_.key, keyLen, sessionKey, keyLen) != DM_OK) {
+            LOGE("memcpy_s failed.");
+            (void)memset_s(sessionKey_.key, keyLen, 0, keyLen);
+            free(sessionKey_.key);
+            sessionKey_.key = nullptr;
+            sessionKey_.keyLen = 0;
+            return ERR_DM_PROCESS_SESSION_KEY_FAILED;
+        }
+        sessionKey_.keyLen = keyLen;
+    }
+    return DM_OK;
+}
+} // namespace DistributedHardware
+} // namespace OHOS
