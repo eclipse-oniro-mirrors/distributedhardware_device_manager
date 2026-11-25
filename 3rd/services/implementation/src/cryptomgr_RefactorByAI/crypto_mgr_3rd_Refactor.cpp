@@ -321,7 +321,7 @@ int32_t CryptoMgr3rd::DecryptMessage(const std::string &inputMsg, std::string &o
 
     const uint32_t outDataLen = inputMsgBytesLen - OVERHEAD_LEN + 1; /* for '\0' */
     uint32_t outLen = outDataLen;
-    unsigned char *outData = (unsigned char *)calloc(outLen, sizeof(unsigned char));
+    unsigned char *outData = (unsigned char *)calloc(outDataLen, sizeof(unsigned char));
     if (outData == nullptr) {
         LOGE("calloc fail");
         (void)WipeCipherKey(cipherKey); // PR-09 fix (B): wipe the key copy before this error return
