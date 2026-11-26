@@ -24,12 +24,14 @@
 #include <thread>
 
 std::shared_ptr<OHOS::AppExecFwk::EventHandler> AsyncUtilBase::mainHandler_;
+std::mutex AsyncUtilBase::mainHandlerMutex_;
 
 bool AsyncUtilBase::SendEventToMainThread(const std::function<void()> func)
 {
     if (func == nullptr) {
         return false;
     }
+    std::lock_guard<std::mutex> lock(mainHandlerMutex_);
     if (!mainHandler_) {
         std::shared_ptr<OHOS::AppExecFwk::EventRunner> runner = OHOS::AppExecFwk::EventRunner::GetMainEventRunner();
         if (!runner) {

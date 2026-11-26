@@ -90,7 +90,7 @@ private:
     void NotifyEventWait();
     void NotifyStateWait();
 
-    DmAuthStateType curState_;
+    std::atomic<DmAuthStateType> curState_;
     DmAuthStateType preState_{DmAuthStateType::ACL_AUTH_IDLE_STATE};  // Previous push state
 
     // State transition table for normal state transitions (all state transitions to the Finish state are valid)

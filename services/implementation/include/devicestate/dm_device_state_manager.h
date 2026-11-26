@@ -19,6 +19,7 @@
 #ifndef OHOS_DM_DEVICE_STATE_MANAGER_H
 #define OHOS_DM_DEVICE_STATE_MANAGER_H
 
+#include <atomic>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -71,7 +72,7 @@ typedef struct NotifyTask {
     std::condition_variable queueFullCond_;
     std::mutex queueMtx_;
     std::queue<std::shared_ptr<NotifyEvent>> queue_;
-    bool threadRunning_ = false;
+    std::atomic<bool> threadRunning_ { false };
 } NotifyTask;
 
 class DmDeviceStateManager final : public ISoftbusStateCallback,

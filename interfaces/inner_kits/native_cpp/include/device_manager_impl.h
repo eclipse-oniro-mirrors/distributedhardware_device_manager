@@ -24,6 +24,7 @@
 #include "ipc_client_manager.h"
 #include "ipc_client_proxy.h"
 #endif
+#include <mutex>
 #include <set>
 
 namespace OHOS {
@@ -524,13 +525,14 @@ private:
 private:
     std::shared_ptr<IpcClientProxy> ipcClientProxy_ =
         std::make_shared<IpcClientProxy>(std::make_shared<IpcClientManager>());
-    std::mutex subMapLock;
+    std::recursive_mutex subMapLock;
     std::map<std::string, uint16_t> pkgName2SubIdMap_;
 
     std::mutex pubMapLock;
     std::map<std::string, uint16_t> pkgName2PubIdMap_;
 
     std::string anonyLocalUdid_;
+    std::once_flag anonyLocalUdidOnceFlag_;
 
     std::set<uint16_t> randSubIdSet_;
     std::set<uint16_t> randPubIdSet_;

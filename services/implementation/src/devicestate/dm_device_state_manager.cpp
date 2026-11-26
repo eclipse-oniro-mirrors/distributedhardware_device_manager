@@ -672,7 +672,7 @@ void DmDeviceStateManager::DeleteOffLineTimer(const std::string &peerUdid)
 void DmDeviceStateManager::StartEventThread()
 {
     LOGD("begin");
-    eventTask_.threadRunning_ = true;
+    eventTask_.threadRunning_.store(true);
     eventTask_.queueThread_ = std::thread([this]() { this->ThreadLoop(); });
     LOGD("complete");
 }
@@ -680,7 +680,7 @@ void DmDeviceStateManager::StartEventThread()
 void DmDeviceStateManager::StopEventThread()
 {
     LOGI("begin");
-    eventTask_.threadRunning_ = false;
+    eventTask_.threadRunning_.store(false);
     eventTask_.queueCond_.notify_all();
     eventTask_.queueFullCond_.notify_all();
     if (eventTask_.queueThread_.joinable()) {
@@ -711,11 +711,11 @@ void DmDeviceStateManager::ThreadLoop()
     if (ret != DM_OK) {
         LOGE("setname failed.");
     }
-    while (eventTask_.threadRunning_) {
+    while (eventTask_.threadRunning_.load()) {
         std::shared_ptr<NotifyEvent> task = nullptr;
         {
             std::unique_lock<std::mutex> lock(eventTask_.queueMtx_);
-            while (eventTask_.queue_.empty() && eventTask_.threadRunning_) {
+            while (eventTask_.queue_.empty() && eventTask_.threadRunning_.load()) {
                 eventTask_.queueCond_.wait_for(lock, std::chrono::seconds(DM_EVENT_WAIT_TIMEOUT));
             }
             if (!eventTask_.queue_.empty()) {

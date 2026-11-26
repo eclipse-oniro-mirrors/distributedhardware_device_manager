@@ -52,6 +52,7 @@ namespace {
 }
 
 std::string SoftbusConnector::remoteUdidHash_ = "";
+std::mutex SoftbusConnector::remoteUdidHashMutex_;
 std::map<std::string, std::shared_ptr<DeviceInfo>> SoftbusConnector::discoveryDeviceInfoMap_ = {};
 std::unordered_map<std::string, std::string> SoftbusConnector::deviceUdidMap_ = {};
 std::vector<ProcessInfo> SoftbusConnector::processInfoVec_ = {};
@@ -61,6 +62,7 @@ std::mutex SoftbusConnector::deviceUdidLocks_;
 std::mutex SoftbusConnector::processInfoVecMutex_;
 std::mutex SoftbusConnector::processChangeInfoVecMutex_;
 std::shared_ptr<ISoftbusConnectorCallback> SoftbusConnector::connectorCallback_ = nullptr;
+std::mutex SoftbusConnector::connectorCallbackMutex_;
 std::shared_ptr<ISoftbusLeaveLNNCallback> SoftbusConnector::leaveLNNCallback_ = nullptr;
 std::mutex SoftbusConnector::leaveLNNMutex_;
 std::map<std::string, std::string> SoftbusConnector::leaveLnnPkgMap_ = {};
@@ -326,12 +328,14 @@ int32_t SoftbusConnector::GetAclListHash(const DevUserInfo &localDevUserInfo,
 
 int32_t SoftbusConnector::RegisterConnectorCallback(std::shared_ptr<ISoftbusConnectorCallback> callback)
 {
+    std::lock_guard<std::mutex> lock(connectorCallbackMutex_);
     connectorCallback_ = callback;
     return DM_OK;
 }
 
 int32_t SoftbusConnector::UnRegisterConnectorCallback()
 {
+    std::lock_guard<std::mutex> lock(connectorCallbackMutex_);
     connectorCallback_ = nullptr;
     return DM_OK;
 }
@@ -357,10 +361,15 @@ void SoftbusConnector::JoinLnn(const std::string &deviceId, bool isForceJoin)
         LOGE("addrInfo is nullptr.");
         return;
     }
+    std::string remoteUdidHash;
+    {
+        std::lock_guard<std::mutex> lock(remoteUdidHashMutex_);
+        remoteUdidHash = remoteUdidHash_;
+    }
     if (addrInfo->type == ConnectionAddrType::CONNECTION_ADDR_BLE &&
         Crypto::ConvertHexStringToBytes(addrInfo->info.ble.udidHash, UDID_HASH_LEN,
-        remoteUdidHash_.c_str(), remoteUdidHash_.length()) != DM_OK) {
-        LOGE("convert remoteUdid hash failed, remoteUdidHash_: %{public}s.", GetAnonyString(remoteUdidHash_).c_str());
+        remoteUdidHash.c_str(), remoteUdidHash.length()) != DM_OK) {
+        LOGE("convert remoteUdid hash failed, remoteUdidHash_: %{public}s.", GetAnonyString(remoteUdidHash).c_str());
         return;
     }
     int32_t ret = ::JoinLNN(DM_PKG_NAME, addrInfo.get(), OnSoftbusJoinLNNResult, isForceJoin);
@@ -617,6 +626,7 @@ void SoftbusConnector::OnSoftbusJoinLNNResult(ConnectionAddr *addr, const char *
         return;
     }
     int32_t sessionId = addr->info.session.sessionId;
+    std::lock_guard<std::mutex> lock(connectorCallbackMutex_);
     CHECK_NULL_VOID(connectorCallback_);
     connectorCallback_->OnSoftbusJoinLNNResult(sessionId, networkId, result);
     (void)addr;
@@ -828,7 +838,10 @@ void SoftbusConnector::OnSessionOpened(int32_t sessionId, int32_t result)
         LOGE("GetPeerDeviceId failed.");
         return;
     }
-    remoteUdidHash_ = GetDeviceUdidHashByUdid(peerUdid);
+    {
+        std::lock_guard<std::mutex> lock(remoteUdidHashMutex_);
+        remoteUdidHash_ = GetDeviceUdidHashByUdid(peerUdid);
+    }
     if (result == 0 && !peerUdid.empty() && deviceStateManagerCallback_ != nullptr) {
         deviceStateManagerCallback_->DeleteOffLineTimer(peerUdid);
     }

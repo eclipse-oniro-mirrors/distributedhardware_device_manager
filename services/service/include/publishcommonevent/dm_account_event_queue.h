@@ -17,6 +17,7 @@
 #define OHOS_DM_ACCOUNT_EVENT_QUEUE_H
 
 #include <queue>
+#include <atomic>
 #include <mutex>
 #include <condition_variable>
 #include <thread>
@@ -46,7 +47,7 @@ private:
     std::mutex queueMutex_;
     std::condition_variable queueCond_;
     std::thread processThread_;
-    bool isRunning_ = false;
+    std::atomic<bool> isRunning_ = false;
     AccountEventCallback callback_;
 };
 

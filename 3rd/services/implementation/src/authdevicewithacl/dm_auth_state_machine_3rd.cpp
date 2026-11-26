@@ -266,12 +266,12 @@ bool DmAuthStateMachine3rd::IsWaitEvent()
 void DmAuthStateMachine3rd::SetCurState(DmAuthStateType state)
 {
     LOGI("DmAuthStateMachine3rd::SetCurState state: %{public}d", state);
-    curState_ = state;
+    curState_.store(state);
 }
 
 DmAuthStateType DmAuthStateMachine3rd::GetCurState()
 {
-    return curState_;
+    return curState_.load();
 }
 
 // Verify the validity of the next state transition.

@@ -50,6 +50,7 @@ public:
 protected:
     std::mutex jsCallbackMutex_;
     static std::shared_ptr<OHOS::AppExecFwk::EventHandler> mainHandler_;
+    static std::mutex mainHandlerMutex_;
 };
 
 class DmAniInitCallback : public OHOS::DistributedHardware::DmInitCallback,

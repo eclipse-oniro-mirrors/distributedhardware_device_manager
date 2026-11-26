@@ -71,6 +71,7 @@ DeviceManagerServiceImpl3rd::~DeviceManagerServiceImpl3rd()
 int DeviceManagerServiceImpl3rd::OnAuth3rdAclSessionOpened(int sessionId, int result)
 {
     LOGI("OnSessionOpened success, sessionId: %{public}d, res: %{public}d.", sessionId, result);
+    std::lock_guard<ffrt::mutex> mapLock(sessionEnableMapMtx_);
     if (sessionEnableCvMap_.find(sessionId) != sessionEnableCvMap_.end()) {
         std::lock_guard<ffrt::mutex> lock(sessionEnableMutexMap_[sessionId]);
         if (result == 0) {
@@ -180,6 +181,7 @@ int DeviceManagerServiceImpl3rd::OnAuthCred3rdSessionOpened(int sessionId, int r
     } else {
         HandleCredSessionOpenFailure(sessionId);
     }
+    std::lock_guard<ffrt::mutex> mapLock(sessionEnableMapMtx_);
     if (sessionEnableCvMap_.find(sessionId) != sessionEnableCvMap_.end()) {
         std::lock_guard<ffrt::mutex> lock(sessionEnableMutexMap_[sessionId]);
         if (result == 0) {
@@ -270,8 +272,11 @@ void DeviceManagerServiceImpl3rd::Release()
     listener_ = nullptr;
     softbusConnector_ = nullptr;
     hiChainAuthConnector_ = nullptr;
-    sessionEnableCvMap_.clear();
-    sessionEnableMutexMap_.clear();
+    {
+        std::lock_guard<ffrt::mutex> mapLock(sessionEnableMapMtx_);
+        sessionEnableCvMap_.clear();
+        sessionEnableMutexMap_.clear();
+    }
     return;
 }
 
@@ -388,15 +393,51 @@ static uint64_t GenerateRandNum(int sessionId)
     return randNum;
 }
 
+void DeviceManagerServiceImpl3rd::SetupAuthSession(std::shared_ptr<AuthManagerBase3rd> authMgr,
+    int32_t sessionId, uint64_t logicalSessionId, const ProcessInfo3rd &processInfo3rd)
+{
+    CleanNotifyCallback cleanNotifyCallback = [=](const auto &logicalSessionId, const auto &connDelayCloseTime,
+        const ProcessInfo3rd &processInfo3rd) {
+        this->NotifyCleanEvent(logicalSessionId, connDelayCloseTime, processInfo3rd, true);
+    };
+    authMgr->RegisterCleanNotifyCallback(cleanNotifyCallback);
+    CHECK_NULL_VOID(hiChainAuthConnector_);
+    hiChainAuthConnector_->RegisterHiChainAuthCallbackById(logicalSessionId, authMgr);
+    ImportAuthCodeAndUidFromCache(authMgr, processInfo3rd);
+    {
+        std::lock_guard<ffrt::mutex> tokenIdLock(logicalSessionId2TokenIdMapMtx_);
+        logicalSessionId2TokenIdMap_[logicalSessionId] = processInfo3rd.tokenId;
+    }
+    {
+        std::lock_guard<ffrt::mutex> sessionIdLock(logicalSessionId2SessionIdMapMtx_);
+        logicalSessionId2SessionIdMap_[logicalSessionId] = sessionId;
+    }
+}
+
+bool DeviceManagerServiceImpl3rd::WaitSessionEnable(int32_t sessionId)
+{
+    ffrt::mutex* sessionMtx = nullptr;
+    ffrt::condition_variable* sessionCv = nullptr;
+    bool* sessionReady = nullptr;
+    {
+        std::lock_guard<ffrt::mutex> mapLock(sessionEnableMapMtx_);
+        sessionEnableCvReadyMap_[sessionId] = false;
+        sessionMtx = &sessionEnableMutexMap_[sessionId];
+        sessionCv = &sessionEnableCvMap_[sessionId];
+        sessionReady = &sessionEnableCvReadyMap_[sessionId];
+    }
+    std::unique_lock<ffrt::mutex> cvLock(*sessionMtx);
+    return sessionCv->wait_for(cvLock, std::chrono::milliseconds(OPEN_AUTH_SESSION_TIMEOUT),
+        [sessionReady] { return *sessionReady; });
+}
+
 void DeviceManagerServiceImpl3rd::AuthDeviceAclImpl(const PeerTargetId3rd &targetId, const PinCodeInfo pinCodeInfo,
     const std::map<std::string, std::string> &authParamTmp, const ProcessInfo3rd processInfo3rd)
 {
     LOGE("processName:%{public}s, tokenId:%{public}u, businessName: %{public}s",
         processInfo3rd.processName.c_str(), processInfo3rd.tokenId, processInfo3rd.businessName.c_str());
-    
     targetId3rd_ = targetId;
     authParam_ = authParamTmp;
-
     std::shared_ptr<AuthManagerBase3rd> authMgr = nullptr;
     std::lock_guard<ffrt::mutex> autoLock(authMgrMapLock_);
     auto it = authMgrMap_.find(processInfo3rd.tokenId);
@@ -416,26 +457,8 @@ void DeviceManagerServiceImpl3rd::AuthDeviceAclImpl(const PeerTargetId3rd &targe
         return;
     }
     uint64_t logicalSessionId = GenerateRandNum(sessionId);
-    CleanNotifyCallback cleanNotifyCallback = [=](const auto &logicalSessionId, const auto &connDelayCloseTime,
-        const ProcessInfo3rd &processInfo3rd) {
-        this->NotifyCleanEvent(logicalSessionId, connDelayCloseTime, processInfo3rd, true);
-    };
-    authMgr->RegisterCleanNotifyCallback(cleanNotifyCallback);
-    CHECK_NULL_VOID(hiChainAuthConnector_);
-    hiChainAuthConnector_->RegisterHiChainAuthCallbackById(logicalSessionId, authMgr);
-    ImportAuthCodeAndUidFromCache(authMgr, processInfo3rd);
-    {
-        std::lock_guard<ffrt::mutex> tokenIdLock(logicalSessionId2TokenIdMapMtx_);
-        logicalSessionId2TokenIdMap_[logicalSessionId] = processInfo3rd.tokenId;
-    }
-    {
-        std::lock_guard<ffrt::mutex> sessionIdLock(logicalSessionId2SessionIdMapMtx_);
-        logicalSessionId2SessionIdMap_[logicalSessionId] = sessionId;
-    }
-    sessionEnableCvReadyMap_[sessionId] = false;
-    std::unique_lock<ffrt::mutex> cvLock(sessionEnableMutexMap_[sessionId]);
-    if (!sessionEnableCvMap_[sessionId].wait_for(cvLock, std::chrono::milliseconds(OPEN_AUTH_SESSION_TIMEOUT),
-        [&] { return sessionEnableCvReadyMap_[sessionId]; })) {
+    SetupAuthSession(authMgr, sessionId, logicalSessionId, processInfo3rd);
+    if (!WaitSessionEnable(sessionId)) {
         SessionOpenFailed(sessionId, processInfo3rd);
         return;
     }
@@ -726,7 +749,7 @@ int32_t DeviceManagerServiceImpl3rd::AddAuthMgr(uint32_t tokenId, std::shared_pt
         return ERR_DM_POINT_NULL;
     }
     {
-        std::lock_guard<ffrt::mutex> lock(authMgrMapMtx_);
+        std::lock_guard<ffrt::mutex> lock(authMgrMapLock_);
         if (authMgrMap_.size() >= MAX_NEW_PROC_SESSION_COUNT_TEMP) {
             LOGE("Other bind session exist, can not start new one. authMgrMap_.size:%{public}zu", authMgrMap_.size());
             return ERR_DM_AUTH_BUSINESS_BUSY;
@@ -816,7 +839,7 @@ void DeviceManagerServiceImpl3rd::EraseAuthMgr(uint32_t tokenId)
         bindingTimer_->DeleteTimer(BINDING_TIMER_NAME);
     }
     {
-        std::lock_guard<ffrt::mutex> lock(authMgrMapMtx_);
+        std::lock_guard<ffrt::mutex> lock(authMgrMapLock_);
         if (authMgrMap_.find(tokenId) != authMgrMap_.end()) {
             LOGI("authMgrMap_ erase token: %{public}d.", tokenId);
             authMgrMap_.erase(tokenId);
@@ -886,7 +909,6 @@ void DeviceManagerServiceImpl3rd::AuthCredentialImpl(const PeerTargetId3rd &targ
     if (sessionId == BINDING_SESSION_ID_IDLE) {
         return;
     }
-
     std::shared_ptr<AuthManagerBase3rd> authMgr = nullptr;
     std::lock_guard<ffrt::mutex> autoLock(authMgrMapLock_);
     auto it = authMgrMap_.find(processInfo3rd.tokenId);
@@ -900,28 +922,9 @@ void DeviceManagerServiceImpl3rd::AuthCredentialImpl(const PeerTargetId3rd &targ
         LOGI("Created new AuthMgr for token %{public}s",
             GetAnonyUint32(processInfo3rd.tokenId).c_str());
     }
-
     uint64_t logicalSessionId = GenerateRandNum(sessionId);
-    CleanNotifyCallback cleanNotifyCallback = [=](const auto &logicalSessionId, const auto &connDelayCloseTime,
-        const ProcessInfo3rd &processInfo3rd) {
-        this->NotifyCleanEvent(logicalSessionId, connDelayCloseTime, processInfo3rd, true);
-    };
-    authMgr->RegisterCleanNotifyCallback(cleanNotifyCallback);
-    CHECK_NULL_VOID(hiChainAuthConnector_);
-    hiChainAuthConnector_->RegisterHiChainAuthCallbackById(logicalSessionId, authMgr);
-    ImportAuthCodeAndUidFromCache(authMgr, processInfo3rd);
-    {
-        std::lock_guard<ffrt::mutex> tokenIdLock(logicalSessionId2TokenIdMapMtx_);
-        logicalSessionId2TokenIdMap_[logicalSessionId] = processInfo3rd.tokenId;
-    }
-    {
-        std::lock_guard<ffrt::mutex> sessionIdLock(logicalSessionId2SessionIdMapMtx_);
-        logicalSessionId2SessionIdMap_[logicalSessionId] = sessionId;
-    }
-    sessionEnableCvReadyMap_[sessionId] = false;
-    std::unique_lock<ffrt::mutex> cvLock(sessionEnableMutexMap_[sessionId]);
-    if (!sessionEnableCvMap_[sessionId].wait_for(cvLock, std::chrono::milliseconds(OPEN_AUTH_SESSION_TIMEOUT),
-        [&] { return sessionEnableCvReadyMap_[sessionId]; })) {
+    SetupAuthSession(authMgr, sessionId, logicalSessionId, processInfo3rd);
+    if (!WaitSessionEnable(sessionId)) {
         CredSessionOpenFailed(sessionId, processInfo3rd);
         NotifyCleanEvent(logicalSessionId, 0, processInfo3rd, true);
         return;
@@ -1072,7 +1075,6 @@ void DeviceManagerServiceImpl3rd::AuthPincodeImpl(const PeerTargetId3rd &targetI
 {
     LOGE("processName:%{public}s, tokenId:%{public}u, businessName: %{public}s",
         processInfo3rd.processName.c_str(), processInfo3rd.tokenId, processInfo3rd.businessName.c_str());
-
     std::shared_ptr<AuthManagerBase3rd> authMgr = nullptr;
     std::lock_guard<ffrt::mutex> autoLock(authMgrMapLock_);
     auto it = authMgrMap_.find(processInfo3rd.tokenId);
@@ -1093,37 +1095,19 @@ void DeviceManagerServiceImpl3rd::AuthPincodeImpl(const PeerTargetId3rd &targetI
     }
     uint64_t logicalSessionId = GenerateRandNum(sessionId);
     LOGI("AuthPincodeImpl, sessionId:%{public}d, logicalSessionId:%{public}" PRIu64 "", sessionId, logicalSessionId);
-    CleanNotifyCallback cleanNotifyCallback = [=](const auto &logicalSessionId, const auto &connDelayCloseTime,
-        const ProcessInfo3rd &processInfo3rd) {
-        this->NotifyCleanEvent(logicalSessionId, connDelayCloseTime, processInfo3rd, true);
-    };
-    authMgr->RegisterCleanNotifyCallback(cleanNotifyCallback);
-    CHECK_NULL_VOID(hiChainAuthConnector_);
-    hiChainAuthConnector_->RegisterHiChainAuthCallbackById(logicalSessionId, authMgr);
-    ImportAuthCodeAndUidFromCache(authMgr, processInfo3rd);
-    {
-        std::lock_guard<ffrt::mutex> tokenIdLock(logicalSessionId2TokenIdMapMtx_);
-        logicalSessionId2TokenIdMap_[logicalSessionId] = processInfo3rd.tokenId;
-    }
-    {
-        std::lock_guard<ffrt::mutex> sessionIdLock(logicalSessionId2SessionIdMapMtx_);
-        logicalSessionId2SessionIdMap_[logicalSessionId] = sessionId;
-    }
-    sessionEnableCvReadyMap_[sessionId] = false;
-    std::unique_lock<ffrt::mutex> cvLock(sessionEnableMutexMap_[sessionId]);
-    if (!sessionEnableCvMap_[sessionId].wait_for(cvLock, std::chrono::milliseconds(OPEN_AUTH_SESSION_TIMEOUT),
-        [&] { return sessionEnableCvReadyMap_[sessionId]; })) {
+    SetupAuthSession(authMgr, sessionId, logicalSessionId, processInfo3rd);
+    if (!WaitSessionEnable(sessionId)) {
         LOGE("wait session enable timeout or enable fail, sessionId: %{public}d.", sessionId);
         CredSessionOpenFailed(sessionId, processInfo3rd);
         return;
     }
     authMgr->AuthPincode(targetId, authParamTmp, sessionId, logicalSessionId);
-    return;
 }
 
 int DeviceManagerServiceImpl3rd::OnAuth3rdSessionOpened(int sessionId, int result)
 {
     LOGI("OnSessionOpened success, sessionId:%{public}d, res:%{public}d.", sessionId, result);
+    std::lock_guard<ffrt::mutex> mapLock(sessionEnableMapMtx_);
     if (sessionEnableCvMap_.find(sessionId) != sessionEnableCvMap_.end()) {
         std::lock_guard<ffrt::mutex> lock(sessionEnableMutexMap_[sessionId]);
         if (result == 0) {

@@ -123,6 +123,9 @@ private:
         ProcessInfo3rd processInfo3rd, bool isSrcSide);
     void EraseAuthMgr(uint32_t tokenId);
     void ErasePincodeInfo(ProcessInfo3rd processInfo3rd);
+    void SetupAuthSession(std::shared_ptr<AuthManagerBase3rd> authMgr, int32_t sessionId,
+        uint64_t logicalSessionId, const ProcessInfo3rd &processInfo3rd);
+    bool WaitSessionEnable(int32_t sessionId);
 
     std::shared_ptr<AuthManagerBase3rd> GetCredAuthMgrByMessage(int32_t msgType,
         uint64_t logicalSessionId, int32_t sessionId, const JsonObject &jsonObject);
@@ -148,10 +151,10 @@ private:
     ffrt::mutex authMgrMapLock_;
     ffrt::mutex logicalSessionId2TokenIdMapMtx_;
     std::map<uint64_t, uint32_t> logicalSessionId2TokenIdMap_;
-    ffrt::mutex authMgrMapMtx_;
     ffrt::mutex tokenIdSessionIdMapMtx_;
     std::map<uint32_t, int> tokenIdSessionIdMap_;  // New protocol sharing
     ffrt::mutex mapMutex_;  // sessionsMap_ lock
+    ffrt::mutex sessionEnableMapMtx_;  // sessionEnable maps lock
     std::map<int, bool> sessionEnableCvReadyMap_;  // Condition variable ready flag
     std::map<int, ffrt::condition_variable> sessionEnableCvMap_;  // Condition variable corresponding to the session
     std::map<int, ffrt::mutex> sessionEnableMutexMap_;
