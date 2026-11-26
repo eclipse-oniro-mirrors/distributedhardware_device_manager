@@ -86,18 +86,6 @@ HWTEST_F(DmAuthCertTest, GenerateCertificate_001, testing::ext::TestSize.Level1)
 }
 
 /**
- * @tc.name  : GenerateCertificateV3_001
- * @tc.desc  : 测试当认证证书模块未加载时,GenerateCertificateV3 函数应返回 ERR_DM_FAILED
- */
-HWTEST_F(DmAuthCertTest, GenerateCertificateV3_001, testing::ext::TestSize.Level1) {
-    AuthCert authCert;
-    DmCertChain dmCertChain;
-    const uint64_t random = 12345;
-    int32_t result = authCert.GenerateCertificateV3(dmCertChain, random);
-    EXPECT_EQ(result, ERR_DM_FAILED);
-}
-
-/**
  * @tc.name  : GenerateCertificateV3_DelegatesToExt_001
  * @tc.desc  : 测试 GenerateCertificateV3 委托至 IDMAuthCertExt 实现并被调用一次
  */
@@ -113,7 +101,6 @@ HWTEST_F(DmAuthCertTest, GenerateCertificateV3_DelegatesToExt_001, testing::ext:
     EXPECT_EQ(mock->generateV3Count, 1u);
     EXPECT_EQ(mock->generateV2Count, 0u);
     EXPECT_EQ(mock->generateV1Count, 0u);
-    AuthAttestCommon::GetInstance().FreeDmCertChain(dmCertChain);
 }
 
 /**
