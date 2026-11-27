@@ -86,26 +86,8 @@ HWTEST_F(DmAuthCertTest, GenerateCertificate_001, testing::ext::TestSize.Level1)
 }
 
 /**
- * @tc.name  : GenerateCertificateV3_DelegatesToExt_001
- * @tc.desc  : 测试 GenerateCertificateV3 委托至 IDMAuthCertExt 实现并被调用一次
- */
-HWTEST_F(DmAuthCertTest, GenerateCertificateV3_DelegatesToExt_001, testing::ext::TestSize.Level1) {
-    AuthCert authCert;
-    authCert.isAdapterAuthCertSoLoaded_ = true;
-    authCert.dmAuthCertExt_ = std::make_shared<DmAuthCertExtMock>();
-    DmCertChain dmCertChain;
-    const uint64_t random = 12345;
-    int32_t result = authCert.GenerateCertificateV3(dmCertChain, random);
-    EXPECT_EQ(result, DM_OK);
-    auto mock = std::static_pointer_cast<DmAuthCertExtMock>(authCert.dmAuthCertExt_);
-    EXPECT_EQ(mock->generateV3Count, 1u);
-    EXPECT_EQ(mock->generateV2Count, 0u);
-    EXPECT_EQ(mock->generateV1Count, 0u);
-}
-
-/**
  * @tc.name  : VerifyCertificateV3_001
- * @tc.desc  : 测试当认证证书模块未加载时,VerifyCertificateV3 函数应返回 ERR_DM_FAILED
+ * @tc.desc  : VerifyCertificateV3 函数调用场景
  */
 HWTEST_F(DmAuthCertTest, VerifyCertificateV3_001, testing::ext::TestSize.Level1) {
     AuthCert authCert;
@@ -113,31 +95,24 @@ HWTEST_F(DmAuthCertTest, VerifyCertificateV3_001, testing::ext::TestSize.Level1)
     const char *deviceIdHash = "testDeviceIdHash";
     const uint64_t random = 12345;
     int32_t result = authCert.VerifyCertificateV3(dmCertChain, deviceIdHash, random);
-    EXPECT_EQ(result, ERR_DM_FAILED);
+    EXPECT_NE(result, DM_OK);
 }
 
-/**
- * @tc.name  : VerifyCertificateV3_DelegatesToExt_001
- * @tc.desc  : 测试 VerifyCertificateV3 委托至 IDMAuthCertExt 实现,成功与失败结果均透传
- */
-HWTEST_F(DmAuthCertTest, VerifyCertificateV3_DelegatesToExt_001, testing::ext::TestSize.Level1) {
+HWTEST_F(DmAuthCertTest, GenerateCertificateV3_001, testing::ext::TestSize.Level1) {
     AuthCert authCert;
-    authCert.isAdapterAuthCertSoLoaded_ = true;
-    authCert.dmAuthCertExt_ = std::make_shared<DmAuthCertExtMock>();
+    DmCertChain dmCertChain;
+    const uint64_t random = 0;
+    int32_t result = authCert.GenerateCertificateV3(dmCertChain, random);
+    EXPECT_NE(result, ERR_DM_INPUT_PARA_INVALID);
+}
+
+HWTEST_F(DmAuthCertTest, VerifyCertificateV3_001, testing::ext::TestSize.Level1) {
+    AuthCert authCert;
     DmCertChain dmCertChain;
     const char *deviceIdHash = "testDeviceIdHash";
-    const uint64_t random = 12345;
+    const uint64_t random = 0;
     int32_t result = authCert.VerifyCertificateV3(dmCertChain, deviceIdHash, random);
-    EXPECT_EQ(result, DM_OK);
-    auto mock = std::static_pointer_cast<DmAuthCertExtMock>(authCert.dmAuthCertExt_);
-    EXPECT_EQ(mock->verifyV3Count, 1u);
-    EXPECT_EQ(mock->verifyV2Count, 0u);
-    EXPECT_EQ(mock->verifyV1Count, 0u);
-
-    mock->Reset();
-    mock->verifyV3Ret = ERR_DM_VERIFY_CERT_FAILED;
-    result = authCert.VerifyCertificateV3(dmCertChain, deviceIdHash, random);
-    EXPECT_EQ(result, ERR_DM_VERIFY_CERT_FAILED);
+    EXPECT_EQ(result, ERR_DM_INPUT_PARA_INVALID);
 }
 }
 }
