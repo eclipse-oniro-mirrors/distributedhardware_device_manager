@@ -17,6 +17,8 @@
 #include "dm_auth_cert.h"
 #include "dm_error_type.h"
 #include "dm_log.h"
+#include "dm_auth_attest_common.h"
+#include "dm_auth_cert_ext_mock.h"
 #include "UTTest_dm_auth_cert.h"
 
 namespace OHOS {
@@ -81,6 +83,36 @@ HWTEST_F(DmAuthCertTest, GenerateCertificate_001, testing::ext::TestSize.Level1)
     int32_t result = authCert.GenerateCertificate(dmCertChain);
     int32_t errCode = -10005;
     EXPECT_NE(result, errCode);
+}
+
+/**
+ * @tc.name  : VerifyCertificateV3_001
+ * @tc.desc  : VerifyCertificateV3 函数调用场景
+ */
+HWTEST_F(DmAuthCertTest, VerifyCertificateV3_001, testing::ext::TestSize.Level1) {
+    AuthCert authCert;
+    DmCertChain dmCertChain;
+    const char *deviceIdHash = "testDeviceIdHash";
+    const uint64_t random = 12345;
+    int32_t result = authCert.VerifyCertificateV3(dmCertChain, deviceIdHash, random);
+    EXPECT_NE(result, DM_OK);
+}
+
+HWTEST_F(DmAuthCertTest, GenerateCertificateV3_001, testing::ext::TestSize.Level1) {
+    AuthCert authCert;
+    DmCertChain dmCertChain;
+    const uint64_t random = 0;
+    int32_t result = authCert.GenerateCertificateV3(dmCertChain, random);
+    EXPECT_NE(result, ERR_DM_INPUT_PARA_INVALID);
+}
+
+HWTEST_F(DmAuthCertTest, VerifyCertificateV3_001, testing::ext::TestSize.Level1) {
+    AuthCert authCert;
+    DmCertChain dmCertChain;
+    const char *deviceIdHash = "testDeviceIdHash";
+    const uint64_t random = 0;
+    int32_t result = authCert.VerifyCertificateV3(dmCertChain, deviceIdHash, random);
+    EXPECT_EQ(result, ERR_DM_INPUT_PARA_INVALID);
 }
 }
 }

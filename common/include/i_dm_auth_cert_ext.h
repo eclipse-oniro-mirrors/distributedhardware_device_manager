@@ -28,6 +28,9 @@ public:
     virtual int32_t GenerateCertificateV2(DmCertChain &dmCertChain, const uint64_t random) = 0;
     virtual int32_t VerifyCertificateV2(const DmCertChain &dmCertChain, const char *deviceIdHash,
         const uint64_t random) = 0;
+    virtual int32_t GenerateCertificateV3(DmCertChain &dmCertChain, const uint64_t random) = 0;
+    virtual int32_t VerifyCertificateV3(const DmCertChain &dmCertChain, const char *deviceIdHash,
+        const uint64_t random) = 0;
 };
 
 using CreateDMAuthCertFuncPtr = IDMAuthCertExt *(*)(void);

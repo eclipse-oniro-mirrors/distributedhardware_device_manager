@@ -1042,6 +1042,28 @@ HWTEST_F(DmAnonymousTest, IsDmCommonNotifyEventValid_003, testing::ext::TestSize
     bool ret = IsDmCommonNotifyEventValid(dmCommonNotifyEvent);
     EXPECT_TRUE(ret);
 }
+
+/**
+ * @tc.name: DmVersionConstants_001
+ * @tc.desc: DM_VERSION_5_1_8 constant exists with value "5.1.8" (PQC version threshold)
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(DmAnonymousTest, DmVersionConstants_001, testing::ext::TestSize.Level1)
+{
+    EXPECT_STREQ(DM_VERSION_5_1_8, "5.1.8");
+}
+
+/**
+ * @tc.name: DmVersionConstants_002
+ * @tc.desc: DM_CURRENT_VERSION is bumped to 5.1.8
+ * @tc.type: FUNC
+ * @tc.require: AR000GHSJK
+ */
+HWTEST_F(DmAnonymousTest, DmVersionConstants_002, testing::ext::TestSize.Level1)
+{
+    EXPECT_STREQ(DM_CURRENT_VERSION, "5.1.8");
+}
 } // namespace
 } // namespace DistributedHardware
 } // namespace OHOS

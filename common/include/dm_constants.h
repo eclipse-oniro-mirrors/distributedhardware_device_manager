@@ -244,6 +244,7 @@ extern const char* DM_VERSION_5_1_4;
 extern const char* DM_VERSION_5_1_5;
 extern const char* DM_VERSION_5_1_6;
 extern const char* DM_VERSION_5_1_7;
+extern const char* DM_VERSION_5_1_8;
 extern const char* DM_CURRENT_VERSION;
 extern const char* DM_ACL_AGING_VERSION;
 extern const char* DM_VERSION_5_0_OLD_MAX;      // Estimated highest version number of the old version
